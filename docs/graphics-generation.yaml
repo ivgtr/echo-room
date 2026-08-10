@@ -1,0 +1,986 @@
+schema_version: 1
+project:
+  id: echo-room
+  title: "ECHO ROOM / 残響室"
+  specification_version: "0.1"
+  generated_at: "2026-08-11"
+  purpose: >-
+    A provider-neutral, ordered image-generation job manifest for all raster
+    graphics required by the first playable release.
+
+source_documents:
+  - docs/base.md
+  - docs/requirements.md
+  - docs/technical-design.md
+  - docs/graphics-production.md
+
+prompt_library:
+  world:
+    text: >-
+      ECHO ROOM, a grounded Japanese science-fiction mystery game set in 2039.
+      Interior of a compact underground experimental laboratory in a Japanese
+      advanced research institute, immediately after a containment accident.
+      Utilitarian brutalist architecture, blue-gray concrete, painted steel
+      panels, matte black polymer, reinforced frosted glass, exposed conduits
+      and precise industrial fasteners. A believable mixture of expensive
+      near-future prototype equipment and durable analog controls. Recently
+      occupied and functional, lightly worn but not abandoned. Cinematic
+      realistic digital environment art, highly coherent geometry, restrained
+      detail, readable interactive objects, quiet tension, no characters.
+      Designed as a first-person point-and-click adventure background made from
+      layered 2D images, with clear foreground, midground and background
+      separation.
+  camera_wide:
+    text: >-
+      First-person standing eye level at 1.65 meters, rectilinear 28–32mm
+      full-frame equivalent lens, level horizon, controlled perspective, 16:9
+      landscape composition. Leave the lower 24 percent visually quiet enough
+      for subtitle UI. Keep all essential clues away from the outer 5 percent
+      crop-safe margin.
+  camera_closeup:
+    text: >-
+      First-person inspection close-up, rectilinear 45–55mm full-frame
+      equivalent lens, level and readable front-three-quarter view, physically
+      consistent with the supplied room reference. The complete interactive
+      object must remain inside the central 80 percent of the frame. Leave
+      clean space around controls for an HTML interaction overlay.
+  light_powered:
+    text: >-
+      Cold neutral overhead work lights are active, with subtle remnants of
+      deep red emergency illumination. Muted blue-gray and green-gray palette,
+      restrained cyan equipment glow, realistic soft shadows, no crushed
+      blacks, clue surfaces remain readable.
+  light_emergency:
+    text: >-
+      Main power is off. Sparse deep-red emergency lights create pools of light
+      and long soft shadows. Very dark but navigable, with enough midtone detail
+      for game interaction. No horror spotlight, no pure black loss of detail.
+  reference_lock:
+    text: >-
+      Use the supplied approved reference image as the single source of truth.
+      Preserve unchanged geometry, materials, proportions, camera placement and
+      object identity. Do not redesign the room or the machine.
+  negative:
+    text: >-
+      No 3D model render aesthetic, no glossy spaceship corridor, no cyberpunk
+      neon city palette, no fantasy technology, no floating holograms, no
+      steampunk, no military bunker, no hospital, no abandoned ruin, no heavy
+      rust, no vegetation, no cobwebs, no blood, no gore, no body, no monster,
+      no visible person, no protagonist hands, no weapons, no windows, no
+      adjacent-room doorway, no fisheye lens, no Dutch angle, no extreme depth
+      of field, no motion blur, no decorative text, no logos, no watermarks, no
+      UI overlay, no subtitles, no baked-in labels or numbers.
+
+canonical_space:
+  room_id: E-01
+  approximate_dimensions_m:
+    width: 5.2
+    depth: 4.0
+    height: 2.7
+  north_wall:
+    center: iron_exit_door
+    upper_center: emergency_lock_and_battery_housing
+    right: intercom
+    visible_near_northwest: analog_clock
+  east_wall:
+    center: echo_buffer_terminal
+    terminal_side: voice_analysis_access_panel
+  south_wall:
+    center: desk
+  west_wall:
+    north_side: breaker_panel
+    south_side: locker
+  forbidden_openings:
+    - windows
+    - adjacent_room_door
+    - observation_window
+  initial_view: north_wall
+
+palette:
+  concrete: "#30363A"
+  painted_steel: "#48534F"
+  polymer_and_shadow: "#11181C"
+  work_light: "#C9D5D5"
+  terminal_glow: "#58B8B0"
+  emergency_red: "#9A1F24"
+  transmit_red: "#D42A32"
+  paper: "#D5D1C4"
+
+output_policy:
+  logical_runtime_canvas: [1920, 1080]
+  max_runtime_texture_dimension: 4096
+  wide_source_minimum: [3840, 2160]
+  closeup_source_minimum: [2560, 1440]
+  item_source_minimum: [2048, 2048]
+  portrait_source_minimum: [1024, 1280]
+  outer_crop_safe_percent: 5
+  subtitle_quiet_zone_bottom_percent: 24
+  closeup_object_safe_percent: 80
+  source_format: highest_quality_lossless_available
+  runtime_opaque_format: webp
+  runtime_alpha_format: lossless_webp_or_png
+  precision_graphics_source: editable_high_resolution_raster
+  mask_format: grayscale_png
+  rules:
+    - Do not upscale by simple stretching.
+    - Do not auto-trim transparent full-screen layers.
+    - All layers for one view must share the same canvas origin.
+    - Generated text must be removed before delivery.
+    - Preserve editable layered sources.
+    - Do not create or deliver SVG assets unless separately approved as an exception.
+
+execution_policy:
+  mode: ordered_reference_pipeline
+  parallelize_only_within_stage: true
+  approval_gates:
+    - after: 0
+      required_assets: [gfx-ref-001]
+      approval: art_direction
+    - after: 1
+      required_assets: [gfx-ref-002, gfx-ref-004]
+      approval: canonical_room_geometry
+    - after: 2
+      required_assets: [gfx-wide-001, gfx-wide-002, gfx-wide-003, gfx-wide-004]
+      approval: cross_view_consistency
+  record_for_each_generation:
+    - provider
+    - model
+    - model_version
+    - prompt
+    - negative_prompt
+    - seed_when_available
+    - reference_asset_ids
+    - mask_asset_ids
+    - generation_date
+  retry_policy:
+    maximum_candidates_per_asset: 4
+    preserve_rejected_candidates: true
+    reject_if_geometry_changes: true
+
+assets:
+  - id: gfx-ref-001
+    label: 美術方向キーフレーム
+    category: reference
+    stage: 0
+    priority: blocker
+    method: text_to_image
+    prompt_parts: [world, camera_wide, light_powered, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Create an art-direction keyframe rather than a final gameplay view. Show a
+      coherent compact underground laboratory corner containing concrete,
+      painted steel, exposed conduit, a rugged analog control and one restrained
+      cyan prototype display. The frame must communicate material quality,
+      detail density and the intended balance of near-future and industrial
+      design. Keep the room recently occupied and orderly after a sudden power
+      incident.
+    variants_requested: 3
+    deliverables:
+      - raw_candidates
+      - selected_master
+      - palette_sample
+    acceptance:
+      - Not horror or abandoned.
+      - Interactive objects remain readable.
+      - The design can plausibly include analog clock, breaker and modern terminal.
+
+  - id: gfx-ref-002
+    label: E-01正面基準画像
+    category: reference
+    stage: 1
+    priority: blocker
+    method: reference_guided_generation
+    references: [gfx-ref-001, gfx-ref-004]
+    prompt_parts: [world, camera_wide, light_powered, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Face the north wall of room E-01. A heavy sealed iron exit door is centered.
+      Above it is a blank rectangular emergency-lock and battery display housing.
+      A rugged wall intercom is mounted to the right. An old analog clock is
+      visible toward the upper-left area. No window and no second doorway. This
+      image establishes the exact visual identity and scale of the room.
+    deliverables:
+      - layered_source
+      - preview_flat
+      - runtime_preview
+    acceptance:
+      - Door is the dominant navigation anchor, not a giant vault door.
+      - Display housing has blank space for DOM text.
+      - Lower subtitle zone contains no clues.
+
+  - id: gfx-ref-003
+    label: 主要素材・色・表面シート
+    category: reference
+    stage: 1
+    priority: blocker
+    method: derive_and_curate
+    references: [gfx-ref-001, gfx-ref-002]
+    prompt_parts: []
+    canvas:
+      source_minimum: [2048, 2048]
+      aspect_ratio: "1:1"
+    prompt: >-
+      Curate close crops of the approved concrete, painted steel, black polymer,
+      frosted glass, paper, red warning lamp and cyan display glow. Do not invent
+      new materials.
+    deliverables:
+      - material_board
+      - color_swatches
+      - approved_surface_crops
+
+  - id: gfx-ref-004
+    label: E-01レイアウト図
+    category: reference
+    stage: 0
+    priority: blocker
+    method: manual_raster_diagram
+    prompt_parts: []
+    canvas:
+      source_minimum: [2048, 2048]
+      aspect_ratio: "1:1"
+    prompt: >-
+      Create a precise non-diegetic production layout using canonical_space as a
+      high-resolution editable raster document. This is a production reference,
+      not an in-game floor map. Do not use SVG.
+    deliverables:
+      - editable_layered_raster_source
+      - reference_png
+
+  - id: gfx-wide-001
+    label: 北壁・通常探索
+    category: world_wide
+    stage: 2
+    priority: blocker
+    method: reference_edit_and_layer_separation
+    references: [gfx-ref-002, gfx-ref-003, gfx-ref-004]
+    prompt_parts: [world, camera_wide, light_powered, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Produce the final gameplay-wide north-wall view from the approved canonical
+      image. Keep the closed iron door centered, blank emergency display above,
+      intercom on the right and analog clock toward the upper-left. Add restrained
+      foreground conduit for parallax without obscuring any object.
+    states_derived: [powered, emergency]
+    deliverables:
+      - background_layer
+      - far_props_layer
+      - main_props_layer
+      - foreground_layer
+      - shadow_overlay
+      - emissive_mask
+      - emergency_light_mask
+      - preview_flat
+
+  - id: gfx-wide-002
+    label: 東壁・端末側
+    category: world_wide
+    stage: 2
+    priority: blocker
+    method: reference_guided_generation
+    references: [gfx-ref-002, gfx-ref-003, gfx-ref-004]
+    prompt_parts: [world, camera_wide, light_powered, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Face the east wall from the same room and eye level. Show a rugged wall-mounted
+      ECHO BUFFER terminal with a blank dark display, plus a bolted service panel
+      immediately beside it that can later be opened with a screwdriver. Preserve
+      the north door edge on the correct side to prove spatial continuity.
+    states_derived: [power_off, powered, panel_open]
+    deliverables:
+      - standard_wide_layers
+
+  - id: gfx-wide-003
+    label: 南壁・デスク側
+    category: world_wide
+    stage: 2
+    priority: blocker
+    method: reference_guided_generation
+    references: [gfx-ref-002, gfx-ref-003, gfx-ref-004]
+    prompt_parts: [world, camera_wide, light_powered, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Face the south wall. Show a functional metal research desk with one blank
+      off-white emergency-test sheet, a restrained chair and a small number of
+      believable lab objects. Keep the surface uncluttered so the paper is a clear
+      investigation target. Preserve east and west wall edge cues.
+    states_derived: [paper_present, paper_taken]
+    deliverables:
+      - standard_wide_layers
+
+  - id: gfx-wide-004
+    label: 西壁・ブレーカーとロッカー
+    category: world_wide
+    stage: 2
+    priority: blocker
+    method: reference_guided_generation
+    references: [gfx-ref-002, gfx-ref-003, gfx-ref-004]
+    prompt_parts: [world, camera_wide, light_powered, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Face the west wall. Place a four-lever industrial breaker panel toward the
+      north side and a tall single-person steel locker toward the south side. The
+      locker has a compact blank four-digit electronic lock. Keep both objects
+      visually separate and selectable. No doorway or window between them.
+    states_derived: [locker_closed, locker_open, power_off, power_on]
+    deliverables:
+      - standard_wide_layers
+
+  - id: gfx-wide-005
+    label: 北壁・終幕ドア開放
+    category: world_wide
+    stage: 5
+    priority: blocker
+    method: masked_reference_edit
+    references: [gfx-wide-001, gfx-close-012]
+    prompt_parts: [world, camera_wide, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Open only the existing central iron door. Intense clean white light spills
+      from the threshold and softly silhouettes the unchanged laboratory. Reveal
+      only the immediate entrance of a plain antechamber; do not reveal another
+      mystery, person or exterior location.
+    preserve_pixels_outside_mask: true
+    deliverables:
+      - opened_door_layer
+      - white_light_mask
+      - shadow_overlay
+      - preview_flat
+
+  - id: gfx-close-001
+    label: 鉄製ドア接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-wide-001]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: &closeup_canvas
+      source_minimum: [2560, 1440]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Inspect the same closed iron door and its lock seam. Show a believable heavy
+      emergency seal and the blank display housing above, with room around the seam
+      for a subtle lock-release animation. Do not add a handle puzzle.
+    state_variants: [closed, unlocked, ajar]
+    deliverables: &closeup_deliverables
+      - layered_source
+      - state_layers
+      - hit_mask
+      - preview_states
+
+  - id: gfx-close-002
+    label: アナログ時計接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-wide-001]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the same old utilitarian wall clock. Keep the face clean and blank
+      enough for accurate clock markings and hands to be overlaid later. The final
+      composed hands will indicate exactly 02:17.
+    postprocess:
+      - Add a precise high-resolution raster clock face and hands showing 02:17.
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-003
+    label: インターホン接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-wide-001]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the same rugged wall intercom: metal speaker grille, simple talk
+      aperture, one unlit status lamp, exposed mounting screws and slight ordinary
+      use. It must feel like a normal facility intercom, not a sinister device.
+    state_variants: [idle, receiving]
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-004
+    label: デスク接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-wide-003]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the same metal desk from standing first-person view. A single blank
+      off-white sheet is the main focus, with enough clean flat area to overlay the
+      emergency power test text. Keep the few surrounding objects unchanged.
+    state_variants: [paper_present, paper_taken]
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-005
+    label: ブレーカーパネル接写
+    category: world_closeup
+    stage: 3
+    priority: blocker
+    method: reference_guided_generation_and_layer_separation
+    references: [gfx-wide-004]
+    prompt_parts: [world, camera_closeup, light_emergency, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the same industrial breaker panel straight enough for interaction.
+      It contains exactly four visually identical vertical mechanical levers in
+      one row. All start down. Leave a blank damaged label strip above them. Each
+      lever must be separable and able to pivot upward without changing the panel.
+    state_variants: [all_off, individual_lever_on, success]
+    exact_counts:
+      levers: 4
+    deliverables:
+      - fixed_panel_base
+      - four_separate_lever_layers
+      - lever_pivot_metadata
+      - four_hit_masks
+      - success_light_mask
+      - preview_states
+
+  - id: gfx-close-006
+    label: ロッカー接写
+    category: world_closeup
+    stage: 3
+    priority: blocker
+    method: reference_guided_generation_and_masked_edit
+    references: [gfx-wide-004]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the same tall steel locker. The closed version has a compact blank
+      electronic lock. The open version reveals one screwdriver, one blank staff
+      access card and one folded facility map arranged clearly on a shelf. Create
+      a third state after all three items have been removed. Preserve the locker
+      body and camera exactly across states.
+    state_variants: [closed, open_items_present, open_empty]
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-007
+    label: ロッカー電子錠接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-close-006]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Show the same compact four-digit electronic lock front-on. Provide a blank
+      dark display window and four restrained physical or touch input zones. Do
+      not render any digits, letters or symbols; HTML will provide exact input.
+    state_variants: [locked, accepted]
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-008
+    label: 壁面端末接写
+    category: world_closeup
+    stage: 3
+    priority: blocker
+    method: reference_guided_generation_and_layer_separation
+    references: [gfx-wide-002]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the same rugged ECHO BUFFER wall terminal nearly front-on. Create a
+      broad blank 16:10 dark glass display area suitable for a crisp HTML overlay,
+      surrounded by a thick research-grade metal bezel and a few unlabeled status
+      lights. No generated text, icons, menu or waveform.
+    state_variants: [off, booting, on]
+    deliverables:
+      - terminal_body
+      - blank_screen_mask
+      - glass_reflection_overlay
+      - emissive_mask
+      - hit_mask
+      - preview_states
+
+  - id: gfx-close-009
+    label: 端末横解析パネル接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: masked_reference_edit
+    references: [gfx-wide-002, gfx-close-008]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Focus on the bolted service panel immediately beside the same terminal.
+      Create closed and opened states. In the opened state, reveal tidy wiring and
+      one clearly readable physical toggle area for VOICE ANALYSIS, but no text.
+      Preserve every surrounding pixel and the camera between states.
+    state_variants: [closed, open]
+    preserve_pixels_outside_mask: true
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-010
+    label: VOICE ANALYSISスイッチ接写
+    category: world_closeup
+    stage: 3
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-close-009]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Inspect the single physical analysis toggle inside the opened service panel.
+      Show a robust small metal switch with an empty label plate. Produce exact
+      off and on positions while preserving all surrounding wiring.
+    state_variants: [off, on]
+    deliverables: *closeup_deliverables
+
+  - id: gfx-close-011
+    label: 最終送信装置接写
+    category: world_closeup
+    stage: 4
+    priority: blocker
+    method: reference_guided_generation_and_layer_separation
+    references: [gfx-close-008, gfx-ref-003]
+    prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      Show the terminal's final physical transmission control surface. Include
+      exactly four blank horizontal packet slots in a restrained industrial frame
+      and one unmistakable red physical confirmation button below them. The red
+      button is important but not oversized. Leave all text and slot content blank
+      for HTML overlays.
+    exact_counts:
+      packet_slots: 4
+      red_buttons: 1
+    state_variants: [inactive, four_slots_ready, transmitting, complete]
+    deliverables:
+      - control_body
+      - four_slot_masks
+      - red_button_up
+      - red_button_down
+      - emissive_mask
+      - hit_masks
+      - preview_states
+
+  - id: gfx-close-012
+    label: ドア先の白い前室
+    category: world_closeup
+    stage: 4
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-close-001, gfx-ref-003]
+    prompt_parts: [world, camera_closeup, reference_lock, negative]
+    canvas: *closeup_canvas
+    prompt: >-
+      View through the same partially opened iron door into only the immediate
+      threshold of a plain research-facility antechamber, overwhelmed by clean
+      white light. Keep distant details unreadable. No person, exterior landscape,
+      hidden laboratory or sequel tease.
+    deliverables: *closeup_deliverables
+
+  - id: gfx-item-001
+    label: ドライバー
+    category: inventory_item
+    stage: 3
+    priority: required
+    method: reference_guided_cutout
+    references: [gfx-ref-003, gfx-close-006]
+    prompt_parts: [world, reference_lock, negative]
+    canvas: &item_canvas
+      source_minimum: [2048, 2048]
+      runtime_detail: [1024, 1024]
+      runtime_icon: [256, 256]
+      aspect_ratio: "1:1"
+      transparent_background: true
+    prompt: >-
+      Isolate the same medium flathead maintenance screwdriver from the locker.
+      Utilitarian dark handle with one muted red identification ring, lightly used
+      and clean. Three-quarter view, centered, fully visible, no cast background.
+    deliverables: &item_deliverables
+      - transparent_master
+      - runtime_detail
+      - runtime_icon
+      - alpha_mask
+
+  - id: gfx-item-002
+    label: 職員用カード外装
+    category: inventory_item
+    stage: 3
+    priority: required
+    method: reference_guided_cutout
+    references: [gfx-ref-003, gfx-close-006]
+    prompt_parts: [world, reference_lock, negative]
+    canvas: *item_canvas
+    prompt: >-
+      Isolate the same blank staff access card from the locker. Durable off-white
+      polymer card with one understated cyan-gray stripe, a blank portrait window
+      and blank text areas. No generated name, number, logo or barcode. Front view,
+      complete card, transparent background.
+    postprocess:
+      - Composite exact portrait, institute name, employee data and machine-readable marks.
+    deliverables: *item_deliverables
+
+  - id: gfx-item-003
+    label: 主人公の職員証写真
+    category: character_portrait
+    stage: 4
+    priority: blocked
+    blocked_by: [g-d01]
+    method: text_to_image_after_character_approval
+    prompt_parts: [negative]
+    canvas:
+      source_minimum: [1024, 1280]
+      runtime: [512, 640]
+      aspect_ratio: "4:5"
+    prompt_template: >-
+      Japanese research staff member, {{age}}, {{gender_presentation}},
+      {{hair_description}}, wearing {{approved_lab_clothing}}. Neutral staff badge
+      photograph, direct front view, calm ordinary expression, even flat lighting,
+      plain cool-gray background, shoulders visible, realistic but consistent with
+      the approved ECHO ROOM environment art. No text, no badge in frame, no dramatic
+      lighting, no beauty portrait styling.
+    deliverables:
+      - approved_portrait_master
+      - badge_crop
+      - voice_analysis_crop
+
+  - id: gfx-item-004
+    label: 折り畳まれたフロア図
+    category: inventory_item
+    stage: 3
+    priority: required
+    method: reference_guided_cutout
+    references: [gfx-ref-003, gfx-close-006]
+    prompt_parts: [world, reference_lock, negative]
+    canvas: *item_canvas
+    prompt: >-
+      Isolate the same neatly folded facility map from the locker. Slightly handled
+      off-white technical paper with visible fold lines and a tiny blank cover block.
+      No readable map, text or symbols on the folded exterior. Transparent background.
+    deliverables: *item_deliverables
+
+  - id: gfx-doc-001
+    label: 展開した施設フロア図
+    category: document
+    stage: 4
+    priority: blocker
+    method: manual_raster_composite
+    references: [gfx-ref-004, gfx-item-004]
+    prompt_parts: []
+    canvas: &document_canvas
+      source_minimum_long_edge: 2048
+      runtime_long_edge: 1600
+      transparent_background: true
+    prompt: >-
+      Draw the exact facility diagram in a high-resolution editable layered raster
+      document, then composite it onto the approved unfolded paper texture. Do not
+      use SVG. E-01 has no adjacent room on either side; machine equipment and
+      concrete structure occupy those spaces. Include the corridor, control room
+      and machine room according to the story requirements.
+    exact_text_added_manually:
+      - FACILITY MAP
+      - ROOM E-01
+    deliverables: &document_deliverables
+      - editable_layered_raster_source
+      - paper_texture
+      - layered_composite
+      - runtime_document
+
+  - id: gfx-doc-002
+    label: 非常電源テスト用紙
+    category: document
+    stage: 3
+    priority: required
+    method: generated_paper_manual_text
+    references: [gfx-ref-003, gfx-close-004]
+    prompt_parts: [world, reference_lock, negative]
+    canvas: *document_canvas
+    prompt: >-
+      Create only the same off-white facility paper texture seen on the desk,
+      including subtle handling and a restrained blank technical-document layout.
+      Add no generated letters or symbols.
+    exact_text_added_manually:
+      - EMERGENCY POWER TEST
+      - 起動順序：周波数の低い回路から接続すること
+    deliverables: *document_deliverables
+
+  - id: gfx-doc-003
+    label: 緊急時メモ
+    category: document
+    stage: 3
+    priority: required
+    method: generated_paper_manual_text
+    references: [gfx-ref-003]
+    prompt_parts: [world, negative]
+    canvas: *document_canvas
+    prompt: >-
+      Create a small plain memo paper suitable for one handwritten Japanese sentence.
+      Slightly used but clean, with no generated writing, symbol or decoration.
+    exact_text_added_manually:
+      - 緊急時は「送信側の時刻」を使用する。
+    deliverables: *document_deliverables
+
+  - id: gfx-ui-001
+    label: 端末画面ベゼル
+    category: ui_shell
+    stage: 4
+    priority: required
+    method: derive_from_approved_asset
+    references: [gfx-close-008]
+    prompt_parts: []
+    canvas:
+      source_minimum: [2048, 1536]
+      runtime_minimum: [1024, 768]
+      transparent_background: true
+    prompt: >-
+      Extract and clean the approved terminal bezel without redesigning it. Prepare
+      stretch-safe edges or nine-slice metadata while preserving the blank center.
+    deliverables:
+      - transparent_bezel
+      - nine_slice_metadata
+      - screen_inner_mask
+
+  - id: gfx-fx-001
+    label: 微細な埃texture
+    category: effect_texture
+    stage: 4
+    priority: optional
+    method: generate_or_manual
+    references: [gfx-ref-003]
+    prompt_parts: [negative]
+    canvas:
+      source_minimum: [2048, 2048]
+      runtime: [1024, 1024]
+      aspect_ratio: "1:1"
+      transparent_background: true
+    prompt: >-
+      Sparse tiny airborne dust motes only, varied size and opacity, subtle and
+      natural, isolated on transparent background. No smoke cloud, spark or bokeh.
+    deliverables:
+      - transparent_texture
+      - alpha_mask
+
+  - id: gfx-fx-002
+    label: 水滴跡texture
+    category: effect_texture
+    stage: 4
+    priority: optional
+    method: generate_or_manual
+    references: [gfx-ref-003]
+    prompt_parts: [negative]
+    canvas:
+      source_minimum: [2048, 2048]
+      runtime: [1024, 1024]
+      transparent_background: true
+    prompt: >-
+      A restrained fresh water seep and a few drip trails suitable for compositing
+      onto blue-gray concrete. Transparent background, no flood, mold or old ruin.
+    deliverables:
+      - transparent_texture
+      - alpha_mask
+
+  - id: gfx-title-001
+    label: タイトル背景
+    category: title
+    stage: 5
+    priority: required
+    method: derive_and_recompose
+    references: [gfx-wide-001, gfx-ref-003]
+    prompt_parts: [world, camera_wide, light_emergency, reference_lock, negative]
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Recompose the approved north-wall room view as a restrained title background.
+      The closed door sits slightly below center in deep red emergency darkness.
+      Leave a calm empty area in the upper-middle for the ECHO ROOM logo. Do not add
+      text, a person, a future-self reflection or any story spoiler.
+    deliverables:
+      - title_background_master
+      - runtime_background
+      - logo_safe_area_guide
+
+  - id: gfx-title-002
+    label: ECHO ROOMロゴ
+    category: title
+    stage: 5
+    priority: required
+    method: manual_raster_typography
+    references: [gfx-title-001]
+    prompt_parts: []
+    canvas:
+      source_minimum: [4096, 1024]
+      runtime_maximum: [2048, 512]
+      transparent_background: true
+    prompt: >-
+      Design exact editable raster typography for ECHO ROOM and optional Japanese
+      subtitle 残響室. Restrained research-system typography, subtle echo or
+      temporal-offset motif, legible at small size, no horror distortion and no
+      generated lettering. Do not use SVG.
+    deliverables:
+      - editable_layered_raster_source
+      - transparent_png_master
+      - light_variant
+      - dark_variant
+      - monochrome_variant
+
+  - id: gfx-promo-001
+    label: 横長キービジュアル
+    category: promotion
+    stage: 6
+    priority: optional
+    method: derive_and_recompose
+    references: [gfx-title-001, gfx-title-002, gfx-wide-001]
+    prompt_parts: []
+    canvas:
+      source_minimum: [3840, 2160]
+      runtime: [1920, 1080]
+      aspect_ratio: "16:9"
+    prompt: >-
+      Build a spoiler-free horizontal key visual from approved assets: the sealed
+      door, faint intercom signal and restrained red emergency light. Use the exact
+      approved raster logo. Do not imply that the other voice is the protagonist.
+    deliverables:
+      - layered_master
+      - clean_without_logo
+      - final_with_logo
+
+  - id: gfx-promo-002
+    label: 正方形サムネイル
+    category: promotion
+    stage: 6
+    priority: optional
+    method: derive_and_recompose
+    references: [gfx-promo-001, gfx-title-002]
+    prompt_parts: []
+    canvas:
+      source_minimum: [2048, 2048]
+      runtime: [1024, 1024]
+      aspect_ratio: "1:1"
+    prompt: >-
+      Recompose the approved key visual for a square crop. Keep the door and red
+      intercom signal readable at thumbnail size and preserve a safe logo area.
+    deliverables:
+      - layered_master
+      - clean_without_logo
+      - final_with_logo
+
+  - id: gfx-promo-003
+    label: OGP画像
+    category: promotion
+    stage: 6
+    priority: optional
+    method: manual_composite
+    references: [gfx-promo-001, gfx-title-002]
+    prompt_parts: []
+    canvas:
+      runtime: [1200, 630]
+      aspect_ratio: "40:21"
+    prompt: >-
+      Crop and manually compose the approved key visual and exact raster logo for
+      Open Graph display. Maintain legibility at small preview size.
+    deliverables:
+      - final_ogp
+
+non_generated_assets:
+  - id: gfx-doc-004
+    label: ECHO研究概要
+    method: react_dom
+    reason: Exact text and responsive layout are required.
+  - id: gfx-ui-002
+    label: 所持品トレイ背景
+    method: html_css
+    reason: Responsive and stretchable UI.
+  - id: gfx-ui-003
+    label: 会話ログ外装
+    method: html_css
+    reason: Responsive and accessible text UI.
+  - id: gfx-ui-004
+    label: ボタン・タブ・フォーカス
+    method: html_css
+    reason: Interaction states and accessibility.
+  - id: gfx-ui-005
+    label: 音高視覚補助
+    method: html_css_or_canvas
+    reason: Exact four-level puzzle semantics.
+  - id: gfx-fx-003
+    label: 白飛び
+    method: runtime_gradient
+    reason: Resolution-independent animated effect.
+  - id: gfx-fx-004
+    label: 端末ノイズ
+    method: runtime_effect
+    reason: Animated and adjustable for reduced-motion settings.
+  - id: gfx-fx-005
+    label: 非常灯の光
+    method: runtime_composite_from_mask
+    reason: Reuse one geometry across lighting states.
+
+post_generation_validation:
+  automated:
+    - Every declared reference ID exists.
+    - Every required asset has all declared deliverables.
+    - Raster dimensions meet or exceed the declared runtime dimensions.
+    - Alpha assets contain an alpha channel.
+    - Full-screen layers share identical dimensions and origin.
+    - Runtime file names follow the asset naming convention.
+  visual:
+    - Four wide views agree with canonical_space.
+    - No window or adjacent-room opening exists.
+    - Close-ups match their parent wide-view object.
+    - State variants preserve unchanged pixels and camera.
+    - Generated text, watermark and accidental UI have been removed.
+    - Emergency state remains navigable.
+    - Subtitle and crop-safe regions remain clear.
+    - Promotional assets contain no identity reveal spoiler.
+  story_accuracy:
+    - Clock overlay reads exactly 02:17.
+    - Locker solution overlay can display exactly 0237.
+    - Terminal can display receive/source times with exactly 20 minutes difference.
+    - Facility map shows no room adjacent to E-01.
+    - Final transmission control has exactly four packet slots and one red button.
+
+open_variables:
+  g-d01:
+    label: protagonist_profile
+    required_fields:
+      - age
+      - gender_presentation
+      - hair_description
+      - approved_lab_clothing
+    blocks: [gfx-item-003]
+  g-d02:
+    label: institute_logo
+    blocks: []
+    fallback: Use exact text without a symbol logo.
+  g-d03:
+    label: final_typeface
+    blocks: [gfx-title-002]
+  g-d04:
+    label: generation_provider
+    blocks: []
+    note: Map requested source sizes to the provider's nearest supported size.
+  g-d05:
+    label: promotional_scope
+    blocks: [gfx-promo-001, gfx-promo-002, gfx-promo-003]
