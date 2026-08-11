@@ -1,9 +1,11 @@
 export function FacilityMap({
   compact = false,
   conduitLayer = false,
+  revealRoute = true,
 }: {
   compact?: boolean;
   conduitLayer?: boolean;
+  revealRoute?: boolean;
 }) {
   return (
     <figure
@@ -37,13 +39,19 @@ export function FacilityMap({
       {conduitLayer && (
         <div className="facility-conduit-layer" aria-label="通信の配線図">
           <span>INTERCOM ○</span>
-          <i aria-hidden="true">━━━━ ○ J-2 ━━━━</i>
-          <strong>ECHO BUFFER RETURN ○</strong>
+          <i aria-hidden="true">
+            {revealRoute ? '━━━━ ○ J-2 ━━━━' : '━━━━ ○ J-2  ┅┅┅  ┃ J-3'}
+          </i>
+          <strong>
+            {revealRoute ? 'ECHO BUFFER RETURN ○' : 'RETURN ○ / E-02 ┃'}
+          </strong>
           <small>実線：通信 / 破線：電力</small>
         </div>
       )}
       <p className="map-finding">
-        E-01の左右に部屋はない。通信線は設備壁の中へ続いている。
+        {revealRoute
+          ? 'E-01の左右に部屋はない。通信線は設備壁の中へ続いている。'
+          : 'E-01の左右は設備壁だ。INTERCOMから接続した線をたどる。'}
       </p>
     </figure>
   );

@@ -8,7 +8,14 @@ export type SoundEffectId =
   | 'communication_noise'
   | 'analysis_complete'
   | 'transmission'
-  | 'door_unlock';
+  | 'door_unlock'
+  | 'power_relay'
+  | 'carrier_lock'
+  | 'locker_dial'
+  | 'log_patch'
+  | 'packet_snap'
+  | 'voice_scan'
+  | 'transmit_charge';
 
 export type SoundState = {
   active: boolean;
@@ -16,6 +23,7 @@ export type SoundState = {
   effectsVolume: number;
   environmentVolume: number;
   powered: boolean;
+  powerPhase: 'normal' | 'low' | 'critical' | 'reserve';
 };
 
 type Tone = {
@@ -105,6 +113,37 @@ export const SOUND_CUES: Readonly<Record<SoundEffectId, readonly Tone[]>> = {
       type: 'triangle',
     },
   ],
+  power_relay: [
+    { frequency: 82, delay: 0, duration: 0.08, gain: 0.06, type: 'square' },
+  ],
+  carrier_lock: [
+    { frequency: 620, delay: 0, duration: 0.05, gain: 0.035 },
+    { frequency: 930, delay: 0.05, duration: 0.07, gain: 0.025 },
+  ],
+  locker_dial: [
+    { frequency: 145, delay: 0, duration: 0.035, gain: 0.05, type: 'square' },
+  ],
+  log_patch: [
+    { frequency: 260, delay: 0, duration: 0.045, gain: 0.04, type: 'triangle' },
+  ],
+  packet_snap: [
+    { frequency: 410, delay: 0, duration: 0.04, gain: 0.04, type: 'square' },
+    { frequency: 540, delay: 0.04, duration: 0.05, gain: 0.028 },
+  ],
+  voice_scan: [
+    { frequency: 280, delay: 0, duration: 0.06, gain: 0.035 },
+    { frequency: 360, delay: 0.06, duration: 0.06, gain: 0.035 },
+  ],
+  transmit_charge: [
+    { frequency: 120, delay: 0, duration: 0.12, gain: 0.05, type: 'triangle' },
+    {
+      frequency: 240,
+      delay: 0.1,
+      duration: 0.12,
+      gain: 0.04,
+      type: 'triangle',
+    },
+  ],
 };
 
 const DEFAULT_STATE: SoundState = {
@@ -113,6 +152,7 @@ const DEFAULT_STATE: SoundState = {
   effectsVolume: 100,
   environmentVolume: 70,
   powered: false,
+  powerPhase: 'normal',
 };
 
 type AudioContextFactory = () => AudioContext;
@@ -129,7 +169,7 @@ export class SoundManager {
   private environmentSources: EnvironmentSource[] = [];
   private effectSources = new Set<EffectSource>();
   private state: SoundState = DEFAULT_STATE;
-  private environmentPowered: boolean | null = null;
+  private environmentKey: string | null = null;
 
   constructor(
     private readonly createContext: AudioContextFactory = () =>
@@ -196,16 +236,22 @@ export class SoundManager {
     }
     if (
       this.environmentSources.length > 0 &&
-      this.environmentPowered === this.state.powered
+      this.environmentKey === `${this.state.powered}:${this.state.powerPhase}`
     )
       return;
 
     this.stopEnvironment();
     if (!this.context || !this.environmentBus) return;
-    const baseFrequency = this.state.powered ? 58 : 43;
+    const phaseOffset = { normal: 0, low: -2, critical: -6, reserve: -13 }[
+      this.state.powerPhase
+    ];
+    const baseFrequency = (this.state.powered ? 58 : 43) + phaseOffset;
+    const phaseGain = { normal: 1, low: 0.9, critical: 0.7, reserve: 0.48 }[
+      this.state.powerPhase
+    ];
     const tones: readonly [number, OscillatorType, number][] = [
-      [baseFrequency, 'sine', 0.025],
-      [baseFrequency * 2.01, 'triangle', 0.009],
+      [baseFrequency, 'sine', 0.025 * phaseGain],
+      [baseFrequency * 2.01, 'triangle', 0.009 * phaseGain],
     ];
     this.environmentSources = tones.map(([frequency, type, level]) => {
       const oscillator = this.context!.createOscillator();
@@ -217,7 +263,7 @@ export class SoundManager {
       oscillator.start();
       return { oscillator, gain };
     });
-    this.environmentPowered = this.state.powered;
+    this.environmentKey = `${this.state.powered}:${this.state.powerPhase}`;
   }
 
   private stopEnvironment() {
@@ -231,7 +277,7 @@ export class SoundManager {
       gain.disconnect();
     }
     this.environmentSources = [];
-    this.environmentPowered = null;
+    this.environmentKey = null;
   }
 
   private playTones(tones: readonly Tone[]) {

@@ -8,15 +8,12 @@ import { createPowerRestoredProgress } from '../../src/game/save/saveManager';
 const solutions: [PuzzleId, string[]][] = [
   ['puzzle_carrier_sync', ['right-2', 'none', 'left-1']],
   ['puzzle_maintenance_lock', ['double', 'ring', 'triangle', 'node']],
-  ['puzzle_log_pairing', ['s-b', 's-c', 's-a']],
-  ['puzzle_signal_route', ['signal', 'ring-relay', 'echo-buffer']],
-  ['puzzle_packet_repair', ['c', 'd', 'a', 'b']],
-  ['puzzle_temporal_anomaly', ['packet-04', 'unseen-event']],
-  ['puzzle_voiceprint_calibration', ['compress-half', 'invert', 'left-2']],
   [
-    'puzzle_causal_script',
-    ['packet-01', 'packet-02', 'packet-03', 'packet-04'],
+    'puzzle_signal_investigation',
+    ['s-b', 's-c', 's-a', 'signal', 'ring-relay', 'echo-buffer'],
   ],
+  ['puzzle_packet_repair', ['c', 'd', 'a', 'b']],
+  ['puzzle_voiceprint_calibration', ['compress-half', 'invert', 'left-2']],
   [
     'puzzle_transmission_window',
     [
@@ -30,7 +27,7 @@ const solutions: [PuzzleId, string[]][] = [
   ],
 ];
 
-describe('ten-puzzle story progression', () => {
+describe('seven-puzzle story progression', () => {
   it('does not advance for a wrong answer and grants items at puzzle 3', () => {
     const actor = createActor(gameMachine).start();
     actor.send({
@@ -52,7 +49,7 @@ describe('ten-puzzle story progression', () => {
     ]);
   });
 
-  it('requires all ten deductions before transmission and ending', () => {
+  it('requires all seven deductions before transmission and ending', () => {
     const actor = createActor(gameMachine).start();
     actor.send({
       type: 'PROGRESS_RESTORED',
@@ -62,9 +59,14 @@ describe('ten-puzzle story progression', () => {
     expect(actor.getSnapshot().context.storyStage).toBe('puzzle_carrier_sync');
     for (const [puzzleId, answer] of solutions)
       actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
-    expect(actor.getSnapshot().context.completedPuzzleIds).toHaveLength(10);
+    expect(actor.getSnapshot().context.completedPuzzleIds).toHaveLength(7);
     expect(actor.getSnapshot().context.storyStage).toBe('transmission_ready');
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
-    expect(actor.getSnapshot().context.storyStage).toBe('ending');
+    expect(actor.getSnapshot().context.storyStage).toBe('ending_transmission');
+    for (let index = 0; index < 6; index += 1)
+      actor.send({ type: 'ENDING_ADVANCED' });
+    expect(actor.getSnapshot().context.storyStage).toBe('ending_door');
+    actor.send({ type: 'ENDING_DOOR_SELECTED' });
+    expect(actor.getSnapshot().context.storyStage).toBe('completed');
   });
 });

@@ -13,40 +13,33 @@ export type TerminalMenuId = 'system' | 'log' | 'audio' | 'security';
 export type StoryStage =
   | 'puzzle_carrier_sync'
   | 'puzzle_maintenance_lock'
-  | 'puzzle_log_pairing'
-  | 'puzzle_signal_route'
+  | 'puzzle_signal_investigation'
   | 'puzzle_packet_repair'
-  | 'puzzle_temporal_anomaly'
   | 'puzzle_voiceprint_calibration'
-  | 'puzzle_causal_script'
   | 'puzzle_transmission_window'
   | 'transmission_ready'
-  | 'ending'
+  | 'ending_transmission'
+  | 'ending_replay'
+  | 'ending_door'
   | 'completed';
 export type ItemId = 'item_screwdriver' | 'item_staff_card' | 'item_floor_map';
 
 export const stagePuzzle: Partial<Record<StoryStage, PuzzleId>> = {
   puzzle_carrier_sync: 'puzzle_carrier_sync',
   puzzle_maintenance_lock: 'puzzle_maintenance_lock',
-  puzzle_log_pairing: 'puzzle_log_pairing',
-  puzzle_signal_route: 'puzzle_signal_route',
+  puzzle_signal_investigation: 'puzzle_signal_investigation',
   puzzle_packet_repair: 'puzzle_packet_repair',
-  puzzle_temporal_anomaly: 'puzzle_temporal_anomaly',
   puzzle_voiceprint_calibration: 'puzzle_voiceprint_calibration',
-  puzzle_causal_script: 'puzzle_causal_script',
   puzzle_transmission_window: 'puzzle_transmission_window',
 };
 
 const nextStage: Record<PuzzleId, StoryStage> = {
   puzzle_power_route: 'puzzle_carrier_sync',
   puzzle_carrier_sync: 'puzzle_maintenance_lock',
-  puzzle_maintenance_lock: 'puzzle_log_pairing',
-  puzzle_log_pairing: 'puzzle_signal_route',
-  puzzle_signal_route: 'puzzle_packet_repair',
-  puzzle_packet_repair: 'puzzle_temporal_anomaly',
-  puzzle_temporal_anomaly: 'puzzle_voiceprint_calibration',
-  puzzle_voiceprint_calibration: 'puzzle_causal_script',
-  puzzle_causal_script: 'puzzle_transmission_window',
+  puzzle_maintenance_lock: 'puzzle_signal_investigation',
+  puzzle_signal_investigation: 'puzzle_packet_repair',
+  puzzle_packet_repair: 'puzzle_voiceprint_calibration',
+  puzzle_voiceprint_calibration: 'puzzle_transmission_window',
   puzzle_transmission_window: 'transmission_ready',
 };
 
@@ -67,6 +60,7 @@ export type GameEvent =
   | { type: 'TERMINAL_MENU_SELECTED'; menuId: TerminalMenuId }
   | { type: 'TRANSMISSION_CONFIRMED' }
   | { type: 'ENDING_ADVANCED' }
+  | { type: 'ENDING_DOOR_SELECTED' }
   | { type: 'HINT_REQUESTED' }
   | { type: 'RETURNED_TO_TITLE' };
 
@@ -237,13 +231,20 @@ export const gameMachine = setup({
       hintLevel: 0,
     }),
     beginEnding: assign({
-      storyStage: 'ending',
+      storyStage: 'ending_transmission',
       endingLineIndex: 0,
       selectedHotspotId: null,
       locationId: 'location_north_wall',
     }),
     advanceEnding: assign({
       endingLineIndex: ({ context }) => context.endingLineIndex + 1,
+      storyStage: ({ context }) =>
+        context.endingLineIndex >= 0 ? 'ending_replay' : 'ending_transmission',
+    }),
+    unlockEndingDoor: assign({
+      storyStage: 'ending_door',
+      selectedHotspotId: null,
+      locationId: 'location_north_wall',
     }),
     completeEnding: assign({ storyStage: 'completed' }),
     revealHint: assign({
@@ -322,8 +323,12 @@ export const gameMachine = setup({
             },
             ENDING_ADVANCED: [
               { guard: 'endingHasMoreLines', actions: 'advanceEnding' },
-              { actions: 'completeEnding' },
+              { actions: 'unlockEndingDoor' },
             ],
+            ENDING_DOOR_SELECTED: {
+              guard: ({ context }) => context.storyStage === 'ending_door',
+              actions: 'completeEnding',
+            },
             HINT_REQUESTED: { actions: 'revealHint' },
           },
         },

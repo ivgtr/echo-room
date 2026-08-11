@@ -9,16 +9,19 @@ test('active-time warnings pause safely and reserve power survives reload', asyn
   await page.clock.install();
   await page.addInitScript(
     installProgressSave,
-    createProgressSave({ activeElapsedMs: 587_000 }),
+    createProgressSave({ activeElapsedMs: 560_000 }),
   );
 
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
   const hud = page.locator('.status-cluster');
-  await expect(hud.getByText('00:10:01')).toBeVisible();
+  await expect(stage).toHaveAttribute('data-power-phase', 'normal');
+  await page.clock.pauseAt(
+    (await page.evaluate(() => Date.now())) + 1_000,
+  );
 
-  await page.clock.fastForward(1_250);
+  await page.clock.fastForward(30_000);
   await expect(stage).toHaveAttribute('data-power-phase', 'low');
   await expect(hud.getByRole('status')).toHaveText('LOW POWER / 残量10分以下');
 
@@ -39,6 +42,7 @@ test('active-time warnings pause safely and reserve power survives reload', asyn
     document.documentElement.dataset.testVisibility = 'hidden';
     document.dispatchEvent(new Event('visibilitychange'));
   });
+  await page.clock.fastForward(1);
   const hiddenTime = await hud.locator('time').textContent();
   await page.clock.fastForward(5_000);
   await expect(hud.locator('time')).toHaveText(hiddenTime ?? '');

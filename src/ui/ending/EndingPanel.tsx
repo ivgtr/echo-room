@@ -1,15 +1,16 @@
 import { useCallback, useState } from 'react';
 
 import { NarrativeText } from '../narrative/NarrativeText';
+import { introEntries } from '../narrative/narrativeArchive';
 import type { TextSpeed } from '../system/uiSettings';
 
 const lines = [
   'PACKET 01 SENT / PACKET 02 SENT / PACKET 03 SENT / PACKET 04 SENT',
-  '過去の主人公「……何だ、ここ……。誰だ？」',
-  '主人公「隣の実験室にいる。こっちも閉じ込められてる。」',
-  '主人公「でも――そっちの部屋なら出口を開けられる。」',
-  '過去の主人公「どうして分かる？」',
-  '主人公「説明してる時間がない。まず電源を戻せ。」',
+  `20分前の自分「${introEntries[0].text}${introEntries[2].text}」`,
+  `現在の自分「${introEntries[3].text}」`,
+  `現在の自分「${introEntries[4].text}」`,
+  `20分前の自分「${introEntries[5].text}」`,
+  `現在の自分「${introEntries[6].text}」`,
 ];
 
 export function EndingPanel({
@@ -73,7 +74,7 @@ export function EndingPanel({
             />
           </p>
           <button type="button" onClick={handleAdvance} autoFocus>
-            {lineIndex === lines.length - 1 ? 'ドアを開ける' : '続ける'}
+            {lineIndex === lines.length - 1 ? '通信を終える' : '続ける'}
           </button>
         </>
       )}

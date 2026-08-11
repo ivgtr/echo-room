@@ -11,35 +11,20 @@ const hints: Partial<Record<StoryStage, [string, string, string]>> = {
     '機器名を、同じ機器の記号に置き換える。',
     '二重線、丸、三角、ひし形の順。',
   ],
-  puzzle_log_pairing: [
-    '時刻ではなく、3つの波の並びを比べる。',
-    '短・長・短など、3つすべてが同じ組を探す。',
-    'R1=S-B、R2=S-C、R3=S-A。',
-  ],
-  puzzle_signal_route: [
-    'SECURITYで部屋の図と配線図を重ねる。',
-    '通信の実線と丸い端子を、切らさずにたどる。',
-    '通信の実線→J-2丸端子→ECHO BUFFER RETURN。',
+  puzzle_signal_investigation: [
+    '同じ波を3組つないだ後、その通信線を地図で追う。',
+    'R1=S-B、R2=S-C、R3=S-A。通信の実線と丸い端子を見る。',
+    '3組をつなぎ、通信の実線→J-2→ECHO BUFFER RETURN。',
   ],
   puzzle_packet_repair: [
     '最初の「｜」と最後の「■」を先に決める。',
     '隣り合う断片の端を、同じ記号にする。',
     'C、D、A、Bの順。',
   ],
-  puzzle_temporal_anomaly: [
-    '各発言を、これまでに起きたことと比べる。',
-    'まだ見たこともない物への指示に注目する。',
-    'PACKET 04は、まだ押していない赤いボタンを知っている。',
-  ],
   puzzle_voiceprint_calibration: [
     '受信データを、職員カードと同じ形にする。',
     '波の間隔、上下、開始位置を別々に直す。',
     '間隔は半分、上下は反転、開始位置は左へ2。',
-  ],
-  puzzle_causal_script: [
-    'PACKET番号ではなく、各発言を聞いたときの出来事を見る。',
-    '呼びかけ→電源→LOG→赤いボタンの順に考える。',
-    '「聞こえるか」、電源、LOG、赤いボタンの順。',
   ],
   puzzle_transmission_window: [
     '4つの発言を、受け取った順に置く。',

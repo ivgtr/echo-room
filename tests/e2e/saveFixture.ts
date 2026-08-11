@@ -8,8 +8,8 @@ type ProgressOverrides = Partial<SavedProgress>;
 
 export function createProgressSave(overrides: ProgressOverrides = {}) {
   return {
-    schemaVersion: 3 as const,
-    contentVersion: '0.2.0' as const,
+    schemaVersion: 4 as const,
+    contentVersion: '0.3.0' as const,
     savedAt: '2026-08-12T00:00:00.000Z',
     progress: {
       checkpointId: 'checkpoint_puzzle_01' as const,

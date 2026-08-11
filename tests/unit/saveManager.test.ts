@@ -28,7 +28,7 @@ const createStorage = (): Storage => {
 };
 
 describe('saveManager', () => {
-  it('round-trips a current ten-puzzle checkpoint as schema v3', () => {
+  it('round-trips a current seven-puzzle checkpoint as schema v4', () => {
     const storage = createStorage();
     saveProgress(
       createPowerRestoredProgress({
@@ -39,10 +39,8 @@ describe('saveManager', () => {
           'puzzle_power_route',
           'puzzle_carrier_sync',
           'puzzle_maintenance_lock',
-          'puzzle_log_pairing',
-          'puzzle_signal_route',
+          'puzzle_signal_investigation',
           'puzzle_packet_repair',
-          'puzzle_temporal_anomaly',
         ],
         activeElapsedMs: 456_789,
         reservePower: true,
@@ -52,8 +50,8 @@ describe('saveManager', () => {
     expect(loadProgress(storage)).toMatchObject({
       status: 'valid',
       data: {
-        schemaVersion: 3,
-        contentVersion: '0.2.0',
+        schemaVersion: 4,
+        contentVersion: '0.3.0',
         progress: {
           checkpointId: 'checkpoint_puzzle_07',
           storyStage: 'puzzle_voiceprint_calibration',
@@ -100,18 +98,16 @@ describe('saveManager', () => {
       'checkpoint_puzzle_01',
     );
     expect(
-      getCheckpointId('puzzle_causal_script', [
+      getCheckpointId('puzzle_transmission_window', [
         'puzzle_power_route',
         'puzzle_carrier_sync',
         'puzzle_maintenance_lock',
-        'puzzle_log_pairing',
-        'puzzle_signal_route',
+        'puzzle_signal_investigation',
         'puzzle_packet_repair',
-        'puzzle_temporal_anomaly',
         'puzzle_voiceprint_calibration',
       ]),
-    ).toBe('checkpoint_puzzle_08');
-    expect(getCheckpointId('ending', [])).toBe(
+    ).toBe('checkpoint_puzzle_06');
+    expect(getCheckpointId('ending_replay', [])).toBe(
       'checkpoint_transmission_started',
     );
     expect(getCheckpointId('completed', [])).toBe('checkpoint_completed');

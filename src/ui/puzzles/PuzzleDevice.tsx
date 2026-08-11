@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -36,8 +37,40 @@ export function PuzzleDevice({
   onSubmit,
   onClose,
 }: Props) {
-  const submit = (answer: string[]) => onSubmit(puzzleId, answer);
+  const submit = useCallback(
+    (answer: string[]) => onSubmit(puzzleId, answer),
+    [onSubmit, puzzleId],
+  );
   const Device = deviceComponents[puzzleId];
+  const [diagnosticPuzzleId, setDiagnosticPuzzleId] = useState<PuzzleId | null>(
+    null,
+  );
+  const diagnosticAvailable = diagnosticPuzzleId === puzzleId;
+  const inactivityTimerRef = useRef<number | null>(null);
+  const restartInactivityTimer = () => {
+    if (diagnosticAvailable) return;
+    if (inactivityTimerRef.current !== null)
+      window.clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = window.setTimeout(
+      () => setDiagnosticPuzzleId(puzzleId),
+      60_000,
+    );
+  };
+  useEffect(() => {
+    inactivityTimerRef.current = window.setTimeout(
+      () => setDiagnosticPuzzleId(puzzleId),
+      60_000,
+    );
+    const sessionTimer = window.setTimeout(
+      () => setDiagnosticPuzzleId(puzzleId),
+      90_000,
+    );
+    return () => {
+      if (inactivityTimerRef.current !== null)
+        window.clearTimeout(inactivityTimerRef.current);
+      window.clearTimeout(sessionTimer);
+    };
+  }, [puzzleId]);
 
   return (
     <DeviceFrame
@@ -45,16 +78,10 @@ export function PuzzleDevice({
       failures={failures}
       embedded={embedded}
       onClose={onClose}
+      diagnosticAvailable={diagnosticAvailable}
+      onActivity={restartInactivityTimer}
     >
-      <Device
-        key={
-          puzzleId === 'puzzle_packet_repair'
-            ? puzzleId
-            : `${puzzleId}-${failures}`
-        }
-        failures={failures}
-        submit={submit}
-      />
+      <Device failures={failures} submit={submit} />
     </DeviceFrame>
   );
 }
@@ -63,12 +90,9 @@ const deviceComponents: Record<PuzzleId, ComponentType<DeviceProps>> = {
   puzzle_power_route: PowerRouteDevice,
   puzzle_carrier_sync: CarrierSyncDevice,
   puzzle_maintenance_lock: MaintenanceLockDevice,
-  puzzle_log_pairing: LogPatchDevice,
-  puzzle_signal_route: SignalTraceDevice,
+  puzzle_signal_investigation: SignalInvestigationDevice,
   puzzle_packet_repair: PacketRailDevice,
-  puzzle_temporal_anomaly: EventScannerDevice,
   puzzle_voiceprint_calibration: VoiceprintDevice,
-  puzzle_causal_script: ScriptRailDevice,
   puzzle_transmission_window: TransmissionPatchDevice,
 };
 
@@ -86,12 +110,16 @@ function DeviceFrame({
   failures,
   embedded,
   onClose,
+  diagnosticAvailable,
+  onActivity,
   children,
 }: {
   puzzleId: PuzzleId;
   failures: number;
   embedded: boolean;
   onClose: () => void;
+  diagnosticAvailable: boolean;
+  onActivity: () => void;
   children: ReactNode;
 }) {
   const copy = PUZZLE_DEVICE_COPY[puzzleId];
@@ -114,7 +142,10 @@ function DeviceFrame({
       aria-modal={embedded ? undefined : true}
       aria-labelledby={titleId}
       data-puzzle-id={puzzleId}
+      data-diagnostic-available={diagnosticAvailable || undefined}
       style={closeupStyle}
+      onPointerDownCapture={onActivity}
+      onKeyDownCapture={onActivity}
     >
       {!embedded && (
         <button
@@ -139,6 +170,11 @@ function DeviceFrame({
           ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
           : 'STATUS / STANDBY'}
       </p>
+      {diagnosticAvailable && (
+        <p className="device-diagnostic" role="status">
+          DIAGNOSTIC AVAILABLE / SYSTEMのヒントを確認できます
+        </p>
+      )}
     </section>
   );
 }
@@ -239,7 +275,7 @@ function PowerRouteDevice({ failures, submit }: DeviceProps) {
   );
 }
 
-function CarrierSyncDevice({ submit }: DeviceProps) {
+function CarrierSyncDevice({ failures, submit }: DeviceProps) {
   const [positions, setPositions] = useState([-2, 0, 1]);
   useAutoAnswer(
     positions.every((position) => position === 0)
@@ -248,7 +284,7 @@ function CarrierSyncDevice({ submit }: DeviceProps) {
     submit,
   );
   return (
-    <div className="carrier-device">
+    <div className={`carrier-device${failures > 0 ? ' is-error' : ''}`}>
       <div className="carrier-readout">
         <span>REFERENCE</span>
         <strong>SYNC POINT / 0</strong>
@@ -440,146 +476,155 @@ const signatures = {
   's-c': '長・短・短',
 } as const;
 
-function LogPatchDevice({ submit }: DeviceProps) {
-  const [activeReceive, setActiveReceive] = useState<number | null>(null);
-  const [patches, setPatches] = useState<(string | null)[]>([null, null, null]);
-  useAutoAnswer(
-    patches.every(Boolean) ? patches.filter(isString) : null,
-    submit,
-  );
+function WaveSignature({
+  value,
+}: {
+  value: (typeof signatures)[keyof typeof signatures];
+}) {
   return (
-    <div className="patch-device">
-      <div className="log-columns">
-        <div className="jack-column">
-          <h3>RECEIVE</h3>
-          {(['r1', 'r2', 'r3'] as const).map((id, index) => (
-            <button
-              type="button"
-              className={activeReceive === index ? 'jack is-armed' : 'jack'}
-              aria-pressed={activeReceive === index}
-              aria-label={`${id.toUpperCase()}受信端子`}
-              key={id}
-              onClick={() => setActiveReceive(index)}
-            >
-              <i aria-hidden="true" />
-              <span>{id.toUpperCase()}</span>
-              <small>{signatures[id]}</small>
-            </button>
-          ))}
-        </div>
-        <div className="patch-cords" aria-label="接続状態">
-          {patches.map((source, index) => (
-            <span
-              key={index}
-            >{`R${index + 1} ─ ${source?.toUpperCase() ?? 'OPEN'}`}</span>
-          ))}
-        </div>
-        <div className="jack-column">
-          <h3>SOURCE</h3>
-          {(['s-a', 's-b', 's-c'] as const).map((id) => (
-            <button
-              type="button"
-              className="jack"
-              aria-label={`${id.toUpperCase()}送信端子`}
-              key={id}
-              onClick={() => {
-                if (activeReceive === null) return;
-                setPatches((current) =>
-                  current.map((value, index) =>
-                    index === activeReceive ? id : value,
-                  ),
-                );
-                setActiveReceive(null);
-              }}
-            >
-              <i aria-hidden="true" />
-              <span>{id.toUpperCase()}</span>
-              <small>{signatures[id]}</small>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+    <small className="wave-signature" aria-label={`波形 ${value}`}>
+      {value.split('・').map((pulse, index) => (
+        <i
+          aria-hidden="true"
+          className={pulse === '長' ? 'is-long' : 'is-short'}
+          key={`${pulse}-${index}`}
+        />
+      ))}
+    </small>
   );
 }
 
-function SignalTraceDevice({ submit }: DeviceProps) {
-  const [trace, setTrace] = useState<(string | null)[]>([null, null, null]);
-  useAutoAnswer(trace.every(Boolean) ? trace.filter(isString) : null, submit);
-  const choose = (index: number, value: string) =>
-    setTrace((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? value : item)),
+function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
+  const [activeReceive, setActiveReceive] = useState<number | null>(null);
+  const [patches, setPatches] = useState<(string | null)[]>([null, null, null]);
+  const [trace, setTrace] = useState<string[]>([]);
+  const pairingComplete = patches.every((source, index) => {
+    const receiveId = `r${index + 1}` as keyof typeof signatures;
+    return (
+      source &&
+      signatures[receiveId] === signatures[source as keyof typeof signatures]
     );
+  });
+  useAutoAnswer(
+    pairingComplete && trace.length === 3
+      ? [...patches.filter(isString), ...trace]
+      : null,
+    submit,
+  );
+  const traceSegments = [
+    ['signal', '通信実線'],
+    ['power', '電力破線'],
+    ['ring-relay', 'J-2 丸端子'],
+    ['bar-relay', 'J-3 線端子'],
+    ['echo-buffer', 'ECHO BUFFER RETURN'],
+    ['adjacent-room', 'E-02'],
+  ] as const;
+  const allowedAtStep = [
+    ['signal', 'power'],
+    ['ring-relay', 'bar-relay'],
+    ['echo-buffer', 'adjacent-room'],
+  ] as const;
   return (
-    <div className="trace-device">
-      <FacilityMap conduitLayer />
-      <div className="trace-overlay" aria-label="配線追跡操作">
-        <div>
-          <span>INTERCOM</span>
-          <button
-            type="button"
-            aria-pressed={trace[0] === 'signal'}
-            onClick={() => choose(0, 'signal')}
-          >
-            通信実線
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[0] === 'power'}
-            onClick={() => choose(0, 'power')}
-          >
-            電力破線
-          </button>
+    <div
+      className={`signal-investigation-device${failures > 0 ? ' is-trace-error' : ''}`}
+    >
+      <div className="patch-device">
+        <div className="log-columns">
+          <div className="jack-column">
+            <h3>RECEIVE</h3>
+            {(['r1', 'r2', 'r3'] as const).map((id, index) => (
+              <button
+                type="button"
+                className={activeReceive === index ? 'jack is-armed' : 'jack'}
+                aria-pressed={activeReceive === index}
+                aria-label={`${id.toUpperCase()}受信端子`}
+                key={id}
+                onClick={() => setActiveReceive(index)}
+              >
+                <i aria-hidden="true" />
+                <span>{id.toUpperCase()}</span>
+                <WaveSignature value={signatures[id]} />
+              </button>
+            ))}
+          </div>
+          <div className="patch-cords" aria-label="接続状態">
+            {patches.map((source, index) => (
+              <span
+                key={index}
+              >{`R${index + 1} ─ ${source?.toUpperCase() ?? 'OPEN'}`}</span>
+            ))}
+          </div>
+          <div className="jack-column">
+            <h3>SOURCE</h3>
+            {(['s-a', 's-b', 's-c'] as const).map((id) => (
+              <button
+                type="button"
+                className="jack"
+                aria-label={`${id.toUpperCase()}送信端子`}
+                key={id}
+                onClick={() => {
+                  if (activeReceive === null) return;
+                  setPatches((current) =>
+                    current.map((value, index) =>
+                      index === activeReceive ? id : value,
+                    ),
+                  );
+                  setActiveReceive(null);
+                }}
+              >
+                <i aria-hidden="true" />
+                <span>{id.toUpperCase()}</span>
+                <WaveSignature value={signatures[id]} />
+              </button>
+            ))}
+          </div>
         </div>
-        <div>
-          <span>JUNCTION</span>
-          <button
-            type="button"
-            aria-pressed={trace[1] === 'ring-relay'}
-            onClick={() => choose(1, 'ring-relay')}
+        {pairingComplete && (
+          <div
+            className="offset-reveal"
+            role="status"
+            aria-label="3組すべて送信は受信の20分後"
           >
-            J-2 丸端子
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[1] === 'bar-relay'}
-            onClick={() => choose(1, 'bar-relay')}
-          >
-            J-3 線端子
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[1] === 'node-relay'}
-            onClick={() => choose(1, 'node-relay')}
-          >
-            J-4 ひし形端子
-          </button>
-        </div>
-        <div>
-          <span>END</span>
-          <button
-            type="button"
-            aria-pressed={trace[2] === 'echo-buffer'}
-            onClick={() => choose(2, 'echo-buffer')}
-          >
-            ECHO BUFFER RETURN
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[2] === 'control-room'}
-            onClick={() => choose(2, 'control-room')}
-          >
-            CONTROL ROOM
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[2] === 'adjacent-room'}
-            onClick={() => choose(2, 'adjacent-room')}
-          >
-            E-02
-          </button>
-        </div>
+            <span>02:11:04 ─ 02:31:04</span>
+            <span>02:14:32 ─ 02:34:32</span>
+            <span>02:17:18 ─ 02:37:18</span>
+            <strong>+20:00 / OFFSET CONFIRMED</strong>
+          </div>
+        )}
       </div>
+      {pairingComplete && (
+        <div className="trace-device">
+          <FacilityMap conduitLayer revealRoute={false} />
+          <div className="trace-path" aria-label="INTERCOMから配線を順に追う">
+            <span>INTERCOM</span>
+            {traceSegments.map(([id, label]) => {
+              const step = trace.length;
+              const enabled =
+                step < allowedAtStep.length &&
+                allowedAtStep[step]!.includes(id as never);
+              const selected = trace.includes(id);
+              return (
+                <button
+                  type="button"
+                  key={id}
+                  disabled={!enabled || selected}
+                  aria-pressed={selected}
+                  onClick={() => setTrace((current) => [...current, id])}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className="device-eject"
+              onClick={() => setTrace([])}
+            >
+              TRACE RESET
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -595,7 +640,7 @@ function PacketRailDevice({ submit }: DeviceProps) {
   const [rail, setRail] = useState<(string | null)[]>([null, null, null]);
   const [selected, setSelected] = useState<string | null>(null);
   const complete = rail.every(isString);
-  useAutoAnswer(complete ? ['c', ...rail.filter(isString)] : null, submit);
+  const submittedSignatureRef = useRef('');
 
   const placedFragments = [
     fragments.find(({ id }) => id === 'c')!,
@@ -605,6 +650,23 @@ function PacketRailDevice({ submit }: DeviceProps) {
     const next = placedFragments[index + 1];
     return Boolean(fragment && next && fragment.right === next.left);
   });
+  const answerSignature = complete
+    ? ['c', ...rail.filter(isString)].join('|')
+    : '';
+  const jointSignature = joints.map(Number).join('');
+  const restored = complete && jointSignature === '111';
+  useEffect(() => {
+    if (!complete) return;
+    const answer = answerSignature.split('|');
+    if (submittedSignatureRef.current === answerSignature) return;
+    submittedSignatureRef.current = answerSignature;
+    if (jointSignature === '111') {
+      const reduced = document.documentElement.dataset.reducedMotion === 'true';
+      const timer = window.setTimeout(() => submit(answer), reduced ? 80 : 700);
+      return () => window.clearTimeout(timer);
+    }
+    submit(answer);
+  }, [answerSignature, complete, jointSignature, submit]);
 
   function placeFragment(slot: number, fragmentId: string) {
     setRail((current) =>
@@ -722,6 +784,20 @@ function PacketRailDevice({ submit }: DeviceProps) {
             : 'CONTINUITY'}
         </small>
       </div>
+      {restored && (
+        <div
+          className="packet-restored-sequence"
+          role="status"
+          aria-live="assertive"
+        >
+          <strong>FRAME RESTORED</strong>
+          {packetTexts.map((text, index) => (
+            <span className={index === 3 ? 'is-future-packet' : ''} key={text}>
+              PACKET 0{index + 1} / {text}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -748,73 +824,32 @@ function DataFragmentGraphic({ fragment }: { fragment: FragmentDefinition }) {
   );
 }
 
-function EventScannerDevice({ submit }: DeviceProps) {
-  const [packet, setPacket] = useState<string | null>(null);
-  const [basis, setBasis] = useState<string | null>(null);
-  useAutoAnswer(packet && basis ? [packet, basis] : null, submit);
-  return (
-    <div className="scanner-device">
-      <div className="packet-cassettes" aria-label="PACKETカセット">
-        {packetTexts.map((text, index) => {
-          const id = `packet-0${index + 1}`;
-          return (
-            <button
-              type="button"
-              key={id}
-              aria-pressed={packet === id}
-              onClick={() => setPacket(id)}
-            >
-              <span>PACKET 0{index + 1}</span>
-              <small>{text}</small>
-            </button>
-          );
-        })}
-      </div>
-      <div className="scanner-bed">
-        <span>EVENT COMPARATOR</span>
-        <strong>{packet?.toUpperCase() ?? 'NO CASSETTE'}</strong>
-        <i aria-hidden="true" />
-      </div>
-      <div className="event-probes" aria-label="照合する出来事">
-        <button
-          type="button"
-          aria-pressed={basis === 'unseen-event'}
-          onClick={() => setBasis('unseen-event')}
-        >
-          未発生の操作
-        </button>
-        <button
-          type="button"
-          aria-pressed={basis === 'different-room'}
-          onClick={() => setBasis('different-room')}
-        >
-          別室の視点
-        </button>
-        <button
-          type="button"
-          aria-pressed={basis === 'clock-broken'}
-          onClick={() => setBasis('clock-broken')}
-        >
-          停止した時計
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function VoiceprintDevice({ submit }: DeviceProps) {
+function VoiceprintDevice({ failures, submit }: DeviceProps) {
   const [spacing, setSpacing] = useState(0);
   const [inverted, setInverted] = useState(false);
   const [phase, setPhase] = useState(0);
-  useAutoAnswer(
-    spacing === 1 && inverted && phase === -2
-      ? ['compress-half', 'invert', 'left-2']
-      : null,
-    submit,
-  );
+  const [matchProgress, setMatchProgress] = useState<number | null>(null);
+  const matchStartedRef = useRef(false);
+  const calibrated = spacing === 1 && inverted && phase === -2;
+  useEffect(() => {
+    if (!calibrated || matchStartedRef.current) return;
+    matchStartedRef.current = true;
+    const steps = [24, 51, 76, 93, 99.8, 100];
+    const reduced = document.documentElement.dataset.reducedMotion === 'true';
+    const timers = steps.map((value, index) =>
+      window.setTimeout(
+        () => {
+          setMatchProgress(value);
+          if (value === 100) submit(['compress-half', 'invert', 'left-2']);
+        },
+        index * (reduced ? 60 : 420),
+      ),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [calibrated, submit]);
   const spacingLabels = ['1×', '1/2×', '2×'];
   return (
-    <div className="voiceprint-device">
+    <div className={`voiceprint-device${failures > 0 ? ' is-error' : ''}`}>
       <div className="voiceprint-screen" aria-label="声紋特徴量比較">
         <span>STAFF RECORD</span>
         <WaveBars values={[2, 4, 2, 2, 4, 2]} />
@@ -872,6 +907,29 @@ function VoiceprintDevice({ submit }: DeviceProps) {
           <output>{signed(phase)}</output>
         </label>
       </div>
+      {matchProgress !== null && (
+        <div
+          className={`voice-match-sequence${matchProgress === 100 ? ' is-match' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span>VOICE MATCH</span>
+          <strong>{matchProgress.toFixed(matchProgress % 1 ? 1 : 0)}%</strong>
+          {matchProgress >= 99.8 && (
+            <figure>
+              <img
+                src={`${import.meta.env.BASE_URL}assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp`}
+                alt="職員カードと一致したE-01担当者の写真"
+              />
+              <figcaption>
+                {matchProgress === 100
+                  ? '100.0% / MATCH / E-01 OCCUPANT'
+                  : 'IDENTITY QUERY...'}
+              </figcaption>
+            </figure>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -898,54 +956,7 @@ function WaveBars({
   );
 }
 
-function ScriptRailDevice({ submit }: DeviceProps) {
-  const [rail, setRail] = useState<string[]>([]);
-  useAutoAnswer(rail.length === 4 ? rail : null, submit);
-  return (
-    <div className="script-device">
-      <div className="response-timeline" aria-label="過去側の応答記録">
-        <span>応答あり</span>
-        <span>電源調査</span>
-        <span>LOG OPEN</span>
-        <span>最終操作前</span>
-      </div>
-      <ol className="script-rail">
-        {[0, 1, 2, 3].map((slot) => (
-          <li key={slot}>
-            <small>TX {slot + 1}</small>
-            {rail[slot]
-              ? packetTexts[Number(rail[slot].slice(-2)) - 1]
-              : '――――'}
-          </li>
-        ))}
-      </ol>
-      <div className="script-strips">
-        {packetTexts.map((text, index) => {
-          const id = `packet-0${index + 1}`;
-          return (
-            <button
-              type="button"
-              key={id}
-              disabled={rail.includes(id)}
-              onClick={() => setRail((current) => [...current, id])}
-            >
-              <span>{text}</span>
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          className="device-eject"
-          onClick={() => setRail([])}
-        >
-          REWIND / 巻き戻す
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function TransmissionPatchDevice({ submit }: DeviceProps) {
+function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
   const [armedPacket, setArmedPacket] = useState<string | null>(null);
   const [windows, setWindows] = useState<(string | null)[]>([
     null,
@@ -958,7 +969,7 @@ function TransmissionPatchDevice({ submit }: DeviceProps) {
   const [delayIndex, setDelayIndex] = useState(0);
   const [routeIndex, setRouteIndex] = useState(0);
   return (
-    <div className="transmission-device">
+    <div className={`transmission-device${failures > 0 ? ' is-error' : ''}`}>
       <div className="transmission-windows" aria-label="四つの受信窓">
         {[
           '返事をする前',
@@ -994,10 +1005,11 @@ function TransmissionPatchDevice({ submit }: DeviceProps) {
             <button
               type="button"
               key={id}
+              aria-label={`送信断片「${text}」`}
               aria-pressed={armedPacket === id}
               onClick={() => setArmedPacket(id)}
             >
-              <span>P{index + 1}</span>
+              <span>TX STRIP</span>
               <small>{text}</small>
             </button>
           );

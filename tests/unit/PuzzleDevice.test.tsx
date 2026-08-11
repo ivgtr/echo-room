@@ -1,13 +1,16 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
   within,
 } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PuzzleDevice } from '../../src/ui/puzzles/PuzzleDevice';
+
+afterEach(() => vi.useRealTimers());
 
 describe('PuzzleDevice', () => {
   it('uses cable isolation and the physical breaker order as the power answer', async () => {
@@ -191,5 +194,55 @@ describe('PuzzleDevice', () => {
       'triangle',
       'node',
     ]);
+  });
+
+  it('keeps dial input after a failed validation instead of remounting', () => {
+    const onSubmit = vi.fn();
+    const view = render(
+      <PuzzleDevice
+        puzzleId="puzzle_maintenance_lock"
+        failures={0}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+    const device = within(view.container);
+    const firstDial = device.getByRole('spinbutton', { name: 'ダイヤル1' });
+    fireEvent.click(firstDial);
+    fireEvent.click(firstDial);
+    fireEvent.click(device.getByRole('button', { name: 'LOCK HANDLE' }));
+    const position = firstDial.getAttribute('aria-valuenow');
+
+    view.rerender(
+      <PuzzleDevice
+        puzzleId="puzzle_maintenance_lock"
+        failures={1}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(
+      device.getByRole('spinbutton', { name: 'ダイヤル1' }),
+    ).toHaveAttribute('aria-valuenow', position);
+    expect(device.getByText('LOCK / JAMMED')).toBeVisible();
+  });
+
+  it('announces a session-only diagnostic after inactivity', () => {
+    vi.useFakeTimers();
+    const view = render(
+      <PuzzleDevice
+        embedded
+        puzzleId="puzzle_carrier_sync"
+        failures={0}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(
+      within(view.container).getByText(/DIAGNOSTIC AVAILABLE/),
+    ).toBeVisible();
   });
 });

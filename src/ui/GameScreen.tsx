@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -105,11 +106,13 @@ type Props = {
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
   onUiClick: () => void;
+  onPuzzleInteraction: (puzzleId: PuzzleId) => void;
   onTextBlip: () => void;
   onEventNarrativeAdvance: () => void;
 };
 
 export function GameScreen(props: Props) {
+  const { onClose, onPuzzleSubmit, onTransmit } = props;
   const powerPhase = props.reservePower
     ? 'reserve'
     : getEmergencyPowerPhase(props.activeElapsedMs);
@@ -131,8 +134,13 @@ export function GameScreen(props: Props) {
   const [inspectionPhase, setInspectionPhase] = useState<
     'idle' | 'approaching' | 'active'
   >('idle');
-  const ending =
-    props.storyStage === 'ending' || props.storyStage === 'completed';
+  const eventNarrativeBlocking =
+    props.eventNarrative?.presentation === 'dramatic';
+  const endingSequence =
+    props.storyStage === 'ending_transmission' ||
+    props.storyStage === 'ending_replay';
+  const ending = endingSequence || props.storyStage === 'completed';
+  const doorEscape = props.storyStage === 'ending_door';
   const inspectionModalOpen =
     props.selectedHotspotId === 'hotspot_clock' ||
     props.selectedHotspotId === 'hotspot_desk' ||
@@ -151,12 +159,13 @@ export function GameScreen(props: Props) {
     inspectionPhase !== 'idle' ||
     inspectionModalOpen ||
     Boolean(props.subtitle) ||
-    Boolean(props.eventNarrative) ||
+    eventNarrativeBlocking ||
     ending;
   const explorationControlsVisible =
     !props.intro && !props.powerPuzzle && !ending;
   const availableHotspots = worldViewAssets[props.locationId].hotspots.filter(
     ({ id }) =>
+      (!doorEscape || id === 'hotspot_door') &&
       (id !== 'hotspot_breaker' ||
         !props.powerRestored ||
         props.storyStage === 'puzzle_maintenance_lock') &&
@@ -184,6 +193,16 @@ export function GameScreen(props: Props) {
       systemButtonRef.current?.focus();
     introWasOpenRef.current = props.intro;
   }, [props.intro]);
+
+  useEffect(() => {
+    if (!props.eventNarrative || eventNarrativeBlocking) return;
+    const timer = window.setTimeout(props.onEventNarrativeAdvance, 2800);
+    return () => window.clearTimeout(timer);
+  }, [
+    eventNarrativeBlocking,
+    props.eventNarrative,
+    props.onEventNarrativeAdvance,
+  ]);
 
   function turn(offset: -1 | 1) {
     const next = getRotatedView(props.locationId, offset);
@@ -218,26 +237,33 @@ export function GameScreen(props: Props) {
     }, 380);
   }
 
-  function finishInspection() {
+  const finishInspection = useCallback(() => {
     inspectionLockedRef.current = false;
     setInspectionPhase('idle');
     setInspectionTargetId(null);
-  }
+  }, []);
 
-  function closeInspection() {
-    props.onClose();
+  const closeInspection = useCallback(() => {
+    onClose();
     finishInspection();
-  }
+  }, [finishInspection, onClose]);
 
-  function handlePuzzleSubmit(puzzleId: PuzzleId, answer: string[]) {
-    props.onPuzzleSubmit(puzzleId, answer);
-    if (isPuzzleAnswerCorrect(puzzleId, answer)) finishInspection();
-  }
+  const handlePuzzleSubmit = useCallback(
+    (puzzleId: PuzzleId, answer: string[]) => {
+      onPuzzleSubmit(puzzleId, answer);
+      if (
+        isPuzzleAnswerCorrect(puzzleId, answer) &&
+        puzzleId !== 'puzzle_transmission_window'
+      )
+        finishInspection();
+    },
+    [finishInspection, onPuzzleSubmit],
+  );
 
-  function handleTransmit() {
-    props.onTransmit();
+  const handleTransmit = useCallback(() => {
+    onTransmit();
     finishInspection();
-  }
+  }, [finishInspection, onTransmit]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -370,11 +396,13 @@ export function GameScreen(props: Props) {
         }}
         onClickCapture={(event) => {
           const target = event.target;
-          if (
-            target instanceof Element &&
-            target.closest('button:not(:disabled)')
-          )
-            props.onUiClick();
+          if (!(target instanceof Element)) return;
+          const button = target.closest('button:not(:disabled)');
+          if (!button) return;
+          const device = button.closest<HTMLElement>('[data-puzzle-id]');
+          const puzzleId = device?.dataset.puzzleId as PuzzleId | undefined;
+          if (puzzleId) props.onPuzzleInteraction(puzzleId);
+          else props.onUiClick();
         }}
       >
         <WorldCanvas
@@ -392,7 +420,7 @@ export function GameScreen(props: Props) {
             />
           </div>
           <div className="hud-actions">
-            {!ending && (
+            {!ending && !doorEscape && (
               <button
                 type="button"
                 className="system-entry"
@@ -435,6 +463,12 @@ export function GameScreen(props: Props) {
                     style={hotspotClipStyle(hotspot)}
                     onClick={() => requestHotspot(hotspot.id)}
                   />
+                  {props.storyStage === 'puzzle_maintenance_lock' &&
+                    maintenanceNameplates[hotspot.id] && (
+                      <span className="world-nameplate" aria-hidden="true">
+                        {maintenanceNameplates[hotspot.id]}
+                      </span>
+                    )}
                   <span className="hotspot-label" aria-hidden="true">
                     {hotspot.label}
                   </span>
@@ -474,6 +508,11 @@ export function GameScreen(props: Props) {
             {locationCue}
           </div>
         )}
+        {doorEscape && (
+          <div className="door-escape-cue" role="status" aria-live="assertive">
+            DOOR UNLOCKED / 北壁のドアから脱出する
+          </div>
+        )}
         {!ending && props.subtitle && (
           <ModalFocusScope
             focusKey={`message-${props.subtitle}`}
@@ -502,7 +541,7 @@ export function GameScreen(props: Props) {
             onTextBlip={props.onTextBlip}
           />
         )}
-        {props.eventNarrative && (
+        {props.eventNarrative && eventNarrativeBlocking && (
           <ModalFocusScope
             focusKey={`event-${props.eventNarrative.id}`}
             returnFocusRef={inspectionReturnFocusRef}
@@ -522,6 +561,19 @@ export function GameScreen(props: Props) {
               onTextBlip={props.onTextBlip}
             />
           </ModalFocusScope>
+        )}
+        {props.eventNarrative && !eventNarrativeBlocking && (
+          <div
+            className={`narrative-cue is-${props.eventNarrative.presentation ?? 'ambient'}`}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {props.eventNarrative.speaker && (
+              <strong>{props.eventNarrative.speaker}</strong>
+            )}
+            <span>{props.eventNarrative.text}</span>
+          </div>
         )}
         {inspectionDialog && (
           <ModalFocusScope
@@ -605,7 +657,7 @@ export function GameScreen(props: Props) {
             onExit={props.onExit}
           />
         )}
-        {ending && (
+        {(endingSequence || props.storyStage === 'completed') && (
           <EndingPanel
             lineIndex={props.endingLineIndex}
             completed={props.storyStage === 'completed'}
@@ -625,6 +677,13 @@ export function GameScreen(props: Props) {
     </main>
   );
 }
+
+const maintenanceNameplates: Partial<Record<HotspotId, string>> = {
+  hotspot_terminal: 'TERMINAL ║',
+  hotspot_intercom: 'INTERCOM ○',
+  hotspot_breaker: 'ECHO BUFFER △',
+  hotspot_door: 'DOOR ◆',
+};
 
 function hotspotBoundsStyle(hotspot: WorldHotspot): CSSProperties {
   const bounds = getHotspotBounds(hotspot);

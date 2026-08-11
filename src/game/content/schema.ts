@@ -25,7 +25,7 @@ export const gameContentSchema = z.object({
   contentVersion: z.string().min(1),
   chapters: z
     .array(z.object({ id: id('chapter'), label: z.string().min(1) }))
-    .min(10),
+    .min(9),
   locations: z
     .array(z.object({ id: id('location'), label: z.string().min(1) }))
     .min(4),
@@ -76,7 +76,7 @@ export const gameContentSchema = z.object({
         hintIds: z.array(id('hint')).length(3),
       }),
     )
-    .length(10),
+    .length(7),
   hints: z
     .array(
       z.object({
@@ -86,7 +86,7 @@ export const gameContentSchema = z.object({
         text: z.string().min(1),
       }),
     )
-    .length(30),
+    .length(21),
   storyFacts: z.object({
     wallClock: z.literal('02:17'),
     negativeDelay: z.literal('-00:20:00'),

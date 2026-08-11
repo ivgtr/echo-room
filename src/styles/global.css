@@ -256,6 +256,10 @@ button:focus-visible {
   color: #e2a3a6;
 }
 
+.logical-stage[data-power-phase='low'] .canvas-host {
+  filter: brightness(0.92) saturate(0.94);
+}
+
 .emergency-status[data-power-phase='critical'],
 .emergency-status[data-power-phase='reserve'] {
   color: #f1b0b4;
@@ -268,6 +272,28 @@ button:focus-visible {
 
 .logical-stage[data-power-phase='reserve'] .canvas-host {
   filter: brightness(0.58) saturate(0.62);
+}
+
+.logical-stage[data-power-phase='reserve']::after {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  background: #020405;
+  content: '';
+  animation: reserve-bus-recovery 900ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes reserve-bus-recovery {
+  from {
+    opacity: 1;
+  }
+  65% {
+    opacity: 0.76;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes voltage-drop {
@@ -434,6 +460,25 @@ button:focus-visible {
   pointer-events: none;
 }
 
+.world-nameplate {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  padding: 0.18rem 0.35rem;
+  border: 1px solid rgb(213 209 196 / 72%);
+  color: #d5d1c4;
+  background: rgb(16 20 20 / 78%);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 45%);
+  font:
+    clamp(0.48rem, 0.72vw, 0.66rem) ui-monospace,
+    monospace;
+  letter-spacing: 0.06em;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 .inspection-transition-target {
   position: absolute;
   z-index: 8;
@@ -472,8 +517,8 @@ button:focus-visible {
 .hotspot-control:hover::after,
 .hotspot-control:focus-visible::before,
 .hotspot-control:focus-visible::after,
-.hotspot-control:hover + .hotspot-label,
-.hotspot-control:focus-visible + .hotspot-label {
+.hotspot-control:hover ~ .hotspot-label,
+.hotspot-control:focus-visible ~ .hotspot-label {
   opacity: 1;
 }
 
@@ -638,6 +683,46 @@ button:focus-visible {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.narrative-cue,
+.door-escape-cue {
+  position: absolute;
+  z-index: 18;
+  right: clamp(1rem, 3vw, 2.5rem);
+  bottom: clamp(1rem, 4vh, 2.5rem);
+  display: grid;
+  max-width: min(34rem, 78%);
+  padding: 0.75rem 1rem;
+  border-left: 2px solid #58b8b0;
+  color: #e7efed;
+  background: rgb(5 13 14 / 88%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 38%);
+  gap: 0.2rem;
+  pointer-events: none;
+  animation: narrative-in 180ms ease-out both;
+}
+
+.narrative-cue.is-subtitle {
+  right: 50%;
+  width: min(42rem, 82%);
+  transform: translateX(50%);
+}
+
+.narrative-cue strong {
+  color: #6fe7e2;
+  font:
+    0.68rem ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+
+.door-escape-cue {
+  right: 50%;
+  bottom: 8%;
+  transform: translateX(50%);
+  border-left-color: #d5d1c4;
+  letter-spacing: 0.08em;
 }
 
 .system-menu {
@@ -1723,6 +1808,21 @@ button:focus-visible {
   cursor: pointer;
 }
 
+.device-diagnostic {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.8rem;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 2px solid #d5d1c4;
+  color: #d5d1c4;
+  background: rgb(5 13 14 / 90%);
+  font:
+    0.64rem ui-monospace,
+    monospace;
+  letter-spacing: 0.06em;
+}
+
 .puzzle-modal {
   top: 7%;
   bottom: 7%;
@@ -2300,6 +2400,29 @@ button:focus-visible {
 .transmission-device {
   width: min(68rem, 100%);
 }
+.signal-investigation-device {
+  display: grid;
+  width: min(70rem, 100%);
+  gap: 0.8rem;
+}
+.offset-reveal {
+  display: grid;
+  margin-top: 0.7rem;
+  padding: 0.65rem;
+  border: 1px solid #42615f;
+  color: #a9c2be;
+  background: #061112;
+  font:
+    0.66rem ui-monospace,
+    monospace;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+.offset-reveal strong {
+  grid-column: 1 / -1;
+  color: #8de1d8;
+  text-align: center;
+}
 .log-columns {
   display: grid;
   grid-template-columns: 1fr 0.65fr 1fr;
@@ -2338,6 +2461,25 @@ button:focus-visible {
   grid-column: 2;
   color: #7e9c99;
 }
+.wave-signature {
+  display: flex;
+  align-items: center;
+  min-height: 1.1rem;
+  gap: 0.22rem;
+}
+.wave-signature i {
+  display: block;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: #7e9c99;
+  box-shadow: 0 0 0.35rem rgb(126 156 153 / 45%);
+}
+.wave-signature i.is-short {
+  width: 0.8rem;
+}
+.wave-signature i.is-long {
+  width: 2rem;
+}
 .jack.is-armed {
   border-color: #8de1d8;
   background: #12302f;
@@ -2358,6 +2500,26 @@ button:focus-visible {
 .trace-overlay {
   display: grid;
   gap: 0.5rem;
+}
+.trace-path {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+}
+.trace-path > span,
+.trace-path .device-eject {
+  grid-column: 1 / -1;
+}
+.trace-path button[aria-pressed='true'] {
+  border-color: #8de1d8;
+  color: #e7fffb;
+  background: #12302f;
+}
+.signal-investigation-device.is-trace-error .trace-device,
+.carrier-device.is-error .wave-rail:not(.is-locked),
+.voiceprint-device.is-error .calibration-controls,
+.transmission-device.is-error .transmission-controls {
+  box-shadow: inset 0 0 0 2px rgb(228 91 99 / 55%);
 }
 .trace-overlay > div {
   display: grid;
@@ -2644,6 +2806,24 @@ button:focus-visible {
   margin-left: 0.5rem;
   color: #79908d;
 }
+.packet-restored-sequence {
+  display: grid;
+  padding: 0.8rem;
+  border: 1px solid #58b8b0;
+  color: #a8c7c3;
+  background: rgb(4 17 18 / 94%);
+  gap: 0.35rem;
+}
+.packet-restored-sequence > strong {
+  color: #8de1d8;
+  letter-spacing: 0.14em;
+}
+.packet-restored-sequence .is-future-packet {
+  padding: 0.45rem;
+  border-left: 3px solid #d42a32;
+  color: #fff;
+  background: rgb(101 21 26 / 48%);
+}
 
 .scanner-device {
   display: grid;
@@ -2736,6 +2916,37 @@ button:focus-visible {
 }
 .voiceprint-device .calibration-controls {
   grid-template-columns: 1fr;
+}
+.voice-match-sequence {
+  display: grid;
+  grid-column: 1 / -1;
+  padding: 0.8rem;
+  border: 1px solid #42615f;
+  background: #041011;
+  place-items: center;
+  gap: 0.4rem;
+}
+.voice-match-sequence > strong {
+  color: #8de1d8;
+  font:
+    clamp(1.6rem, 4vw, 3.2rem) ui-monospace,
+    monospace;
+}
+.voice-match-sequence figure {
+  display: grid;
+  margin: 0;
+  grid-template-columns: 5rem 1fr;
+  align-items: center;
+  gap: 0.8rem;
+}
+.voice-match-sequence img {
+  width: 5rem;
+  max-height: 6rem;
+  object-fit: cover;
+}
+.voice-match-sequence.is-match {
+  border-color: #8de1d8;
+  box-shadow: 0 0 2rem rgb(88 184 176 / 28%);
 }
 .rotary-control,
 .toggle-control,

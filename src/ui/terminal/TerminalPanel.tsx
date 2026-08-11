@@ -16,20 +16,15 @@ const menuLabels: Record<TerminalMenuId, string> = {
 
 const puzzleMenu: Partial<Record<PuzzleId, TerminalMenuId>> = {
   puzzle_carrier_sync: 'system',
-  puzzle_log_pairing: 'log',
-  puzzle_signal_route: 'security',
+  puzzle_signal_investigation: 'log',
   puzzle_packet_repair: 'audio',
-  puzzle_temporal_anomaly: 'audio',
-  puzzle_causal_script: 'system',
   puzzle_transmission_window: 'system',
 };
 
 const terminalStatus: Partial<Record<StoryStage, string>> = {
   puzzle_maintenance_lock: 'WEST MAINTENANCE LOCK / LOCAL CONTROL',
-  puzzle_log_pairing: 'LOG / 3 UNMATCHED RECORDS',
-  puzzle_signal_route: 'SECURITY / FACILITY MAP AVAILABLE',
+  puzzle_signal_investigation: 'LOG / 3 RECORDS / CONDUIT TRACE',
   puzzle_packet_repair: 'SIGNAL / DAMAGED FRAME DETECTED',
-  puzzle_temporal_anomaly: 'SIGNAL / EVENT RECORD INCOMPLETE',
   puzzle_voiceprint_calibration: 'VOICEPRINT DATA / EXTERNAL PANEL',
 };
 
@@ -131,7 +126,11 @@ function TerminalMenuContent({
         )}
         <div>
           <span>NEGATIVE DELAY</span>
-          <strong>-00:20:00</strong>
+          <strong>
+            {completedPuzzleIds.includes('puzzle_signal_investigation')
+              ? '-00:20:00'
+              : '--:--:-- / CALIBRATION ERROR'}
+          </strong>
         </div>
         <div>
           <span>LOCAL CLOCK</span>
@@ -139,7 +138,7 @@ function TerminalMenuContent({
         </div>
         <div>
           <span>PUZZLES VERIFIED</span>
-          <strong>{completedPuzzleIds.length} / 10</strong>
+          <strong>{completedPuzzleIds.length} / 7</strong>
         </div>
         <p>{terminalStatus[stage] ?? 'TRANSMISSION BUS / STANDBY'}</p>
       </div>
@@ -151,8 +150,8 @@ function TerminalMenuContent({
         <h3>RECEIVE / SOURCE LOG</h3>
         <p>受信と送信は別々に記録されている。表示の順番も違う。</p>
         <p>
-          {completedPuzzleIds.includes('puzzle_log_pairing')
-            ? '確認済み：3つとも、送信時刻は受信時刻のちょうど20分後。'
+          {completedPuzzleIds.includes('puzzle_signal_investigation')
+            ? '確認済み：3つとも20分差。通信線はECHO BUFFER RETURNへ戻る。'
             : '3つの波の並びを比べ、同じ通信を探す。'}
         </p>
       </div>
@@ -163,7 +162,7 @@ function TerminalMenuContent({
       <div className="terminal-placeholder">
         <FacilityMap conduitLayer />
         <p>
-          {completedPuzzleIds.includes('puzzle_signal_route')
+          {completedPuzzleIds.includes('puzzle_signal_investigation')
             ? '確認済み：E-01の通信線は、隣室ではなくECHO BUFFER RETURNへ戻る。'
             : '職員カードを使えば、部屋の図と配線図を重ねて見られる。'}
         </p>
@@ -189,7 +188,7 @@ function TransmissionReady({ onTransmit }: { onTransmit: () => void }) {
     >
       <p className="eyebrow">TEST TRANSMISSION / ALL CONDITIONS PASSED</p>
       <h3 id="transmission-title">ECHO TRANSMISSION READY</h3>
-      <p>確認完了：10 / 10</p>
+      <p>確認完了：7 / 7</p>
       <ol aria-label="送信パケット4枠">
         <li>W1 / ……聞こえるか？</li>
         <li>W2 / まず電源を戻せ。</li>

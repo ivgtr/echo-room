@@ -41,12 +41,10 @@ export const selectReservePower = (snapshot: GameSnapshot) =>
 const objectives: Partial<Record<StoryStage, string>> = {
   puzzle_carrier_sync: 'デスクの保守メモと、端末の波の位置を見比べる。',
   puzzle_maintenance_lock: 'デスクの点検順と、部屋にある4つの銘板を調べる。',
-  puzzle_log_pairing: '端末のLOGで、同じ波形を持つ通信を探す。',
-  puzzle_signal_route: 'インターホンとSECURITYの配線図を見比べる。',
+  puzzle_signal_investigation:
+    '端末のLOGで波形をつなぎ、そのまま配線の行き先を追う。',
   puzzle_packet_repair: 'SIGNALに残った破損PACKETを調べる。',
-  puzzle_temporal_anomaly: '復元した4文を、これまでの出来事と比べる。',
   puzzle_voiceprint_calibration: '職員カードと解析パネルの波形を見比べる。',
-  puzzle_causal_script: '会話履歴を読み返し、送信する4文を並べる。',
   puzzle_transmission_window:
     '判明した時間差と回線を使い、送信予約を完成させる。',
   transmission_ready: 'SYSTEMで送る内容を確認し、赤いボタンを押す。',
@@ -73,10 +71,12 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   }
   if (hotspot === 'hotspot_door')
     return stage === 'transmission_ready'
-      ? '送信が終われば、ドアのロックが外れるはずだ。'
-      : '非常ロックがかかっている。通信が終わるまで開かない。';
+      ? '送信準備が整った。端末の赤いボタンが使える。'
+      : stage === 'ending_door'
+        ? 'ロックが外れている。ここから出られる。'
+        : '非常ロックがかかっている。通信が終わるまで開かない。';
   if (hotspot === 'hotspot_intercom')
-    return stage === 'puzzle_signal_route'
+    return stage === 'puzzle_signal_investigation'
       ? '丸い端子から、通信線が設備壁の中へ続いている。'
       : '音声は流れない。文章と声紋データがPACKETで届いている。';
   if (hotspot === 'hotspot_terminal' && !snapshot.context.powerRestored)
