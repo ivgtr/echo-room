@@ -19,13 +19,14 @@
 - UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。2026-08-11に代表画面の利用者承認を得た。
 - P4-03は完了。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード、主人公写真、4 PACKET・送信先・4枠を正確なHTML/CSSと本番rasterで統合した。
 - 主人公は32歳前後の日本人男性、短い黒髪、設備保守・運用担当、濃灰の作業着に確定した。氏名や不要な経歴は設定せず、同一写真原本を職員証と声紋特徴量照合へ使用する。
-- P5-01は完了。主要10問の完了IDを進行schema v3へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。旧7問schemaの互換層は持たない。
+- P5-01は完了。主要7体験の完了IDを進行schema v4へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。旧schemaの互換層は持たない。
 - P5-02は完了。現行の単一Hotspot View Modelから意味を持つDOMを生成し、modal中の探索無効化、focus trap・復帰、通知role、SYSTEMの動き軽減設定、keyboardのみの全編ルートを完成した。
 - P5-03は完了。冒頭7台詞を通常に読み終えた時だけ既読状態を保存し、次回以降は単一Narrative UIからskip可能にした。skip後のSYSTEMへのfocus移動と、全7台詞のARCHIVE復元も統合した。
 - 発話音声を使用しない方針を2026-08-11に確定。台詞はHTML字幕、PACKETは文章と声紋特徴量、音響は環境音・効果音・通信ノイズだけの単一構造とする。
 - P4-04は完了。旧tone playerを削除し、非常電源・復旧後の環境音と通信・接続・回路・電源・ロック・解析・送信・ドア解錠cueを単一Sound Managerへ統合した。
 - P4-04の操作音を拡張し、話者差のないレトロゲーム風text blipと共通UI clickをeffectsへ追加。字幕速度と句読点へ同期する文字送り、早押し全文表示、動き軽減時の即時表示へ接続した。
 - P5は全作業完了。次の着手点はP4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残演出。
+- P3B-01〜03は完了。issue #3〜#10を精査し、通信調査、未来情報検査、送信文編集の重複を7つの主要体験へ統合した。Narrative強弱、誤答保持、停滞診断、装置別SE、電源4段階、声紋一致、冒頭通信再演、世界内ドア操作まで連続化し、旧10問schemaは互換層なしでv4へ置き換えた。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 - P8は公開準備のみ着手。GitHub Pages公式Actionsのdeploy workflow、repository subpathを使うproduction build、簡潔なREADMEとネタバレなしのキービジュアルを整備した。pushと公開後smoke testは未実施。
 
@@ -58,7 +59,7 @@
 | P4-03 | completed | 時計接写へ02:17、デスク接写へ容量・負荷・短絡情報を合成。SYSTEMへ-00:20:00、SECURITYと所持品へ室内・通信配線の二層図、職員カードと声紋校正へ同一人物写真、最終送信へ4受信窓・固定遅延・回線終端・赤いbuttonを統合 | `npm run check`、Chromiumの時計・用紙・二層図・波形・全編keyboard・touch・focus復帰E2E | なし |
 | P4-04 | completed | 発話音声・voice系統・会話`audioId`・howler.js・旧tone playerを削除。設定schema v4のSOUND master、effects、environmentに対応する単一Sound Managerを実装し、非常電源・復旧後の機械ハムと共通UI click・話者差のないtext blip・通信・接続・回路・電源・ロック・解析・送信・ドア解錠cueを手続き生成。文字送りは字幕速度・句読点へ同期し、早押し全文表示と動き軽減時の即時表示に対応。SYSTEM・非表示・title・OFFで再生中nodeを停止し、再開操作で復帰。SIGNAL字幕とPACKET声紋特徴量照合を維持 | Node 24で`npm run check`成功（16 files/49 tests、4 bundle/27画像、build 581.67kB）。ChromiumでSound lifecycle、全編keyboard、導入、通常探索を個別検証。最終一括E2Eは依頼者の省略指示により11/13件通過時点で停止（1件interrupted、1件not run） | なし |
 | P4-05 | in_progress | UIQ-02の380ms調査接近と動き軽減代替、UIQ-03の通信Narrative・所持品取得演出、UIQ-04の10分・5分・00:00段階表示、5分以下の電圧低下と静的な動き軽減代替を実装。P4-04で通信ノイズ・解析・送信・ドア解錠サウンドを統合 | 通常・reduced-motion E2E、1280×720の通信・SYSTEM・critical・reserve画面を目視確認 | 水滴・端末起動・送信時発光・ドア解錠・白飛び・endingの残視覚演出はP4-02・P4-05で継続 |
-| P5-01 | completed | 主要10問の完了ID、現在段階、所持品、全問誤答、hint、active time、予備電源を進行schema v3へ保存。設定は別keyのv4。旧7問schemaを受理せず、破損・非対応versionは上書きせず確認後に進行だけ消去可能 | `npm run check`、Chromiumで全checkpoint、late-game復元、設定reload、破損・非対応version保護と消去を検証 | なし |
+| P5-01 | completed | 主要7体験の完了ID、現在段階、所持品、全問誤答、hint、active time、予備電源を進行schema v4へ保存。旧schemaを受理せず、破損・非対応versionは上書きせず確認後に進行だけ消去可能 | `npm run check`、Chromiumで全checkpoint、late-game復元、設定reload、破損・非対応version保護と消去を検証 | なし |
 | P5-02 | completed | Hotspot View Modelから意味を持つReact DOM overlayを生成。modal中の`inert`、focus trap・復帰、色以外の正誤、波形の線高と数列同等表示、動き軽減、全編keyboard操作を完成 | `npm run check`、Chromiumでkeyboardのみの10問→ending、focus trap・復帰・`inert`・設定保存を検証 | なし |
 | P5-03 | completed | 連打・二重click・戻る・画面回転・遷移中input lockの共通基盤、会話履歴・資料再読・表示速度、必要時だけ開く所持品トレイ、対象調査中のカード・ドライバー使用を統合。自動保存通知は2.4秒で操作を塞がず消去。冒頭会話は初見時にskipを表示せず、通常読了後だけ現行設定schemaへ既読を保存し、次回はNarrative UI内でskipできる | Node 24で`npm run check`成功（14 files/40 tests）。Chromium E2E 12件で初見のskip非表示・既読保存・keyboard skip・SYSTEM focus・ARCHIVE復元と既存のmouse・touch・keyboard・連打・resize・設定reloadを検証。skip UIを1280×720で目視確認 | なし |
 | P5-04 | completed | `performance.now()`差分によるアクティブプレイ時間をXStateへ保持。SYSTEMとbrowser非表示中は停止し、00:00で予備電源へ不可逆遷移して進行を継続。経過時間と予備電源状態をschema v3へ保存 | timer境界・machine・保存schema unit、固定時計E2E、予備電源開始状態から10問全編E2E | なし |
@@ -66,6 +67,9 @@
 | UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
 | UIQ-03 | completed | 独白・通信・発見を用途別の共通Narrative UIへ整理し、SIGNAL・話者・通信表示を統一。所持品取得演出、必要時トレイ、対象へのカード・ドライバー使用、SYSTEMのARCHIVE・字幕・系統別音量設定を実装 | Node 24で`npm run check`成功（11 files/23 tests）、`npm run test:e2e`成功（Chromium 8件: 無音、字幕拡大・背景・速度、背景復帰、archive、mouse・touch・keyboard所持品、全編）、1280×720通信・ARCHIVE・設定を目視確認 | アクティブ時間と非常演出はUIQ-04、履歴のcheckpoint永続化はP5-01で継続 |
 | UIQ-04 | completed | `BATTERY 00:19:48`から実プレイ時間を計測し、10分以下LOW、5分以下CRITICALと電圧低下、00:00のRESERVEを文字と背景で段階表示。SYSTEM内へ停止中の残量と目的を併記し、SYSTEM・browser非表示中の停止、保存復元、00:00後の進行継続、動き軽減を実装。2026-08-11に代表画面の利用者承認を取得 | Node 24で`npm run check`成功（13 files/29 tests）、Chromium E2E 9件（固定時計、pause、visibility、保存復元、reduced-motion、予備電源から全編、keyboard、touch）、1280×720のSYSTEM・critical・reserveを目視確認 | なし |
+| P3B-01 | completed | LOG照合と配線追跡、PACKET復元と未来情報、会話順と最終送信をそれぞれ統合し、旧ID・Stage・UI・hintを削除して7体験・schema v4へ単一移行 | 7問正誤・content・save unit、keyboard全編E2E | なし |
+| P3B-02 | completed | ambient・subtitle・dramatic表示、誤答入力保持と局所反応、60秒無操作・90秒滞在の診断通知を実装 | Narrative分類unit、誤答保持unit・全編E2E、診断timer unit | なし |
+| P3B-03 | completed | 機器銘板、装置別cue、電源4段階の映像・環境音、VOICE MATCH専用照合、冒頭通信再演、世界内ドア脱出を実装 | `npm run check`、Chromium 14件、99.8%照合画面・解錠ドアを1280×720で目視確認 | なし |
 | P6-01 | pending |  |  | P4・P5 |
 | P6-02 | pending |  |  | P6-01 |
 | P6-03 | pending |  |  | P4・P5 |
@@ -86,7 +90,7 @@
 
 1. `docs/README.md`のグラフィック・テストルーティングに従い、`graphics-production.md`、`graphics-generation.yaml`、`requirements.md` 6・8〜10・15・16章、`technical-design.md` 7・13・14・18章、`implementation-plan.md`のP4-02〜05とP6を読む。
 2. P4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残視覚演出を完了してP4 Gateを閉じる。P4-04の単一Sound Managerへ別playerや発話音声を追加しない。
-3. P5は完了。進行はv3、設定はv4だけを正規形式とし、旧fixtureや旧読込分岐を追加しない。
-4. `tmp/p5-02-motion-settings.png`、`tmp/p5-03-intro-skip.png`、`tmp/p4-04-sound-settings.png`、`tmp/p4-05-text-blip.png`は実画面確認用。その他の一時画像も引き続きignore済みの`tmp/`へ集約する。
-5. 主要10問の初見所要時間、偶然正解、詰まり、ヒント使用箇所をP7-01で測る。机上時間だけで難易度完了としない。
+3. P5は完了。進行・設定ともv4だけを正規形式とし、旧fixtureや旧読込分岐を追加しない。
+4. `tmp/voice-match-99-8.png`、`tmp/ending-door-control.png`、`tmp/p5-02-motion-settings.png`、`tmp/p5-03-intro-skip.png`、`tmp/p4-04-sound-settings.png`、`tmp/p4-05-text-blip.png`は実画面確認用。その他の一時画像も引き続きignore済みの`tmp/`へ集約する。
+5. 主要7体験の初見所要時間、偶然正解、詰まり、ヒント使用箇所をP7-01で測る。机上時間だけで難易度完了としない。
 6. P4-04は完了。P4-02とP4-05が残るため、P4全体が完了するまでP6 Gateは閉じたままとする。
