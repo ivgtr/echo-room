@@ -117,6 +117,14 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     .getByRole('button', { name: 'VOICE ANALYSISをONにする' })
     .click();
   await expect(analysis.getByText('VOICEPRINT MATCH 100%')).toBeVisible();
+  await expect(
+    analysis.getByRole('img', {
+      name: 'E-01 OCCUPANTとして照合された職員証写真',
+    }),
+  ).toHaveAttribute(
+    'src',
+    '/assets/images/items/gfx-item-003__approved__voice-analysis-crop__512x640.webp',
+  );
   await analysis.getByRole('button', { name: '結果を確認する' }).click();
 
   const finalTerminal = page.getByRole('dialog', { name: '壁面端末' });

@@ -11,8 +11,9 @@
 - UIQ-02は完了。ReactとPixiJSが共有する6〜10点の輪郭polygon hotspot、hover・focus・touch接近marker、380msの寄り、動き軽減crossfade、遷移中・modal中のWorld入力停止とfocus復帰を実装した。
 - UIQ-03は完了。独白・通信・発見を共通Narrative UIへ整理し、取得演出、所持品トレイと対象使用、SYSTEMの会話履歴・資料再読・字幕・系統別音量設定を実装した。
 - UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。2026-08-11に代表画面の利用者承認を得た。
-- P4-03は正確な画面情報の統合中。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード外装、4 PACKET・送信先・4枠をHTML/CSSで実装した。
-- 次の確認点はP4-03の代表画面と主人公profile。承認済みprofileがないため、職員証とVOICE ANALYSISの人物写真・個人情報は捏造せず保留している。
+- P4-03は完了。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード、主人公写真、4 PACKET・送信先・4枠を正確なHTML/CSSと本番rasterで統合した。
+- 主人公は32歳前後の日本人男性、短い黒髪、設備保守・運用担当、濃灰の作業着に確定した。氏名や不要な経歴は設定せず、同一写真原本を職員証とVOICE ANALYSISへ使用する。
+- 次の着手点はP5-01。全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
@@ -31,12 +32,12 @@
 | P3-02 | completed | SYSTEM・LOG・AUDIO・SECURITYを持つ端末UI、進行lock、英語見出しと日本語補助、重要時刻の再確認を実装 | `npm run check`、端末component test | AUDIO・SECURITY解放はP3-04 |
 | P3-03 | completed | 20分差確認、壁時計情報、0237ロッカー、誤答再試行、ドライバー・カード・フロア図取得を実装 | locker正誤unit、全編E2E | なし |
 | P3-04 | completed | カードによるSECURITY図面、所持品図面、隣室不存在、AUDIO PACKET 01〜04と未発言PACKET 04を実装 | story transition unit、全編E2E、PACKET validation | 本番音声待ち |
-| P3-05 | completed | ドライバー使用、VOICE ANALYSIS、98〜100%演出、E-01 OCCUPANTと仮人物写真、正体判明導線を実装 | story transition unit、全編E2E | `protagonist_unknown`代替写真 |
+| P3-05 | completed | ドライバー使用、VOICE ANALYSIS、98〜100%演出、E-01 OCCUPANTと人物写真、正体判明導線を実装 | story transition unit、全編E2E | なし |
 | P3-06 | completed | 4台詞選択・並べ替え、誤順拒否、-00:20:00送信、冒頭会話再現、ドア解錠、白い光、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
 | P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
 | P4-02 | in_progress | 3 bundle・25画像、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。UIQ-02でReact・Pixi共通の6〜10点polygon hotspotへ更新。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit、同一Canvas維持・全4面fade・電源復旧・全編・touch・輪郭外click拒否E2E | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-04の着手は阻害しない |
-| P4-03 | in_progress | 時計接写へ正確な02:17のHTML/CSS時計盤、デスク接写へ非常電源テスト用紙を合成。端末SYSTEMへ-00:20:00・02:17・02:37と緊急時メモ、SECURITYと所持品へE-01の左右に隣室がない施設図、職員カードへE-01・SECURITY権限を表示。最終送信を4つの明示slot、4 PACKET、送信先-00:20:00、赤い送信buttonへ整理 | Node 24で`npm run check`成功（14 files/33 tests）、Chromium E2E 10件（時計・用紙接写、カード・図面、全端末時刻、予備電源状態から全編、4 slot送信）、1280×720の代表6画面を目視確認 | `gfx-item-003`主人公profile（年齢、性別表現、髪型、服装）が未承認。職員証写真・個人情報とVOICE ANALYSIS写真は承認後に統合 |
+| P4-03 | completed | 時計接写へ正確な02:17のHTML/CSS時計盤、デスク接写へ非常電源テスト用紙を合成。端末SYSTEMへ-00:20:00・02:17・02:37と緊急時メモ、SECURITYと所持品へE-01の左右に隣室がない施設図、職員カードへE-01・SECURITY権限と同一原本の主人公写真を表示。VOICE ANALYSISへ本人写真を統合し、最終送信を4つの明示slot、4 PACKET、送信先-00:20:00、赤い送信buttonへ整理 | Node 24で`npm run check`成功（14 files/33 tests、4 bundle/27画像）、Chromium E2E 10件（本人写真、時計・用紙接写、カード・図面、全端末時刻、予備電源状態から全編、keyboard・touch・focus復帰、4 slot送信）、1280×720の代表8画面を目視確認 | なし |
 | P4-04 | pending |  |  | 本番音声 |
 | P4-05 | in_progress | UIQ-02の380ms調査接近と動き軽減代替、UIQ-03の通信Narrative・所持品取得演出、UIQ-04の10分・5分・00:00段階表示、5分以下の電圧低下と静的な動き軽減代替を実装 | 通常・reduced-motion E2E、1280×720の通信・SYSTEM・critical・reserve画面を目視確認 | 通信ノイズ・声紋解析・送信・ドア解錠・endingの本番演出はP4-02〜04で継続 |
 | P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
@@ -57,7 +58,6 @@
 
 ## 保留事項
 
-- `protagonist_unknown`: 職員証写真と最終人物表現は人物設定の承認待ち。
 - 研究所ロゴ: 当面は正確な文字表記のみ。
 - 最終フォント: 当面はsystem font stack。
 - 本番画像・音声: 正規IDと寸法のCanvas製代替画像、字幕、duration metadataで実装を継続する。
@@ -65,8 +65,7 @@
 
 ## 次作業者への引き継ぎ
 
-1. `docs/README.md`のUIルーティングに従い、`requirements.md` 9〜13章、`technical-design.md` 7・10・15章、`quality-up-plan.md`、`implementation-plan.md`のP2・P5・10章を読む。
-2. `tmp/p4-03-*.png`の1280×720代表6画面について利用者確認を得る。修正指示があればP4-03内で反映する。
-3. `graphics-generation.yaml`の`g-d01`に従い、主人公の年齢、性別表現、髪型、承認済み研究施設用衣服を確認する。未承認の人物像や職員証個人情報を独断で作らない。
-4. profile承認後、`gfx-item-003`の職員証写真とVOICE ANALYSIS cropを同じ原本から制作・統合し、P4-03を完了する。
-5. P5-01はP4-03と並行可能。全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
+1. `docs/README.md`の保存ルーティングに従い、`requirements.md` 14章、`technical-design.md` 11〜13章、`implementation-plan.md`のP5-01を読む。
+2. P5-01として全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
+3. `tmp/p4-03-protagonist-card.png`と`tmp/p4-03-protagonist-analysis.png`は主人公写真の実画面確認用。正式素材は`artwork/items/gfx-item-003/`と`public/assets/images/items/`にある。
+4. P4-02の正式高解像度原本・layer分離とP4-04の本番音声は独立した残作業であり、P5-01を止めない。

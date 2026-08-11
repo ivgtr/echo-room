@@ -1,5 +1,18 @@
 # ECHO ROOM グラフィック生成ログ
 
+## GFX-ITEM-003 主人公の職員証写真
+
+- 生成日: 2026-08-11
+- 用途: 職員用アクセスカード、VOICE ANALYSISの本人照合
+- provider / mode: OpenAI built-in `image_gen`、承認済みGFX-REF-001 cinematic v6を美術方向参照とした新規生成
+- model / model version / seed: built-in toolから非公開
+- 人物設定: 32歳前後の日本人男性。短い黒髪。地下研究施設の設備保守・運用担当。濃灰の高襟作業着。氏名と不要な経歴は設定しない。
+- prompt要旨: 正面、頭肩、平坦な寒色白色光、無地の寒色グレー背景、自然で落ち着いた普通の表情。文字、ロゴ、職員証、記章、道具、劇的な色光、英雄的・美容的演出を禁止。
+- 無加工生成物: built-in toolの保存原本を保持し、作業用copyを`tmp/imagegen/gfx-item-003__source.png`へ配置。
+- 承認原本: `items/gfx-item-003/gfx-item-003__approved__portrait-master__1120x1400.png`。生成時の1122×1402から中心を各辺1pxだけcropし、正確な4:5にした。
+- runtime: 同じ承認原本から`public/assets/images/items/`へ職員証用と声紋解析用の512×640 WebPを個別書き出し。
+- 目視検収: 単一人物、年齢感、髪型、保守作業着、正面性、crop安全域、無地背景を確認。生成文字、ロゴ、透かし、記章、背景設備、赤／cyanの色光は見られない。
+
 ## GFX-REF-001 美術方向キーフレーム
 
 - 生成日: 2026-08-11

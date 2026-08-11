@@ -49,11 +49,13 @@ export function AnalysisPanel({
         <div className="analysis-result">
           <strong>VOICEPRINT MATCH 100%</strong>
           <p>REGISTERED USER: E-01 OCCUPANT</p>
-          <div className="portrait-placeholder">
-            protagonist_unknown
-            <br />
-            512×640 PLACEHOLDER
-          </div>
+          <figure className="analysis-portrait">
+            <img
+              src="/assets/images/items/gfx-item-003__approved__voice-analysis-crop__512x640.webp"
+              alt="E-01 OCCUPANTとして照合された職員証写真"
+            />
+            <figcaption>STAFF RECORD / E-01</figcaption>
+          </figure>
           <button type="button" onClick={onComplete}>
             結果を確認する
           </button>

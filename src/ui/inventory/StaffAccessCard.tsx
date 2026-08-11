@@ -9,9 +9,11 @@ export function StaffAccessCard() {
         <strong>STAFF ACCESS</strong>
       </header>
       <div className="staff-card-body">
-        <div className="staff-card-portrait" aria-hidden="true">
-          ID
-        </div>
+        <img
+          className="staff-card-portrait"
+          src="/assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp"
+          alt="E-01職員証に登録された男性職員の写真"
+        />
         <dl>
           <div>
             <dt>FACILITY</dt>

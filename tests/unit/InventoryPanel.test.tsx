@@ -23,6 +23,14 @@ describe('InventoryPanel', () => {
     expect(
       screen.getByLabelText('施設E-01 職員用アクセスカード'),
     ).toHaveTextContent('PERSONNEL DATA / ENCRYPTED');
+    expect(
+      screen.getByRole('img', {
+        name: 'E-01職員証に登録された男性職員の写真',
+      }),
+    ).toHaveAttribute(
+      'src',
+      '/assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp',
+    );
 
     fireEvent.click(
       screen.getByRole('button', { name: /FACILITY MAP 簡易フロア図/ }),

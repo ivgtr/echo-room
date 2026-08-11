@@ -662,21 +662,22 @@ assets:
     label: 主人公の職員証写真
     category: character_portrait
     stage: 4
-    priority: blocked
-    blocked_by: [g-d01]
-    method: text_to_image_after_character_approval
-    prompt_parts: [negative]
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-ref-001]
+    prompt_parts: [reference_lock, negative]
     canvas:
       source_minimum: [1024, 1280]
       runtime: [512, 640]
       aspect_ratio: "4:5"
-    prompt_template: >-
-      Japanese research staff member, {{age}}, {{gender_presentation}},
-      {{hair_description}}, wearing {{approved_lab_clothing}}. Neutral staff badge
-      photograph, direct front view, calm ordinary expression, even flat lighting,
-      plain cool-gray background, shoulders visible, realistic but consistent with
-      the approved ECHO ROOM environment art. No text, no badge in frame, no dramatic
-      lighting, no beauty portrait styling.
+    prompt: >-
+      Neutral institutional ID photograph of one Japanese man around age 32 who
+      works in equipment maintenance and operations. Short straight black hair,
+      calm ordinary expression, direct front view and both shoulders visible.
+      Charcoal-gray high-collar facility work jacket with understated blue-gray
+      piping. Even flat cool-white lighting and a plain cool-gray background.
+      Realistic and grounded, with no text, logo, badge, insignia, dramatic light
+      or beauty-portrait styling.
     deliverables:
       - approved_portrait_master
       - badge_crop
@@ -980,14 +981,6 @@ post_generation_validation:
     - Final transmission control has exactly four packet slots and one red button.
 
 open_variables:
-  g-d01:
-    label: protagonist_profile
-    required_fields:
-      - age
-      - gender_presentation
-      - hair_description
-      - approved_lab_clothing
-    blocks: [gfx-item-003]
   g-d02:
     label: institute_logo
     blocks: []

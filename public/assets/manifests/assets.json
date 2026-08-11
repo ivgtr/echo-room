@@ -166,6 +166,23 @@
           "height": 941
         }
       ]
+    },
+    {
+      "id": "character_portraits",
+      "images": [
+        {
+          "id": "gfx-item-003__badge-crop",
+          "src": "/assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp",
+          "width": 512,
+          "height": 640
+        },
+        {
+          "id": "gfx-item-003__voice-analysis-crop",
+          "src": "/assets/images/items/gfx-item-003__approved__voice-analysis-crop__512x640.webp",
+          "width": 512,
+          "height": 640
+        }
+      ]
     }
   ],
   "placeholderPolicy": "missing_assets_only"

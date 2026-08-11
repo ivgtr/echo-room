@@ -1286,16 +1286,11 @@ button:focus-visible {
 }
 
 .staff-card-portrait {
-  display: grid;
+  display: block;
+  width: 100%;
   border: 1px solid #687775;
-  color: #667674;
-  background: repeating-linear-gradient(
-    135deg,
-    #c2cac6 0 0.4rem,
-    #aeb8b4 0.4rem 0.8rem
-  );
-  place-items: center;
   aspect-ratio: 4 / 5;
+  object-fit: cover;
 }
 
 .staff-access-card dl,
@@ -1508,15 +1503,27 @@ button:focus-visible {
   place-items: center;
 }
 
-.portrait-placeholder {
+.analysis-portrait {
   display: grid;
   width: min(12rem, 40%);
+  margin: 0;
+  gap: 0.35rem;
+  color: #8ca09d;
+  text-align: center;
+}
+
+.analysis-portrait img {
+  display: block;
+  width: 100%;
   aspect-ratio: 4 / 5;
   border: 1px solid #58b8b0;
-  color: #8ca09d;
   background: linear-gradient(145deg, #303a3b, #11181c);
-  place-items: center;
-  text-align: center;
+  object-fit: cover;
+}
+
+.analysis-portrait figcaption {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
 }
 
 .packet-row {
