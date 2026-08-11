@@ -1,0 +1,332 @@
+schemaVersion: 1
+contentVersion: '0.1.0'
+chapters:
+  - { id: chapter_intro, label: 覚醒 }
+  - { id: chapter_restore_power, label: 非常電源 }
+  - { id: chapter_inspect_logs, label: 20分のずれ }
+  - { id: chapter_unlock_locker, label: ロッカー }
+  - { id: chapter_no_adjacent_room, label: 隣室の否定 }
+  - { id: chapter_audio_packets, label: 未来の音声 }
+  - { id: chapter_voice_identity, label: 声の正体 }
+  - { id: chapter_final_transmission, label: 時間の輪 }
+  - { id: chapter_ending, label: 脱出 }
+locations:
+  - { id: location_north_wall, label: 北壁 }
+  - { id: location_east_wall, label: 東壁 }
+  - { id: location_south_wall, label: 南壁 }
+  - { id: location_west_wall, label: 西壁 }
+hotspots:
+  - {
+      id: hotspot_door,
+      locationId: location_north_wall,
+      label: 鉄製ドア,
+      conditions: [],
+    }
+  - {
+      id: hotspot_clock,
+      locationId: location_north_wall,
+      label: アナログ時計,
+      conditions: [],
+    }
+  - {
+      id: hotspot_intercom,
+      locationId: location_north_wall,
+      label: インターホン,
+      conditions: [],
+    }
+  - {
+      id: hotspot_terminal,
+      locationId: location_east_wall,
+      label: 壁面端末,
+      conditions: [{ type: puzzleSolved, puzzleId: puzzle_emergency_power }],
+    }
+  - {
+      id: hotspot_analysis_panel,
+      locationId: location_east_wall,
+      label: 解析パネル,
+      conditions: [{ type: itemOwned, itemId: item_screwdriver }],
+    }
+  - {
+      id: hotspot_desk,
+      locationId: location_south_wall,
+      label: デスク,
+      conditions: [],
+    }
+  - {
+      id: hotspot_breaker,
+      locationId: location_west_wall,
+      label: ブレーカー,
+      conditions: [],
+    }
+  - {
+      id: hotspot_locker,
+      locationId: location_west_wall,
+      label: ロッカー,
+      conditions: [],
+    }
+items:
+  - { id: item_screwdriver, label: ドライバー }
+  - { id: item_staff_card, label: 職員用カード }
+  - { id: item_floor_map, label: 簡易フロア図 }
+documents:
+  - {
+      id: document_power_test,
+      title: EMERGENCY POWER TEST,
+      body: 起動順序：周波数の低い回路から接続すること,
+    }
+  - {
+      id: document_emergency_note,
+      title: 緊急時メモ,
+      body: 緊急時は「送信側の時刻」を使用する。,
+    }
+  - {
+      id: document_floor_map,
+      title: FACILITY MAP,
+      body: E-01の左右は機械設備とコンクリート壁。隣室は存在しない。,
+    }
+dialogues:
+  - {
+      id: dialogue_packet_01,
+      speaker: future_protagonist,
+      text: '……聞こえるか？',
+      audioId: audio_packet_01,
+    }
+  - {
+      id: dialogue_packet_02,
+      speaker: future_protagonist,
+      text: まず電源を戻せ。,
+      audioId: audio_packet_02,
+    }
+  - {
+      id: dialogue_packet_03,
+      speaker: future_protagonist,
+      text: ログは気にするな。,
+      audioId: audio_packet_03,
+    }
+  - {
+      id: dialogue_packet_04,
+      speaker: future_protagonist,
+      text: 最後に、赤いボタンを押せ。,
+      audioId: audio_packet_04,
+    }
+  - {
+      id: dialogue_no_room_question,
+      speaker: protagonist,
+      text: 隣の部屋なんてないぞ。,
+    }
+  - {
+      id: dialogue_no_room_answer,
+      speaker: future_protagonist,
+      text: 分かってる。まだ説明できない。,
+    }
+  - { id: dialogue_identity_question, speaker: protagonist, text: お前は……。 }
+  - {
+      id: dialogue_identity_answer,
+      speaker: future_protagonist,
+      text: 20分後のお前だ。,
+    }
+puzzles:
+  - {
+      id: puzzle_emergency_power,
+      kind: sequence,
+      correctAnswer: [breaker_3, breaker_1, breaker_4, breaker_2],
+      incorrectFeedback: 全レバーが戻った。,
+      effects: [{ type: unlockTerminal, menuId: log }],
+      hintIds: [hint_power_1, hint_power_2, hint_power_3],
+    }
+  - {
+      id: puzzle_time_offset,
+      kind: observation,
+      correctAnswer: observed,
+      incorrectFeedback: 受信と送信元の時刻を見比べよう。,
+      effects: [{ type: advanceChapter, chapterId: chapter_unlock_locker }],
+      hintIds: [hint_time_1, hint_time_2, hint_time_3],
+    }
+  - {
+      id: puzzle_locker,
+      kind: keypad,
+      correctAnswer: '0237',
+      incorrectFeedback: ロックは解除されない。,
+      effects:
+        [
+          { type: grantItem, itemId: item_screwdriver },
+          { type: grantItem, itemId: item_staff_card },
+          { type: grantItem, itemId: item_floor_map },
+        ],
+      hintIds: [hint_locker_1, hint_locker_2, hint_locker_3],
+    }
+  - {
+      id: puzzle_no_adjacent_room,
+      kind: reveal,
+      correctAnswer: both_maps,
+      incorrectFeedback: 2つの図面を確認しよう。,
+      effects: [{ type: advanceChapter, chapterId: chapter_audio_packets }],
+      hintIds: [hint_room_1, hint_room_2, hint_room_3],
+    }
+  - {
+      id: puzzle_audio_packets,
+      kind: media,
+      correctAnswer: audio_packet_04,
+      incorrectFeedback: 未確認のPACKETがある。,
+      effects: [{ type: advanceChapter, chapterId: chapter_voice_identity }],
+      hintIds: [hint_audio_1, hint_audio_2, hint_audio_3],
+    }
+  - {
+      id: puzzle_voice_identity,
+      kind: analysis,
+      correctAnswer: voice_analysis_on,
+      incorrectFeedback: パネルを開く道具が必要だ。,
+      effects:
+        [{ type: advanceChapter, chapterId: chapter_final_transmission }],
+      hintIds: [hint_voice_1, hint_voice_2, hint_voice_3],
+    }
+  - {
+      id: puzzle_final_transmission,
+      kind: reorder,
+      correctAnswer:
+        [audio_packet_01, audio_packet_02, audio_packet_03, audio_packet_04],
+      incorrectFeedback: 冒頭で聞いた順番と違う。,
+      effects: [{ type: advanceChapter, chapterId: chapter_ending }],
+      hintIds: [hint_final_1, hint_final_2, hint_final_3],
+    }
+hints:
+  - {
+      id: hint_power_1,
+      puzzleId: puzzle_emergency_power,
+      level: 1,
+      text: デスクの紙を確認しよう。,
+    }
+  - {
+      id: hint_power_2,
+      puzzleId: puzzle_emergency_power,
+      level: 2,
+      text: 4つの音の高さを比べよう。,
+    }
+  - {
+      id: hint_power_3,
+      puzzleId: puzzle_emergency_power,
+      level: 3,
+      text: 低い音から順に接続する。,
+    }
+  - {
+      id: hint_time_1,
+      puzzleId: puzzle_time_offset,
+      level: 1,
+      text: LOGの2列を見比べよう。,
+    }
+  - {
+      id: hint_time_2,
+      puzzleId: puzzle_time_offset,
+      level: 2,
+      text: 同じ行の分と秒に注目する。,
+    }
+  - {
+      id: hint_time_3,
+      puzzleId: puzzle_time_offset,
+      level: 3,
+      text: 送信元は受信より20分後だ。,
+    }
+  - {
+      id: hint_locker_1,
+      puzzleId: puzzle_locker,
+      level: 1,
+      text: 緊急時メモを確認する。,
+    }
+  - {
+      id: hint_locker_2,
+      puzzleId: puzzle_locker,
+      level: 2,
+      text: SYSTEMの送信側時刻を使う。,
+    }
+  - {
+      id: hint_locker_3,
+      puzzleId: puzzle_locker,
+      level: 3,
+      text: 02:37を4桁にする。,
+    }
+  - {
+      id: hint_room_1,
+      puzzleId: puzzle_no_adjacent_room,
+      level: 1,
+      text: SECURITYと所持品を確認する。,
+    }
+  - {
+      id: hint_room_2,
+      puzzleId: puzzle_no_adjacent_room,
+      level: 2,
+      text: E-01の左右を比較する。,
+    }
+  - {
+      id: hint_room_3,
+      puzzleId: puzzle_no_adjacent_room,
+      level: 3,
+      text: 隣室は図面に存在しない。,
+    }
+  - {
+      id: hint_audio_1,
+      puzzleId: puzzle_audio_packets,
+      level: 1,
+      text: AUDIOを最後まで確認する。,
+    }
+  - {
+      id: hint_audio_2,
+      puzzleId: puzzle_audio_packets,
+      level: 2,
+      text: 聞き覚えのない音声を探す。,
+    }
+  - {
+      id: hint_audio_3,
+      puzzleId: puzzle_audio_packets,
+      level: 3,
+      text: PACKET 04を再生する。,
+    }
+  - {
+      id: hint_voice_1,
+      puzzleId: puzzle_voice_identity,
+      level: 1,
+      text: 端末横のパネルを調べる。,
+    }
+  - {
+      id: hint_voice_2,
+      puzzleId: puzzle_voice_identity,
+      level: 2,
+      text: ドライバーを使用する。,
+    }
+  - {
+      id: hint_voice_3,
+      puzzleId: puzzle_voice_identity,
+      level: 3,
+      text: VOICE ANALYSISをONにする。,
+    }
+  - {
+      id: hint_final_1,
+      puzzleId: puzzle_final_transmission,
+      level: 1,
+      text: 冒頭の会話を思い出す。,
+    }
+  - {
+      id: hint_final_2,
+      puzzleId: puzzle_final_transmission,
+      level: 2,
+      text: PACKET 01から04の順を再現する。,
+    }
+  - {
+      id: hint_final_3,
+      puzzleId: puzzle_final_transmission,
+      level: 3,
+      text: 聞こえるか、電源、ログ、赤いボタンの順。,
+    }
+storyFacts:
+  wallClock: '02:17'
+  negativeDelay: '-00:20:00'
+  lockerCode: '0237'
+  finalSlots: 4
+  receiveTimes: ['02:11:04', '02:14:32', '02:17:18']
+  sourceTimes: ['02:31:04', '02:34:32', '02:37:18']
+  packets:
+    [
+      '……聞こえるか？',
+      'まず電源を戻せ。',
+      'ログは気にするな。',
+      '最後に、赤いボタンを押せ。',
+    ]
