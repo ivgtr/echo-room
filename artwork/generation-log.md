@@ -86,3 +86,22 @@ previewはすべて1672×941。美術方向の選定にのみ使用する。シ�
 | GFX-REF-004 | `reference/gfx-ref-004/gfx-ref-004__reference.png`      | canonical_spaceを2048角の同一原点4 layerへ手動作図      | 5.2m×4.0m、4壁の設備位置、開始視点、開口禁止を明記                       |
 
 REF-002は1672×941のgeometry承認用preview。REF-003 / 004は2048×2048。geometry承認後に単純拡大ではない高解像度制作原本とruntime書き出しへ進む。
+
+## Stage 2 4方向広角preview
+
+- canonical room geometry承認日: 2026-08-11
+- provider: OpenAI built-in `image_gen`。WIDE-001はgeometry driftを避けるため、承認済みREF-002をそのまま継承。
+- 共通参照: GFX-REF-002（形状・北壁）、GFX-REF-003（材質・色）、GFX-REF-004（配置・左右関係）。
+- 共通prompt要旨: 目線高1.65m、28〜32mm、水平、同一室寸法、下部24%字幕安全域を固定。重厚な自然金属、整理された非言語情報、冷白・赤・cyanの局所照明を継承し、low-poly、安価な3D、窓、別開口、生成文字を禁止する。
+
+| ID           | 向き | 出力                                                        | 配置検収                                                            |
+| ------------ | ---- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| GFX-WIDE-001 | 北   | `wide/gfx-wide-001/gfx-wide-001__powered__preview-flat.png` | 中央密閉扉、左上時計、右intercom、上部空表示筐体                    |
+| GFX-WIDE-002 | 東   | `wide/gfx-wide-002/gfx-wide-002__powered__preview-flat.png` | 中央blank terminal、右service panel、左端に北壁扉・intercom cue     |
+| GFX-WIDE-003 | 南   | `wide/gfx-wide-003/gfx-wide-003__powered__preview-flat.png` | 中央desk、椅子、blank paper、左端east cue、右端west cue             |
+| GFX-WIDE-004 | 西   | `wide/gfx-wide-004/gfx-wide-004__powered__preview-flat.png` | 左locker、右4-lever breaker、右端north door cue、左端south desk cue |
+
+- 横断preview: `wide/gfx-wide-stage2__contact-sheet-preview.jpg`
+- 修正: WIDE-003の北壁表示に似た不要筐体を通常task lightへ置換。WIDE-004左端の誤ったcyan端末cueを南壁desk端へ置換。
+- rejected: toolの無関係出力と配置drift稿は`artwork/rejected/`にローカル保持し、通常Gitには含めない。
+- 現解像度: 全4面1672×941のcross-view承認用preview。承認後に同一構図の高解像度制作、layer分離、state差分へ進む。
