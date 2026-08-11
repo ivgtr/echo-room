@@ -75,7 +75,6 @@ export function GameScreen(props: Props) {
         <WorldCanvas
           locationId={props.locationId}
           powerRestored={props.powerRestored}
-          selectedHotspotId={props.selectedHotspotId}
           onHotspotSelected={props.onHotspotSelected}
         />
         <div className="hud-layer">

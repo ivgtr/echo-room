@@ -98,3 +98,9 @@ export function getWorldImage(locationId: LocationId, powerRestored: boolean) {
     powerRestored ? 'powered' : 'emergency'
   ];
 }
+
+export function getAllWorldImages() {
+  return Object.values(worldViewAssets).flatMap((asset) =>
+    Object.values(asset.images),
+  );
+}

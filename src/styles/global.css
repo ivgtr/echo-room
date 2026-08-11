@@ -157,11 +157,6 @@ button:focus-visible {
 .canvas-host canvas {
   display: block;
   object-fit: fill;
-  transition: filter 180ms ease;
-}
-
-.canvas-host.is-inspecting canvas {
-  filter: brightness(1.08);
 }
 
 .canvas-asset-status {

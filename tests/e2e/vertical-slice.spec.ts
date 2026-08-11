@@ -9,19 +9,52 @@ async function enterRoom(page: Page) {
   await page.getByRole('button', { name: '探索を始める' }).click();
 }
 
-test('loads the approved artwork in all four room views', async ({ page }) => {
+test('keeps one canvas while crossfading all four room views', async ({
+  page,
+}) => {
   await enterRoom(page);
   const world = page.getByTestId('world-canvas');
+  const canvas = world.locator('canvas');
   await expect(world).toHaveAttribute('data-asset-state', 'ready');
+  await expect(world).toHaveAttribute('data-transition-state', 'idle');
+  await expect(canvas).toHaveCount(1);
+  await canvas.evaluate((element) => {
+    element.dataset.persistenceMarker = 'original-canvas';
+  });
+  await world.evaluate((element) => {
+    element.dataset.sawTransition = 'false';
+    new MutationObserver(() => {
+      if (element.dataset.transitionState === 'animating') {
+        element.dataset.sawTransition = 'true';
+      }
+    }).observe(element, {
+      attributes: true,
+      attributeFilter: ['data-transition-state'],
+    });
+  });
 
-  for (const direction of [
-    '東壁を見る',
-    '南壁を見る',
-    '西壁を見る',
-    '北壁を見る',
-  ]) {
-    await page.getByRole('button', { name: direction }).click();
+  for (const [buttonName, viewName] of [
+    ['東壁を見る', '東壁'],
+    ['南壁を見る', '南壁'],
+    ['西壁を見る', '西壁'],
+    ['北壁を見る', '北壁'],
+  ] as const) {
+    await world.evaluate((element) => {
+      element.dataset.sawTransition = 'false';
+    });
+    await page.getByRole('button', { name: buttonName }).click();
+    await expect(canvas).toHaveAttribute(
+      'aria-label',
+      new RegExp(`実験室E-01 ${viewName}`),
+    );
     await expect(world).toHaveAttribute('data-asset-state', 'ready');
+    await expect(world).toHaveAttribute('data-transition-state', 'idle');
+    await expect(world).toHaveAttribute('data-saw-transition', 'true');
+    await expect(canvas).toHaveAttribute(
+      'data-persistence-marker',
+      'original-canvas',
+    );
+    await expect(page.getByText('背景素材を読み込んでいます…')).toBeHidden();
   }
 });
 
@@ -33,6 +66,12 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   for (let index = 0; index < 6; index += 1)
     await page.getByRole('button', { name: '次へ' }).click();
   await page.getByRole('button', { name: '探索を始める' }).click();
+  const world = page.getByTestId('world-canvas');
+  const canvas = world.locator('canvas');
+  await expect(world).toHaveAttribute('data-asset-state', 'ready');
+  await canvas.evaluate((element) => {
+    element.dataset.persistenceMarker = 'before-power';
+  });
   await page.getByRole('button', { name: '音声 ON' }).click();
   await page.getByRole('button', { name: '西壁を見る' }).click();
   await page
@@ -57,6 +96,11 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   }
 
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
+  await expect(world).toHaveAttribute('data-transition-state', 'idle');
+  await expect(canvas).toHaveAttribute(
+    'data-persistence-marker',
+    'before-power',
+  );
   await expect(page.getByText('電源復旧地点を自動保存しました')).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: '続きから' }).click();
