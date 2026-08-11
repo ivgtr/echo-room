@@ -7,16 +7,16 @@ export const itemDetails: Record<
   item_screwdriver: {
     label: 'ドライバー',
     code: 'DRIVER',
-    description: '細い固定ネジに合う。端末周辺のパネルを開けられそうだ。',
+    description: '細いネジに合う。端末の横にあるパネルを開けられそうだ。',
   },
   item_staff_card: {
     label: '職員用カード',
     code: 'ACCESS CARD',
-    description: '実験棟の職員用カード。壁面端末のSECURITY認証に使用できる。',
+    description: '施設の職員用カード。壁面端末のSECURITYを開けられる。',
   },
   item_floor_map: {
     label: '設備・配線図',
     code: 'CONDUIT MAP',
-    description: 'E-01の室内配置と通信配線層を重ねた保守用の二層図。',
+    description: 'E-01の部屋の図と、通信の配線図を重ねたもの。',
   },
 };

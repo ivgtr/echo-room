@@ -39,23 +39,24 @@ export const selectReservePower = (snapshot: GameSnapshot) =>
   snapshot.context.reservePower;
 
 const objectives: Partial<Record<StoryStage, string>> = {
-  puzzle_carrier_sync: '端末のSYSTEMでECHO BUFFERの搬送波を同期する。',
-  puzzle_maintenance_lock: '西壁の保守ロッカーを点検記号で開ける。',
-  puzzle_log_pairing: '端末のLOGで波形指紋を照合する。',
-  puzzle_signal_route: 'SECURITYの二層図から通信経路を追跡する。',
-  puzzle_packet_repair: 'SIGNALで破損PACKETのフレームを復元する。',
-  puzzle_temporal_anomaly: '復元PACKETと実際の出来事を照合する。',
-  puzzle_voiceprint_calibration: '解析パネルで声紋特徴量を校正する。',
-  puzzle_causal_script: 'SYSTEMで冒頭の因果会話を再構成する。',
-  puzzle_transmission_window: '4つの受信窓へ送信計画を設定する。',
-  transmission_ready: '試験を通過した送信計画を赤いボタンで実行する。',
+  puzzle_carrier_sync: '端末のSYSTEMで、A・B・Cの波のずれを直す。',
+  puzzle_maintenance_lock: '西壁のロッカーを、4つの記号で開ける。',
+  puzzle_log_pairing: '端末のLOGで、同じ形の通信を組み合わせる。',
+  puzzle_signal_route: 'SECURITYの配線図で、通信線の行き先を調べる。',
+  puzzle_packet_repair: 'SIGNALで、壊れたPACKETをつなぎ直す。',
+  puzzle_temporal_anomaly: '4つの発言から、未来を知っているものを探す。',
+  puzzle_voiceprint_calibration:
+    '解析パネルで、受信データを職員記録に合わせる。',
+  puzzle_causal_script: 'SYSTEMで、4つの発言を正しい順に並べる。',
+  puzzle_transmission_window: '4つの発言を、20分前へ送る準備をする。',
+  transmission_ready: 'SYSTEMで送る内容を確認し、赤いボタンを押す。',
 };
 
 export const selectObjective = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;
   if (snapshot.matches({ playing: 'powered' }))
     return objectives[snapshot.context.storyStage] ?? '脱出経路を確認する。';
-  return '非常電源の損傷箇所と必要容量を調べ、給電経路を構成する。';
+  return 'デスクで容量と壊れた線を調べ、ブレーカーをつなぐ。';
 };
 
 export const selectSubtitle = (snapshot: GameSnapshot) => {
@@ -64,23 +65,23 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   const stage = snapshot.context.storyStage;
   if (hotspot === 'hotspot_door')
     return stage === 'transmission_ready'
-      ? 'ECHO TRANSMISSION COMPLETEを待機している。'
-      : '非常ロックは通信完了信号と連動している。';
+      ? '送信が終われば、ドアのロックが外れるはずだ。'
+      : '非常ロックがかかっている。通信が終わるまで開かない。';
   if (hotspot === 'hotspot_intercom')
     return stage === 'puzzle_signal_route'
-      ? '端子は環形。回線は設備壁の内部へ続いている。'
-      : '発話音声ではなく、字幕と声紋特徴量を含むPACKETを受信している。';
+      ? '丸い端子から、通信線が設備壁の中へ続いている。'
+      : '音声は流れない。文章と声紋データがPACKETで届いている。';
   if (hotspot === 'hotspot_terminal' && !snapshot.context.powerRestored)
     return '端末には電源が来ていない。';
   if (
     hotspot === 'hotspot_analysis_panel' &&
     stage !== 'puzzle_voiceprint_calibration'
   )
-    return '解析パネルは職員記録との照合に使う。今は必要な資料が足りない。';
+    return '受信データと職員記録を比べる装置だ。今はまだ使えない。';
   if (hotspot === 'hotspot_locker' && stage !== 'puzzle_maintenance_lock')
     return snapshot.context.inventory.length > 0
       ? '保守ロッカーは開いている。必要な物は回収済みだ。'
-      : '数字盤ではなく、四つの保守記号を設定する錠だ。';
+      : '数字ではなく、4つの機器記号で開ける錠だ。';
   return null;
 };
 

@@ -58,7 +58,7 @@ export function InventoryPanel({
                 onInspectMap();
               }}
             >
-              フロア図を展開する
+              図を広げる
             </button>
           )}
           {selectedItem === 'item_floor_map' && mapExpanded && (

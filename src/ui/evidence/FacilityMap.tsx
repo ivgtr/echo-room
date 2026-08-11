@@ -35,7 +35,7 @@ export function FacilityMap({
         </div>
       </div>
       {conduitLayer && (
-        <div className="facility-conduit-layer" aria-label="通信配線層">
+        <div className="facility-conduit-layer" aria-label="通信の配線図">
           <span>INTERCOM ○</span>
           <i aria-hidden="true">━━━━ ○ J-2 ━━━━</i>
           <strong>ECHO BUFFER RETURN ○</strong>
@@ -43,7 +43,7 @@ export function FacilityMap({
         </div>
       )}
       <p className="map-finding">
-        E-01の左右は設備壁。通信線は壁内中継器へ続いている。
+        E-01の左右に部屋はない。通信線は設備壁の中へ続いている。
       </p>
     </figure>
   );

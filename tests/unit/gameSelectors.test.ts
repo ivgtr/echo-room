@@ -16,7 +16,7 @@ describe('exploration messaging selectors', () => {
     }
 
     expect(selectObjective(actor.getSnapshot())).toContain(
-      '非常電源の損傷箇所',
+      'デスクで容量と壊れた線',
     );
     expect(selectSubtitle(actor.getSnapshot())).toBeNull();
   });

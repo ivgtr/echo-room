@@ -37,7 +37,7 @@ function ClockEvidence() {
       <p className="clock-readout">
         STOPPED AT <time dateTime="02:17">02:17</time>
       </p>
-      <p>秒針は動いていない。バッテリー残量とは別の時刻情報だ。</p>
+      <p>秒針は止まっている。バッテリーの残り時間を示す時計ではない。</p>
     </div>
   );
 }

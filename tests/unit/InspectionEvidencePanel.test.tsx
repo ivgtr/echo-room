@@ -9,7 +9,9 @@ describe('InspectionEvidencePanel', () => {
     render(<InspectionEvidencePanel kind="clock" onClose={onClose} />);
     expect(screen.getByRole('dialog')).toHaveClass('clock-evidence-modal');
     expect(screen.getByText('02:17')).toHaveAttribute('datetime', '02:17');
-    expect(screen.getByText(/バッテリー残量とは別/)).toBeVisible();
+    expect(
+      screen.getByText(/バッテリーの残り時間を示す時計ではない/),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
     expect(onClose).toHaveBeenCalledOnce();
   });

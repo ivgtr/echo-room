@@ -6,6 +6,7 @@
 
 - P0〜P3は完了し、代替画像・字幕・正式な手続き生成サウンドで冒頭からエンディングまで通して遊べる。
 - P3R-01は完了。旧7問、音高順、0237ロッカー、資料閲覧だけの進行、自動VOICE ANALYSIS、単純な最終並べ替えを削除し、証拠・複数判断・一括検証を持つ主要10問へ単一移行した。
+- P3R-02は完了。謎の情報量と正解を維持したまま、10問の名称・説明・手掛かり・設問・誤答、30ヒント、目的、端末、探索文、資料、所持品、通知を短く自然な日本語へ統一した。抽象的な技術語は固有名に必要な範囲へ絞り、具体的な見る場所と操作へ言い換えた。
 - 搬送波、PACKET指紋、声紋特徴量を同じ視覚文法へ統一し、線高と数列を併記した。すべての主要パズルは発話音声・音の聞き分けなしで解ける。
 - P4は本素材統合の途中。P4-02の現行画面は利用者から肯定評価を受け、UI工程へ進む指示があったため、実機確認待ちのblockerは2026-08-11に解除された。
 - P4-02には正式高解像度原本、独立parallax layer、hit mask、残状態差分が残る。これらはP4-02内で継続するが、P5およびUI品質向上の着手を止めない。
@@ -44,6 +45,7 @@
 | P3-06 | completed | 因果会話再構成、4受信窓・固定遅延・回線終端の最終送信設計、赤ボタン、ドア解錠、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
 | P3-07 | completed | 主要10問に3段階、合計30ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 30 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P3R-01 | completed | 旧7問のstage・event・専用component・保存fieldを削除。10個のdata definition、単一PuzzleWorkbench、単一`PUZZLE_SUBMITTED`event、純粋判定、進行schema v3へ破壊的移行。二層図を通信経路謎へ変更し、赤ボタンを全問後のpayoffへ限定 | `npm run check`成功（17 files/56 tests、10 puzzle/30 hint、4 bundle/27画像、build 589.37kB）。Chromiumでkeyboardのみの予備電源→10問→ending通し1件、既存13件を分割実行し全件成功 | 初見所要時間と難易度はP7-01で利用者playtest |
+| P3R-02 | completed | ゲーム内日本語の基準を正本化。パズル、ヒント、目的、端末、独白、資料、所持品、保存通知を平易化し、同じ対象の呼称を統一。正解配列、判定、進行、PACKET本文は変更なし | `npm run check`成功（17 files/56 tests、content・asset validation、build 589.49kB）。Chromiumの全編10問・keyboard・touch・focus・reduced-motionを含む対象9件成功（7件初回＋文言期待値更新後2件再実行） | 初見時の読みやすさはP7-01で利用者確認 |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
 | P4-02 | in_progress | 3 bundle・25画像、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。UIQ-02でReact・Pixi共通の6〜10点polygon hotspotへ更新。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit、同一Canvas維持・全4面fade・電源復旧・全編・touch・輪郭外click拒否E2E | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-04の着手は阻害しない |
 | P4-03 | completed | 時計接写へ02:17、デスク接写へ容量・負荷・短絡情報を合成。SYSTEMへ-00:20:00、SECURITYと所持品へ室内・通信配線の二層図、職員カードと声紋校正へ同一人物写真、最終送信へ4受信窓・固定遅延・回線終端・赤いbuttonを統合 | `npm run check`、Chromiumの時計・用紙・二層図・波形・全編keyboard・touch・focus復帰E2E | なし |

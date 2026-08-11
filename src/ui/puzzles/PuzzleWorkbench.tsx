@@ -68,8 +68,8 @@ export function PuzzleWorkbench({
       </header>
 
       <div className="reasoning-layout">
-        <aside className="puzzle-evidence" aria-label="取得済みの証拠">
-          <h3>EVIDENCE / 証拠</h3>
+        <aside className="puzzle-evidence" aria-label="見つけた手掛かり">
+          <h3>EVIDENCE / 手掛かり</h3>
           <ul>
             {definition.evidence.map((line) => (
               <li key={line}>{line}</li>
@@ -113,7 +113,7 @@ export function PuzzleWorkbench({
       <p className="puzzle-feedback" aria-live="assertive">
         {failures > 0
           ? definition.incorrectFeedback
-          : `判断済み ${answers.filter(Boolean).length} / ${answers.length}`}
+          : `選択済み ${answers.filter(Boolean).length} / ${answers.length}`}
       </p>
       <footer>
         <button
@@ -122,7 +122,7 @@ export function PuzzleWorkbench({
           disabled={!complete}
           onClick={() => onSubmit(puzzleId, answers.filter(isString))}
         >
-          構成を検証する
+          この答えで確認する
         </button>
         {!embedded && (
           <button type="button" onClick={onClose}>
@@ -136,7 +136,7 @@ export function PuzzleWorkbench({
 
 function WaveformBoard({ patterns }: { patterns: readonly number[][] }) {
   return (
-    <figure className="waveform-board" aria-label="比較用の波形特徴">
+    <figure className="waveform-board" aria-label="波形の比較">
       {patterns.map((pattern, row) => (
         <div className="waveform-row" key={pattern.join('-')}>
           <span>CH-{row + 1}</span>
@@ -151,7 +151,7 @@ function WaveformBoard({ patterns }: { patterns: readonly number[][] }) {
           <output>{pattern.join('-')}</output>
         </div>
       ))}
-      <figcaption>線高と数列は同じ特徴を表す。音声再生は不要。</figcaption>
+      <figcaption>線の高さと数字は、同じ波の形を表している。</figcaption>
     </figure>
   );
 }

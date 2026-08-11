@@ -27,10 +27,10 @@ describe('TerminalPanel', () => {
         stage="puzzle_carrier_sync"
       />,
     );
-    expect(screen.getByText('搬送波同期')).toBeVisible();
-    expect(screen.getByLabelText('比較用の波形特徴')).toBeVisible();
+    expect(screen.getByText('波のずれを直す')).toBeVisible();
+    expect(screen.getByLabelText('波形の比較')).toBeVisible();
     expect(
-      screen.getByRole('button', { name: '構成を検証する' }),
+      screen.getByRole('button', { name: 'この答えで確認する' }),
     ).toBeDisabled();
   });
 
@@ -42,8 +42,8 @@ describe('TerminalPanel', () => {
         stage="puzzle_signal_route"
       />,
     );
-    expect(screen.getByText('通信経路追跡')).toBeVisible();
-    expect(screen.getByText(/ECHO BUFFER終端も環/)).toBeVisible();
+    expect(screen.getByText('通信線をたどる')).toBeVisible();
+    expect(screen.getByText(/ECHO BUFFER RETURNも丸/)).toBeVisible();
   });
 
   it('makes the red button a payoff only after puzzle ten', () => {

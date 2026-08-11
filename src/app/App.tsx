@@ -251,10 +251,8 @@ export function App() {
     savedProgressRef.current = true;
     if (persistCurrentProgress()) {
       lastSavedCheckpointRef.current = progress.checkpointId;
-      if (firstSave)
-        queueMicrotask(() => setSaveMessage('電源復旧地点を自動保存しました'));
-      else if (previousCheckpoint !== progress.checkpointId)
-        queueMicrotask(() => setSaveMessage('進行地点を自動保存しました'));
+      if (firstSave || previousCheckpoint !== progress.checkpointId)
+        queueMicrotask(() => setSaveMessage('自動保存しました'));
     } else {
       queueMicrotask(() =>
         setSaveMessage('保存できませんでした。プレイは続行できます'),
@@ -347,7 +345,7 @@ export function App() {
       if (hotspotId === 'hotspot_desk')
         appendHistory([
           discoveryEntry(
-            '非常電源容量は7 UNIT。ドア駆動線に短絡痕があり、BUFFERは最後に起動する。',
+            '非常電源は7 UNITまで。ドアの線はショートしている。BUFFERは最後に起動する。',
           ),
         ]);
       actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId });

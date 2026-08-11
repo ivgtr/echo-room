@@ -47,7 +47,7 @@ describe('TitleScreen', () => {
       />,
     );
     expect(screen.getByRole('alert')).toHaveTextContent(
-      '破損データを消去するまで進行は保存されません',
+      'このデータを消すまで新しい進行は保存されません',
     );
   });
 });

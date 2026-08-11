@@ -2,16 +2,16 @@ schemaVersion: 2
 contentVersion: '0.2.0'
 chapters:
   - { id: chapter_intro, label: 覚醒 }
-  - { id: chapter_power_route, label: 非常電源経路 }
-  - { id: chapter_carrier_sync, label: 搬送波同期 }
-  - { id: chapter_maintenance_lock, label: 保守ロッカー }
-  - { id: chapter_log_pairing, label: 通信ログ照合 }
-  - { id: chapter_signal_route, label: 通信経路追跡 }
-  - { id: chapter_packet_repair, label: PACKET復元 }
-  - { id: chapter_temporal_anomaly, label: 時系列矛盾 }
-  - { id: chapter_voiceprint, label: 声紋校正 }
-  - { id: chapter_causal_script, label: 因果会話 }
-  - { id: chapter_transmission, label: 最終送信設計 }
+  - { id: chapter_power_route, label: 非常電源をつなぐ }
+  - { id: chapter_carrier_sync, label: 波のずれを直す }
+  - { id: chapter_maintenance_lock, label: ロッカーの記号 }
+  - { id: chapter_log_pairing, label: 同じ通信を探す }
+  - { id: chapter_signal_route, label: 通信線をたどる }
+  - { id: chapter_packet_repair, label: PACKETをつなぎ直す }
+  - { id: chapter_temporal_anomaly, label: まだ起きていないこと }
+  - { id: chapter_voiceprint, label: 声紋データを合わせる }
+  - { id: chapter_causal_script, label: 会話を並べ直す }
+  - { id: chapter_transmission, label: 20分前へ送る }
   - { id: chapter_ending, label: 脱出 }
 locations:
   - { id: location_north_wall, label: 北壁 }
@@ -71,17 +71,17 @@ documents:
   - {
       id: document_power_plan,
       title: EMERGENCY BYPASS PLAN,
-      body: 容量7 UNIT。ドア駆動線は短絡。BUFFERは最後に接続する。,
+      body: 容量は7 UNIT。ドアの線はショートしている。BUFFERは最後につなぐ。,
     }
   - {
       id: document_maintenance_order,
       title: MAINTENANCE ORDER,
-      body: 点検順を回路銘板の記号へ変換する。,
+      body: 点検する機器を、同じ機器の記号に置き換える。,
     }
   - {
       id: document_conduit_map,
       title: FACILITY CONDUIT MAP,
-      body: E-01の通信実線は環端子J-2を経てECHO BUFFER RETURNへ続く。,
+      body: E-01の通信実線は、丸端子J-2からECHO BUFFER RETURNへ続く。,
     }
 dialogues:
   - {
@@ -117,7 +117,7 @@ dialogues:
   - {
       id: dialogue_identity_question,
       speaker: protagonist,
-      text: この特徴量は俺の記録と同じだ。,
+      text: この波の形は……俺の職員記録と同じだ。,
     }
   - {
       id: dialogue_identity_answer,
@@ -128,19 +128,19 @@ puzzles:
   - id: puzzle_power_route
     kind: routing
     correctAnswer: [door, terminal, intercom, buffer]
-    incorrectFeedback: 容量、短絡痕、起動条件をすべて満たす必要がある。
+    incorrectFeedback: 合計容量、ドアの線、起動する順番を見直す。
     effects: [{ type: unlockTerminal, menuId: system }]
     hintIds: [hint_power_1, hint_power_2, hint_power_3]
   - id: puzzle_carrier_sync
     kind: calibration
     correctAnswer: [right-2, none, left-1]
-    incorrectFeedback: 早い波形と遅い波形では補正方向が逆になる。
+    incorrectFeedback: 早い波は右、遅い波は左へ動かす。
     effects: [{ type: advanceChapter, chapterId: chapter_maintenance_lock }]
     hintIds: [hint_carrier_1, hint_carrier_2, hint_carrier_3]
   - id: puzzle_maintenance_lock
     kind: correlation
     correctAnswer: [double, ring, triangle, node]
-    incorrectFeedback: 点検対象を回路銘板の記号へ置き換える。
+    incorrectFeedback: 点検順の機器を、一つずつ記号に置き換える。
     effects:
       - { type: grantItem, itemId: item_screwdriver }
       - { type: grantItem, itemId: item_staff_card }
@@ -149,44 +149,44 @@ puzzles:
   - id: puzzle_log_pairing
     kind: correlation
     correctAnswer: [s-b, s-c, s-a]
-    incorrectFeedback: 三節すべてが同じ波形指紋を探す。
+    incorrectFeedback: 3つの波がすべて同じになる組を探す。
     effects: [{ type: advanceChapter, chapterId: chapter_signal_route }]
     hintIds: [hint_log_1, hint_log_2, hint_log_3]
   - id: puzzle_signal_route
     kind: routing
     correctAnswer: [signal, ring-relay, echo-buffer]
-    incorrectFeedback: 線種と端子記号の両方を維持する。
+    incorrectFeedback: 実線と同じ形の端子を続けてたどる。
     effects: [{ type: advanceChapter, chapterId: chapter_packet_repair }]
     hintIds: [hint_route_1, hint_route_2, hint_route_3]
   - id: puzzle_packet_repair
     kind: reconstruction
     correctAnswer: [c, d, a, b]
-    incorrectFeedback: 先頭、終端、断片間の接続を確認する。
+    incorrectFeedback: 最初と最後を決め、同じ記号の端を合わせる。
     effects: [{ type: advanceChapter, chapterId: chapter_temporal_anomaly }]
     hintIds: [hint_repair_1, hint_repair_2, hint_repair_3]
   - id: puzzle_temporal_anomaly
     kind: correlation
     correctAnswer: [packet-04, unseen-event]
-    incorrectFeedback: 既発生と未発生の出来事を分ける。
+    incorrectFeedback: すでに起きたことと、まだ起きていないことを分ける。
     effects: [{ type: advanceChapter, chapterId: chapter_voiceprint }]
     hintIds: [hint_anomaly_1, hint_anomaly_2, hint_anomaly_3]
   - id: puzzle_voiceprint_calibration
     kind: calibration
     correctAnswer: [compress-half, invert, left-2]
-    incorrectFeedback: 三チャンネルを個別に基準へ戻す。
+    incorrectFeedback: 間隔、上下、開始位置を一つずつ見本に合わせる。
     effects: [{ type: advanceChapter, chapterId: chapter_causal_script }]
     hintIds: [hint_voice_1, hint_voice_2, hint_voice_3]
   - id: puzzle_causal_script
     kind: reconstruction
     correctAnswer: [packet-01, packet-02, packet-03, packet-04]
-    incorrectFeedback: 発言可能になる設備状態を確認する。
+    incorrectFeedback: それぞれの発言を聞いたときの出来事を思い出す。
     effects: [{ type: advanceChapter, chapterId: chapter_transmission }]
     hintIds: [hint_script_1, hint_script_2, hint_script_3]
   - id: puzzle_transmission_window
     kind: routing
     correctAnswer:
       [packet-01, packet-02, packet-03, packet-04, minus-20, echo-return]
-    incorrectFeedback: 受信順、固定遅延、正規終端を満たす。
+    incorrectFeedback: 発言の順番、20分前、送り先を見直す。
     effects: [{ type: advanceChapter, chapterId: chapter_ending }]
     hintIds: [hint_send_1, hint_send_2, hint_send_3]
 hints:
@@ -194,31 +194,31 @@ hints:
       id: hint_power_1,
       puzzleId: puzzle_power_route,
       level: 1,
-      text: 容量と短絡痕を確認する。,
+      text: 合計容量と、ショートした線を確認する。,
     }
   - {
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: ドア線を隔離し、必要設備だけを使う。,
+      text: ドアの線を切り離し、必要な設備だけを使う。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: ドア隔離、端末、通話器、BUFFER。,
+      text: ドアの線を切る。端末、通話器、BUFFERの順。,
     }
   - {
       id: hint_carrier_1,
       puzzleId: puzzle_carrier_sync,
       level: 1,
-      text: 同期点を比較する。,
+      text: 波が最初に上がる位置を比べる。,
     }
   - {
       id: hint_carrier_2,
       puzzleId: puzzle_carrier_sync,
       level: 2,
-      text: 早い波形は右へ戻す。,
+      text: 早い波は右へ、遅い波は左へ動かす。,
     }
   - {
       id: hint_carrier_3,
@@ -230,31 +230,31 @@ hints:
       id: hint_lock_1,
       puzzleId: puzzle_maintenance_lock,
       level: 1,
-      text: 点検順と銘板を対応させる。,
+      text: 点検順と、各機器の記号を見比べる。,
     }
   - {
       id: hint_lock_2,
       puzzleId: puzzle_maintenance_lock,
       level: 2,
-      text: 機器名を記号へ変換する。,
+      text: 機器名を同じ機器の記号に置き換える。,
     }
   - {
       id: hint_lock_3,
       puzzleId: puzzle_maintenance_lock,
       level: 3,
-      text: 二重線、環、三角、節点。,
+      text: 二重線、丸、三角、ひし形。,
     }
   - {
       id: hint_log_1,
       puzzleId: puzzle_log_pairing,
       level: 1,
-      text: 時刻順ではなく指紋を見る。,
+      text: 時刻ではなく、3つの波の並びを見る。,
     }
   - {
       id: hint_log_2,
       puzzleId: puzzle_log_pairing,
       level: 2,
-      text: 三節すべてを比較する。,
+      text: 3つの波を左から順に比べる。,
     }
   - {
       id: hint_log_3,
@@ -266,13 +266,13 @@ hints:
       id: hint_route_1,
       puzzleId: puzzle_signal_route,
       level: 1,
-      text: 室内図と配線層を重ねる。,
+      text: 部屋の図と配線図を重ねる。,
     }
   - {
       id: hint_route_2,
       puzzleId: puzzle_signal_route,
       level: 2,
-      text: 実線と環端子を追う。,
+      text: 通信の実線と丸い端子をたどる。,
     }
   - {
       id: hint_route_3,
@@ -284,13 +284,13 @@ hints:
       id: hint_repair_1,
       puzzleId: puzzle_packet_repair,
       level: 1,
-      text: 先頭と終端を先に決める。,
+      text: 最初の「｜」と最後の「■」を先に決める。,
     }
   - {
       id: hint_repair_2,
       puzzleId: puzzle_packet_repair,
       level: 2,
-      text: 断片端の記号を一致させる。,
+      text: 隣り合う断片の端を同じ記号にする。,
     }
   - {
       id: hint_repair_3,
@@ -302,13 +302,13 @@ hints:
       id: hint_anomaly_1,
       puzzleId: puzzle_temporal_anomaly,
       level: 1,
-      text: 各発言の前提となる出来事を見る。,
+      text: 各発言を、これまでに起きたことと比べる。,
     }
   - {
       id: hint_anomaly_2,
       puzzleId: puzzle_temporal_anomaly,
       level: 2,
-      text: 未発生の操作を知る文を探す。,
+      text: まだしていない操作を知る発言を探す。,
     }
   - {
       id: hint_anomaly_3,
@@ -320,31 +320,31 @@ hints:
       id: hint_voice_1,
       puzzleId: puzzle_voiceprint_calibration,
       level: 1,
-      text: 受信形を基準形へ戻す。,
+      text: 受信データを職員カードと同じ形にする。,
     }
   - {
       id: hint_voice_2,
       puzzleId: puzzle_voiceprint_calibration,
       level: 2,
-      text: 尺度、上下、位置を個別に補正する。,
+      text: 波の間隔、上下、開始位置を別々に直す。,
     }
   - {
       id: hint_voice_3,
       puzzleId: puzzle_voiceprint_calibration,
       level: 3,
-      text: 半分、上下反転、左2。,
+      text: 間隔は半分、上下は反転、開始位置は左へ2。,
     }
   - {
       id: hint_script_1,
       puzzleId: puzzle_causal_script,
       level: 1,
-      text: 発言可能になる設備状態を見る。,
+      text: 各発言を聞いたとき、何をしていたか思い出す。,
     }
   - {
       id: hint_script_2,
       puzzleId: puzzle_causal_script,
       level: 2,
-      text: 応答、電源、LOG、最終操作。,
+      text: 呼びかけ、電源、LOG、赤いボタンの順。,
     }
   - {
       id: hint_script_3,
@@ -356,19 +356,19 @@ hints:
       id: hint_send_1,
       puzzleId: puzzle_transmission_window,
       level: 1,
-      text: 会話を受信窓へ割り当てる。,
+      text: 4つの発言を、受け取った順に置く。,
     }
   - {
       id: hint_send_2,
       puzzleId: puzzle_transmission_window,
       level: 2,
-      text: 遅延と回線は全PACKET共通。,
+      text: 4つとも、同じ時刻と同じ送り先を使う。,
     }
   - {
       id: hint_send_3,
       puzzleId: puzzle_transmission_window,
       level: 3,
-      text: 会話順、20分前、BUFFER RETURN。,
+      text: 会話順、-00:20:00、ECHO BUFFER RETURN。,
     }
 storyFacts:
   wallClock: '02:17'

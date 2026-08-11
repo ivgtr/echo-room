@@ -123,12 +123,12 @@ function TerminalMenuContent({
         </div>
         <p>
           {currentPuzzleMenu
-            ? `現在の検証は ${menuLabels[currentPuzzleMenu]} で行う。`
+            ? `次は ${menuLabels[currentPuzzleMenu]} を開く。`
             : stage === 'puzzle_voiceprint_calibration'
-              ? 'PACKET特徴量は端末横の解析パネルで校正する。'
+              ? '端末の横にある解析パネルで、声紋データを合わせる。'
               : stage === 'puzzle_maintenance_lock'
-                ? '保守用品は西壁ロッカーに格納されている。'
-                : '送信系統を確認中。'}
+                ? '必要な道具は、西壁の保守ロッカーに入っている。'
+                : '送信の準備を確認している。'}
         </p>
       </div>
     );
@@ -137,11 +137,11 @@ function TerminalMenuContent({
     return (
       <div className="terminal-placeholder">
         <h3>RECEIVE / SOURCE LOG</h3>
-        <p>受信側と送信側は別時計で記録され、行順は一致しない。</p>
+        <p>受信と送信は別々に記録されている。表示の順番も違う。</p>
         <p>
           {completedPuzzleIds.includes('puzzle_log_pairing')
-            ? '照合済み：全3組のSOURCEはRECEIVEの正確に20分後。'
-            : '波形指紋の照合が必要。'}
+            ? '確認済み：3つとも、送信時刻は受信時刻のちょうど20分後。'
+            : '3つの波の並びを比べ、同じ通信を探す。'}
         </p>
       </div>
     );
@@ -152,8 +152,8 @@ function TerminalMenuContent({
         <FacilityMap conduitLayer />
         <p>
           {completedPuzzleIds.includes('puzzle_signal_route')
-            ? '確認済み：E-01の通信線は隣室ではなくECHO BUFFER RETURNへ接続。'
-            : '職員カード取得後、室内図と通信配線層を照合できる。'}
+            ? '確認済み：E-01の通信線は、隣室ではなくECHO BUFFER RETURNへ戻る。'
+            : '職員カードを使えば、部屋の図と配線図を重ねて見られる。'}
         </p>
       </div>
     );
@@ -161,12 +161,12 @@ function TerminalMenuContent({
   return (
     <div className="terminal-placeholder signal-summary">
       <h3>ECHO SIGNAL BUFFER</h3>
-      <p>発話音声は使用しない。本文、波形指紋、声紋特徴量を表示する。</p>
+      <p>届いた文章と、通信を見分ける波形、声紋データを確認できる。</p>
       {['01', '02', '03', '04'].map((id) => (
         <span key={id}>PACKET {id} / DATA FRAME</span>
       ))}
       {currentPuzzleMenu && currentPuzzleMenu !== menuId && (
-        <p>現在の検証は {menuLabels[currentPuzzleMenu]} で行う。</p>
+        <p>次は {menuLabels[currentPuzzleMenu]} を開く。</p>
       )}
     </div>
   );
@@ -180,7 +180,7 @@ function TransmissionReady({ onTransmit }: { onTransmit: () => void }) {
     >
       <p className="eyebrow">TEST TRANSMISSION / ALL CONDITIONS PASSED</p>
       <h3 id="transmission-title">ECHO TRANSMISSION READY</h3>
-      <p>PUZZLES VERIFIED: 10 / 10</p>
+      <p>確認完了：10 / 10</p>
       <ol aria-label="送信パケット4枠">
         <li>W1 / ……聞こえるか？</li>
         <li>W2 / まず電源を戻せ。</li>

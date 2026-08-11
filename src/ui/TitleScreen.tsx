@@ -64,12 +64,12 @@ export function TitleScreen({
         </div>
         {saveStatus === 'corrupt' && (
           <p role="alert">
-            保存データを読み込めません。新規開始はできますが、破損データを消去するまで進行は保存されません。
+            保存データを読み込めません。「ゲーム開始」は使えますが、このデータを消すまで新しい進行は保存されません。
           </p>
         )}
         {deleteFailed && <p role="alert">保存データを消去できませんでした。</p>}
         <p className="start-note">
-          サウンドが利用できない場合も文字情報でプレイできます
+          音を出さなくても、すべて文字でプレイできます
         </p>
       </section>
     </main>

@@ -52,7 +52,7 @@ export const powerRestoredEntry: NarrativeEntry = {
   id: 'system_power_restored',
   kind: 'system',
   speaker: 'FACILITY SYSTEM',
-  text: '非常電源の経路が成立し、壁面端末とECHO BUFFERが起動した。',
+  text: '非常電源がつながった。壁面端末とECHO BUFFERが起動する。',
 };
 
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
@@ -61,7 +61,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'offset_discovered',
         kind: 'discovery',
-        text: '照合した三通信は、どれも送信元が受信より正確に20分後だ。',
+        text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。',
       },
       {
         id: 'offset_warning',
@@ -87,14 +87,14 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'future_packet',
         kind: 'discovery',
-        text: 'PACKET 04は、まだ起きていない赤いボタンの操作を知っている。',
+        text: 'PACKET 04は、まだ見ていない赤いボタンを知っている。',
       },
     ],
     puzzle_voiceprint_calibration: [
       {
         id: 'identity_question',
         kind: 'monologue',
-        text: 'この特徴量は……俺の職員記録と同じだ。',
+        text: 'この波の形は……俺の職員記録と同じだ。',
       },
       {
         id: 'identity_answer',
@@ -115,19 +115,19 @@ export function discoveryEntry(text: string): NarrativeEntry {
 const powerPlan: ArchiveDocument = {
   id: 'document_power_plan',
   title: 'EMERGENCY BYPASS PLAN',
-  body: '容量7 UNIT。ドア駆動線は短絡。端末、通話器、BUFFERの順に給電する。',
+  body: '容量は7 UNIT。ドアの線はショートしている。端末、通話器、BUFFERの順につなぐ。',
 };
 
 const maintenanceSheet: ArchiveDocument = {
   id: 'document_maintenance_order',
   title: 'MAINTENANCE ORDER',
-  body: '点検順：端末、通話器、ECHO BUFFER、ドア。回路銘板の記号へ変換する。',
+  body: '点検順：端末、通話器、ECHO BUFFER、ドア。それぞれを機器の記号に置き換える。',
 };
 
 const floorMap: ArchiveDocument = {
   id: 'document_floor_map',
   title: 'FACILITY / CONDUIT MAP',
-  body: 'E-01の左右は設備壁。環端子の通信実線はJ-2からECHO BUFFER RETURNへ続く。',
+  body: 'E-01の左右に部屋はない。通信の実線は丸端子J-2からECHO BUFFER RETURNへ続く。',
 };
 
 export function getArchiveDocuments(

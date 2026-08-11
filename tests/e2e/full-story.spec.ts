@@ -15,19 +15,19 @@ test('keyboard-only route solves all ten deductions before transmission', async 
 
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['CHANNEL A 補正', '右へ2'],
-    ['CHANNEL B 補正', '補正なし'],
-    ['CHANNEL C 補正', '左へ1'],
+    ['Aを動かす方向', '右へ2'],
+    ['Bを動かす方向', 'そのまま'],
+    ['Cを動かす方向', '左へ1'],
   ]);
 
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await openHotspot(page, 'ロッカーを調べる');
   await solve(page, [
-    ['記号枠 1', '二重線 ║'],
-    ['記号枠 2', '環 ○'],
-    ['記号枠 3', '三角 △'],
-    ['記号枠 4', '節点 ◆'],
+    ['1番目の記号', '二重線 ║'],
+    ['2番目の記号', '丸 ○'],
+    ['3番目の記号', '三角 △'],
+    ['4番目の記号', 'ひし形 ◆'],
   ]);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_03');
   const acquisition = page.getByRole('dialog', { name: '所持品を入手した' });
@@ -40,62 +40,62 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   await page.keyboard.press('ArrowRight');
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['R1 に対応するSOURCE', 'S-B'],
-    ['R2 に対応するSOURCE', 'S-C'],
-    ['R3 に対応するSOURCE', 'S-A'],
+    ['R1 と同じ波のSOURCE', 'S-B'],
+    ['R2 と同じ波のSOURCE', 'S-C'],
+    ['R3 と同じ波のSOURCE', 'S-A'],
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['追跡する配線層', '実線 / 通信'],
-    ['設備壁内の中継点', 'J-2 / 環端子'],
-    ['回線の終端', 'ECHO BUFFER RETURN'],
+    ['たどる線', '実線 / 通信'],
+    ['壁の中で通る場所', 'J-2 / 丸端子'],
+    ['線のつなぎ先', 'ECHO BUFFER RETURN'],
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['復元位置 1', '断片C'],
-    ['復元位置 2', '断片D'],
-    ['復元位置 3', '断片A'],
-    ['復元位置 4', '断片B'],
+    ['1番目の断片', '断片C'],
+    ['2番目の断片', '断片D'],
+    ['3番目の断片', '断片A'],
+    ['4番目の断片', '断片B'],
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['現在より後の出来事を前提にするPACKET', /PACKET 04/],
-    ['矛盾を成立させる根拠', '未発生の操作を知っている'],
+    ['未来のことを知っているPACKET', /PACKET 04/],
+    ['そう判断できる理由', 'まだしていない操作を知っている'],
   ]);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_07');
 
   await openHotspot(page, '解析パネルを調べる');
   await solve(page, [
-    ['間隔チャンネルの補正', '1/2へ圧縮'],
-    ['包絡チャンネルの補正', '上下反転'],
-    ['位相チャンネルの補正', '左へ2'],
+    ['波の間隔', '半分にする'],
+    ['波の上下', '上下反転'],
+    ['波の開始位置', '左へ2'],
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['会話位置 1', '……聞こえるか？'],
-    ['会話位置 2', 'まず電源を戻せ。'],
-    ['会話位置 3', 'ログは気にするな。'],
-    ['会話位置 4', '最後に、赤いボタンを押せ。'],
+    ['1番目の発言', '……聞こえるか？'],
+    ['2番目の発言', 'まず電源を戻せ。'],
+    ['3番目の発言', 'ログは気にするな。'],
+    ['4番目の発言', '最後に、赤いボタンを押せ。'],
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
   await solve(page, [
-    ['受信窓 W1', '……聞こえるか？'],
-    ['受信窓 W2', 'まず電源を戻せ。'],
-    ['受信窓 W3', 'ログは気にするな。'],
-    ['受信窓 W4', '最後に、赤いボタンを押せ。'],
-    ['共通送信遅延', '-00:20:00'],
-    ['送信回線', 'ECHO BUFFER RETURN'],
+    ['受信タイミング W1', '……聞こえるか？'],
+    ['受信タイミング W2', 'まず電源を戻せ。'],
+    ['受信タイミング W3', 'ログは気にするな。'],
+    ['受信タイミング W4', '最後に、赤いボタンを押せ。'],
+    ['送る時刻', '-00:20:00'],
+    ['送り先', 'ECHO BUFFER RETURN'],
   ]);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_10');
 
   await openHotspot(page, '壁面端末を調べる');
   const terminal = page.getByRole('dialog', { name: '壁面端末' });
-  await expect(terminal.getByText(/PUZZLES VERIFIED: 10 \/ 10/)).toBeVisible();
+  await expect(terminal.getByText('確認完了：10 / 10')).toBeVisible();
   await terminal
     .getByRole('button', { name: '赤い送信ボタンを押す' })
     .press('Enter');
@@ -133,7 +133,9 @@ async function solve(
     const group = puzzle.getByRole('group', { name: groupName });
     await group.getByRole('button', { name: optionName }).press('Enter');
   }
-  await puzzle.getByRole('button', { name: '構成を検証する' }).press('Enter');
+  await puzzle
+    .getByRole('button', { name: 'この答えで確認する' })
+    .press('Enter');
   await expect(puzzle).toBeHidden();
 }
 
