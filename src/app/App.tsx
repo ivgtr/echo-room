@@ -1,9 +1,15 @@
 import { useActorRef, useSelector } from '@xstate/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { playBreakerTone, unlockAudio } from '../audio/tonePlayer';
-import type { BreakerId, HotspotId, LocationId } from '../game/domain/ids';
+import { soundManager } from '../audio/soundManager';
+import {
+  BREAKER_ORDER,
+  type BreakerId,
+  type HotspotId,
+  type LocationId,
+} from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
+import { isLockerCodeCorrect } from '../game/puzzles/storyPuzzles';
 import {
   clearProgress,
   getCheckpointId,
@@ -201,6 +207,24 @@ export function App() {
   }, [motionReduced]);
 
   useEffect(() => {
+    soundManager.sync({
+      active: isPlaying && pageVisible && !systemMenuOpen,
+      enabled: soundEnabled,
+      effectsVolume: soundLevels.effects,
+      environmentVolume: soundLevels.environment,
+      powered: powerRestored,
+    });
+  }, [
+    isPlaying,
+    pageVisible,
+    powerRestored,
+    soundEnabled,
+    soundLevels.effects,
+    soundLevels.environment,
+    systemMenuOpen,
+  ]);
+
+  useEffect(() => {
     const handleVisibilityChange = () =>
       setPageVisible(document.visibilityState === 'visible');
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -323,7 +347,7 @@ export function App() {
     setSaveMessage(null);
     setNarrativeHistory([]);
     setAcquiredItems([]);
-    void unlockAudio().catch(() => setSoundEnabled(false));
+    void soundManager.unlock().catch(() => undefined);
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef]);
   const handleHotspot = useCallback(
@@ -347,10 +371,16 @@ export function App() {
   );
   const handleBreaker = useCallback(
     (breakerId: BreakerId) => {
-      playBreakerTone(breakerId, soundEnabled, soundLevels.effects);
+      soundManager.playBreaker(breakerId);
+      const nextSequence = [...breakerSequence, breakerId];
+      if (
+        nextSequence.length === BREAKER_ORDER.length &&
+        nextSequence.every((id, index) => id === BREAKER_ORDER[index])
+      )
+        soundManager.playEffect('power_restore');
       actorRef.send({ type: 'BREAKER_TOGGLED', breakerId });
     },
-    [actorRef, soundEnabled, soundLevels.effects],
+    [actorRef, breakerSequence],
   );
 
   const archiveDocuments = getArchiveDocuments(
@@ -367,6 +397,7 @@ export function App() {
         {...(loadResult.status === 'valid'
           ? {
               onContinue: () => {
+                void soundManager.unlock().catch(() => undefined);
                 const progress = loadResult.data.progress;
                 savedProgressRef.current = true;
                 progressWritableRef.current = true;
@@ -465,10 +496,16 @@ export function App() {
       onTerminalMenu={(menuId) =>
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
       }
-      onLogsConfirmed={() => actorRef.send({ type: 'LOGS_CONFIRMED' })}
-      onLockerSubmit={(answer) =>
-        actorRef.send({ type: 'LOCKER_SUBMITTED', answer })
-      }
+      onLogsConfirmed={() => {
+        soundManager.playEffect('terminal_connect');
+        actorRef.send({ type: 'LOGS_CONFIRMED' });
+      }}
+      onLockerSubmit={(answer) => {
+        soundManager.playEffect(
+          isLockerCodeCorrect(answer) ? 'locker_unlock' : 'locker_error',
+        );
+        actorRef.send({ type: 'LOCKER_SUBMITTED', answer });
+      }}
       onInventoryToggle={() => {
         setSystemMenuOpen(false);
         setInventoryOpen((value) => !value);
@@ -479,18 +516,26 @@ export function App() {
         actorRef.send({ type: 'FLOOR_MAP_INSPECTED', source });
       }}
       onPacketPlayed={(packetId) => {
+        soundManager.playEffect('communication_noise');
         appendHistory([packetEntries[packetId]]);
         actorRef.send({ type: 'PACKET_PLAYED', packetId });
       }}
       onAnalysisComplete={() => {
+        soundManager.playEffect('analysis_complete');
         appendHistory(identityEntries);
         actorRef.send({ type: 'VOICE_ANALYSIS_STARTED' });
       }}
       onFinalSubmit={(packetIds) =>
         actorRef.send({ type: 'FINAL_ORDER_SUBMITTED', packetIds })
       }
-      onTransmit={() => actorRef.send({ type: 'TRANSMISSION_CONFIRMED' })}
-      onEndingAdvance={() => actorRef.send({ type: 'ENDING_ADVANCED' })}
+      onTransmit={() => {
+        soundManager.playEffect('transmission');
+        actorRef.send({ type: 'TRANSMISSION_CONFIRMED' });
+      }}
+      onEndingAdvance={() => {
+        if (endingLineIndex >= 5) soundManager.playEffect('door_unlock');
+        actorRef.send({ type: 'ENDING_ADVANCED' });
+      }}
       onHintToggle={() => {
         setSystemMenuOpen(false);
         setHintOpen((value) => !value);

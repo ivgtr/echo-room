@@ -12,7 +12,7 @@
 | グラフィック | runtime素材はWebPまたはPNGとし、SVGを標準採用しない | graphics-production 2章・5章 |
 | 状態 | XState actorを進行状態の唯一の正解とし、ReactとPixiJSは型付きイベントだけを送る | technical-design 5章・6章 |
 | コンテンツ | 人が編集する原本はYAML、形式と参照はZodおよび追加validatorで検証する | technical-design 8章・18章 |
-| サウンド | Web Audio開始はゲーム開始操作に結び付け、再生失敗時も字幕と視覚補助で進行できる | technical-design 10章 |
+| サウンド | ゲーム開始・再開操作で解放する単一Web Audio Sound Managerから、手続き生成のenvironment/effectsだけを再生する。再生失敗時も字幕と視覚補助で進行できる | technical-design 10章 |
 | 保存 | 進行と設定を別々にlocalStorageへ保存し、XState snapshotは保存しない | technical-design 12章 |
 | 時間 | 00:19:48からactive play timeだけ減算し、00:00後は予備電源で続行する | technical-design 11章 |
 | 操作 | マウス、タッチ、キーボードで同じ必須進行を完了できるようにする | requirements 12章・16章 |
