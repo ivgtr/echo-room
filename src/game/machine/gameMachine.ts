@@ -34,6 +34,7 @@ export type GameEvent =
     }
   | { type: 'ACTIVE_TIME_ELAPSED'; deltaMs: number }
   | { type: 'DIALOGUE_ADVANCED' }
+  | { type: 'DIALOGUE_SKIPPED' }
   | { type: 'VIEW_CHANGED'; locationId: LocationId }
   | { type: 'HOTSPOT_SELECTED'; hotspotId: HotspotId }
   | { type: 'BREAKER_TOGGLED'; breakerId: BreakerId }
@@ -124,6 +125,7 @@ export const gameMachine = setup({
     advanceIntro: assign({
       introLineIndex: ({ context }) => context.introLineIndex + 1,
     }),
+    skipIntro: assign({ introLineIndex: 7 }),
     changeView: assign({
       locationId: ({ event }) =>
         event.type === 'VIEW_CHANGED'
@@ -301,6 +303,10 @@ export const gameMachine = setup({
       states: {
         intro: {
           on: {
+            DIALOGUE_SKIPPED: {
+              target: 'exploring',
+              actions: 'skipIntro',
+            },
             DIALOGUE_ADVANCED: [
               { guard: 'hasMoreIntro', actions: 'advanceIntro' },
               { target: 'exploring', actions: 'advanceIntro' },

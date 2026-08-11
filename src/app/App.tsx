@@ -67,6 +67,7 @@ export function App() {
     initialSettings.motionReduced ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
+  const [introSeen, setIntroSeen] = useState(initialSettings.introSeen);
   const [audioEnabled, setAudioEnabled] = useState(
     initialSettings.audioEnabled,
   );
@@ -170,10 +171,11 @@ export function App() {
     try {
       saveSettings(
         {
-          schemaVersion: 2,
+          schemaVersion: 3,
           audioEnabled,
           visualAssist,
           motionReduced,
+          introSeen,
           audioLevels,
           subtitleSettings,
         },
@@ -185,6 +187,7 @@ export function App() {
   }, [
     audioEnabled,
     audioLevels,
+    introSeen,
     motionReduced,
     subtitleSettings,
     visualAssist,
@@ -405,6 +408,7 @@ export function App() {
       powerRestored={powerRestored}
       intro={intro}
       introLineIndex={introLineIndex}
+      introSeen={introSeen}
       breakerPuzzle={breakerPuzzle}
       breakerSequence={breakerSequence}
       breakerFailures={breakerFailures}
@@ -432,7 +436,13 @@ export function App() {
       onDialogueAdvance={() => {
         const entry = introEntries[introLineIndex];
         if (entry) appendHistory([entry]);
+        if (introLineIndex >= introEntries.length - 1) setIntroSeen(true);
         actorRef.send({ type: 'DIALOGUE_ADVANCED' });
+      }}
+      onDialogueSkip={() => {
+        appendHistory(introEntries);
+        setIntroSeen(true);
+        actorRef.send({ type: 'DIALOGUE_SKIPPED' });
       }}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}

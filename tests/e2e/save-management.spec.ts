@@ -1,25 +1,27 @@
 import { expect, test } from '@playwright/test';
 
+import { createSettingsSave, installSettingsSave } from './saveFixture';
+
 test('corrupt progress is protected until confirmed deletion and settings remain', async ({
   page,
 }) => {
+  await page.addInitScript(
+    installSettingsSave,
+    createSettingsSave({
+      audioEnabled: false,
+      visualAssist: true,
+      motionReduced: true,
+      introSeen: true,
+      audioLevels: { voice: 80, effects: 35, environment: 55 },
+      subtitleSettings: {
+        size: 'large',
+        background: 'solid',
+        speed: 'fast',
+      },
+    }),
+  );
   await page.addInitScript(() => {
     localStorage.setItem('echo-room:progress', '{bad json');
-    localStorage.setItem(
-      'echo-room:settings',
-      JSON.stringify({
-        schemaVersion: 2,
-        audioEnabled: false,
-        visualAssist: true,
-        motionReduced: true,
-        audioLevels: { voice: 80, effects: 35, environment: 55 },
-        subtitleSettings: {
-          size: 'large',
-          background: 'solid',
-          speed: 'fast',
-        },
-      }),
-    );
   });
   await page.goto('/');
 

@@ -6,6 +6,7 @@ type Props = {
   text: string;
   actionLabel: string;
   onAdvance: () => void;
+  secondaryAction?: { label: string; onSelect: () => void };
   autoFocus?: boolean;
 };
 
@@ -15,6 +16,7 @@ export function NarrativePanel({
   text,
   actionLabel,
   onAdvance,
+  secondaryAction,
   autoFocus = false,
 }: Props) {
   const communication = kind === 'communication';
@@ -35,9 +37,16 @@ export function NarrativePanel({
       )}
       {speaker && <span className="speaker">{speaker}</span>}
       <p className="narrative-text">{text}</p>
-      <button type="button" onClick={onAdvance} autoFocus={autoFocus}>
-        {actionLabel}
-      </button>
+      <div className="narrative-actions">
+        {secondaryAction && (
+          <button type="button" onClick={secondaryAction.onSelect}>
+            {secondaryAction.label}
+          </button>
+        )}
+        <button type="button" onClick={onAdvance} autoFocus={autoFocus}>
+          {actionLabel}
+        </button>
+      </div>
     </section>
   );
 }

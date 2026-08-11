@@ -15,7 +15,8 @@
 - 主人公は32歳前後の日本人男性、短い黒髪、設備保守・運用担当、濃灰の作業着に確定した。氏名や不要な経歴は設定せず、同一写真原本を職員証とVOICE ANALYSISへ使用する。
 - P5-01は完了。全主要checkpointを進行schema v2へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。
 - P5-02は完了。現行の単一Hotspot View Modelから意味を持つDOMを生成し、modal中の探索無効化、focus trap・復帰、通知role、SYSTEMの動き軽減設定、keyboardのみの全編ルートを完成した。
-- 次の着手点はP5-03。残る操作品質と既読会話のskipを完了する。
+- P5-03は完了。冒頭7台詞を通常に読み終えた時だけ既読状態を保存し、次回以降は単一Narrative UIからskip可能にした。skip後のSYSTEMへのfocus移動と、全7台詞のARCHIVE復元も統合した。
+- P5は全作業完了。次の着手点はP4-02の正式高解像度原本・layer分離とP4-04の本番音声方針確定。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
@@ -44,7 +45,7 @@
 | P4-05 | in_progress | UIQ-02の380ms調査接近と動き軽減代替、UIQ-03の通信Narrative・所持品取得演出、UIQ-04の10分・5分・00:00段階表示、5分以下の電圧低下と静的な動き軽減代替を実装 | 通常・reduced-motion E2E、1280×720の通信・SYSTEM・critical・reserve画面を目視確認 | 通信ノイズ・声紋解析・送信・ドア解錠・endingの本番演出はP4-02〜04で継続 |
 | P5-01 | completed | 電源復旧、20分差確認、ロッカー解錠、隣室不存在、PACKET 04、本人照合、最終順序、送信開始、ending完了の9つを安全checkpointとしてschema v2へ保存。所持品、確認済み図面・PACKET、ヒント・誤答、active time、予備電源をdomain dataで復元。字幕・音量・視覚補助は別keyへ即時保存し、進行消去後も保持。現行schemaだけを受理し、破損・非対応versionは上書きせず、タイトルで確認後に進行だけ消去可能 | Node 24で`npm run check`成功（14 files/39 tests）。Chromium E2E 11件で全9 checkpointの実保存、late-game復元、設定reload、破損・非対応version保護と消去、keyboard・touch・focus復帰、予備電源からendingを検証 | なし |
 | P5-02 | completed | Hotspot View Modelから名前・役割・順序を持つReact DOM overlayを生成。modal中は探索操作を`inert`化し、focus trapと起点復帰を統一。重要音の字幕・視覚通知、色以外の正誤表現、音高補助を維持し、OS設定を初期値とするSYSTEMの動き軽減設定と全編keyboard操作を完成 | Node 24で`npm run check`成功（14 files/39 tests、4 bundle/27画像）。Chromium E2E 11件でkeyboardのみの新規開始から電源復旧、9checkpoint後からending、focus trap・復帰・`inert`・alert/status・設定保存を検証。動き軽減設定を1280×720で目視確認 | なし |
-| P5-03 | in_progress | UIQ-01・02の操作基盤に加え、UIQ-03で会話履歴・資料再読・表示速度、必要時だけ開く所持品トレイ、対象調査中のカード・ドライバー使用を実装。自動保存通知は2.4秒で操作を塞がず消去。P5-01で主要checkpointから会話・資料・所持品を再構築 | Node 24で`npm run check`（14 files/39 tests）、Chromium E2E 11件、Inventoryのmouse・touch・keyboard通し操作、設定・履歴reload | 既読会話skipはP6で継続 |
+| P5-03 | completed | 連打・二重click・戻る・画面回転・遷移中input lockの共通基盤、会話履歴・資料再読・表示速度、必要時だけ開く所持品トレイ、対象調査中のカード・ドライバー使用を統合。自動保存通知は2.4秒で操作を塞がず消去。冒頭会話は初見時にskipを表示せず、通常読了後だけ設定schema v3へ既読を保存し、次回はNarrative UI内でskipできる | Node 24で`npm run check`成功（14 files/40 tests）。Chromium E2E 12件で初見のskip非表示・既読保存・keyboard skip・SYSTEM focus・ARCHIVE復元と既存のmouse・touch・keyboard・連打・resize・設定reloadを検証。skip UIを1280×720で目視確認 | なし |
 | P5-04 | completed | `performance.now()`差分によるアクティブプレイ時間をXStateへ保持。SYSTEMとbrowser非表示中は停止し、00:00で予備電源へ不可逆遷移して進行を継続。経過時間と予備電源状態をschema v2へ保存 | timer境界・machine・保存schema unit、固定時計E2E（SYSTEM・visibility・復元・reduced-motion）、予備電源開始状態から全編E2E | なし |
 | UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
 | UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
@@ -67,8 +68,8 @@
 
 ## 次作業者への引き継ぎ
 
-1. `docs/README.md`のUI・テストルーティングに従い、`requirements.md` 10〜13・15・16章、`technical-design.md` 10・15・18章、`implementation-plan.md`のP5-03とP6を読む。
-2. P5-03として既読会話のskipを実装し、連打・戻る・画面回転と入力ロックの現行E2Eと合わせて操作品質の受け入れ条件を完了する。
-3. P5-01の現行進行schemaはv2だけを正規形式とし、旧fixtureや旧読込分岐を追加しない。設定も現行shapeだけを保持する。
-4. `tmp/p5-02-motion-settings.png`はSYSTEMの動き軽減設定の実画面確認用。その他の一時画像も引き続きignore済みの`tmp/`へ集約する。
-5. P4-02の正式高解像度原本・layer分離とP4-04の本番音声は独立した残作業であり、P5-03を止めない。
+1. `docs/README.md`のグラフィック・テストルーティングに従い、`graphics-production.md`、`graphics-generation.yaml`、`requirements.md` 6・8〜10・15・16章、`technical-design.md` 7・13・14・18章、`implementation-plan.md`のP4-02〜05とP6を読む。
+2. P4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-04の本番音声制作方針を確定してP4 Gateを完了する。
+3. P5は完了。進行はv2、設定はv3だけを正規形式とし、旧fixtureや旧読込分岐を追加しない。
+4. `tmp/p5-02-motion-settings.png`と`tmp/p5-03-intro-skip.png`は実画面確認用。その他の一時画像も引き続きignore済みの`tmp/`へ集約する。
+5. P4-04の本番音声は未制作で、P4全体が完了するまでP6 Gateは閉じたままとする。

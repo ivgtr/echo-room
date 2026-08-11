@@ -16,6 +16,14 @@ const enterPuzzle = () => {
 };
 
 describe('gameMachine vertical slice', () => {
+  it('skips an already-read introduction as one state transition', () => {
+    const actor = createActor(gameMachine).start();
+    actor.send({ type: 'GAME_STARTED' });
+    actor.send({ type: 'DIALOGUE_SKIPPED' });
+    expect(actor.getSnapshot().matches({ playing: 'exploring' })).toBe(true);
+    expect(actor.getSnapshot().context.introLineIndex).toBe(7);
+  });
+
   it('does not accept exploration events before the introduction ends', () => {
     const actor = createActor(gameMachine).start();
     actor.send({ type: 'GAME_STARTED' });

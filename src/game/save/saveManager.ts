@@ -74,10 +74,11 @@ const audioLevelsSchema = z.object({
 });
 
 const settingsSchema = z.object({
-  schemaVersion: z.literal(2),
+  schemaVersion: z.literal(3),
   audioEnabled: z.boolean(),
   visualAssist: z.boolean(),
   motionReduced: z.boolean(),
+  introSeen: z.boolean(),
   audioLevels: audioLevelsSchema,
   subtitleSettings: z.object({
     size: z.enum(['small', 'medium', 'large']),
@@ -96,10 +97,11 @@ export type LoadResult =
   | { status: 'corrupt' };
 
 export const defaultSettings: SettingsData = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   audioEnabled: true,
   visualAssist: false,
   motionReduced: false,
+  introSeen: false,
   audioLevels: { voice: 100, effects: 100, environment: 70 },
   subtitleSettings: {
     size: 'medium',

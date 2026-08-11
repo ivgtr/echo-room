@@ -1,4 +1,7 @@
-import type { SavedProgress } from '../../src/game/save/saveManager';
+import type {
+  SavedProgress,
+  SettingsData,
+} from '../../src/game/save/saveManager';
 
 type ProgressOverrides = Partial<SavedProgress>;
 
@@ -39,4 +42,28 @@ export const installProgressSave = (
 ) => {
   if (localStorage.getItem('echo-room:progress')) return;
   localStorage.setItem('echo-room:progress', JSON.stringify(save));
+};
+
+export function createSettingsSave(
+  overrides: Partial<SettingsData> = {},
+): SettingsData {
+  return {
+    schemaVersion: 3,
+    audioEnabled: true,
+    visualAssist: false,
+    motionReduced: false,
+    introSeen: false,
+    audioLevels: { voice: 100, effects: 100, environment: 70 },
+    subtitleSettings: {
+      size: 'medium',
+      background: 'soft',
+      speed: 'normal',
+    },
+    ...overrides,
+  };
+}
+
+export const installSettingsSave = (settings: SettingsData) => {
+  if (localStorage.getItem('echo-room:settings')) return;
+  localStorage.setItem('echo-room:settings', JSON.stringify(settings));
 };

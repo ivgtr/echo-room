@@ -67,6 +67,7 @@ type Props = {
   powerRestored: boolean;
   intro: boolean;
   introLineIndex: number;
+  introSeen: boolean;
   breakerPuzzle: boolean;
   breakerSequence: readonly BreakerId[];
   breakerFailures: number;
@@ -92,6 +93,7 @@ type Props = {
   activeElapsedMs: number;
   reservePower: boolean;
   onDialogueAdvance: () => void;
+  onDialogueSkip: () => void;
   onViewChanged: (id: LocationId) => void;
   onHotspotSelected: (id: HotspotId) => void;
   onBreakerToggle: (id: BreakerId) => void;
@@ -130,6 +132,7 @@ export function GameScreen(props: Props) {
   const systemReturnFocusRef = useRef<HTMLElement | null>(null);
   const inspectionReturnFocusRef = useRef<HTMLElement | null>(null);
   const systemButtonRef = useRef<HTMLButtonElement>(null);
+  const introWasOpenRef = useRef(props.intro);
   const cueTimerRef = useRef<number | null>(null);
   const inspectionTimerRef = useRef<number | null>(null);
   const inspectionLockedRef = useRef(false);
@@ -182,6 +185,12 @@ export function GameScreen(props: Props) {
     },
     [],
   );
+
+  useEffect(() => {
+    if (introWasOpenRef.current && !props.intro)
+      systemButtonRef.current?.focus();
+    introWasOpenRef.current = props.intro;
+  }, [props.intro]);
 
   function turn(offset: -1 | 1) {
     const next = getRotatedView(props.locationId, offset);
@@ -490,7 +499,9 @@ export function GameScreen(props: Props) {
         {props.intro && (
           <IntroDialogue
             lineIndex={props.introLineIndex}
+            canSkip={props.introSeen}
             onAdvance={props.onDialogueAdvance}
+            onSkip={props.onDialogueSkip}
           />
         )}
         {inspectionDialog && (

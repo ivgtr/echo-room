@@ -1,6 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { createProgressSave, installProgressSave } from './saveFixture';
+import {
+  createProgressSave,
+  createSettingsSave,
+  installProgressSave,
+  installSettingsSave,
+} from './saveFixture';
 
 async function enterRoom(page: Page) {
   await page.goto('/');
@@ -65,9 +70,21 @@ test('keyboard-capable route restores power and resumes after reload', async ({
 }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
+  await expect(
+    page.getByRole('button', { name: '既読会話をスキップ' }),
+  ).toHaveCount(0);
   for (let index = 0; index < 6; index += 1)
     await page.getByRole('button', { name: '次へ' }).press('Enter');
   await page.getByRole('button', { name: '探索を始める' }).press('Enter');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem('echo-room:settings') ?? '{}')
+            .introSeen,
+      ),
+    )
+    .toBe(true);
   const world = page.getByTestId('world-canvas');
   const canvas = world.locator('canvas');
   await expect(world).toHaveAttribute('data-asset-state', 'ready');
@@ -170,6 +187,27 @@ test('keyboard-capable route restores power and resumes after reload', async ({
       .getByRole('dialog', { name: 'SYSTEM' })
       .getByText('端末のLOGで受信時刻と送信元時刻を確認しよう。'),
   ).toBeVisible();
+});
+
+test('read introduction can be skipped without losing its archive', async ({
+  page,
+}) => {
+  await page.addInitScript(
+    installSettingsSave,
+    createSettingsSave({ introSeen: true }),
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
+  await page.getByRole('button', { name: '既読会話をスキップ' }).press('Enter');
+  await expect(page.getByTestId('world-canvas')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'SYSTEM' })).toBeFocused();
+  await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
+  const system = page.getByRole('dialog', { name: 'SYSTEM' });
+  await system
+    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
+    .press('Enter');
+  await expect(system.getByText('……聞こえるか？')).toBeVisible();
+  await expect(system.getByText('まず電源を戻せ。')).toBeVisible();
 });
 
 test('normal exploration exposes only edge turns and direct hotspots', async ({

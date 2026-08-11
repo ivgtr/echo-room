@@ -563,10 +563,15 @@ button:focus-visible {
   line-height: 1.65;
 }
 
-.narrative-panel button {
+.narrative-actions {
   position: absolute;
   right: 1rem;
   bottom: 0.7rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.narrative-actions button {
   min-width: 4rem;
   min-height: 2.4rem;
   border: 0;

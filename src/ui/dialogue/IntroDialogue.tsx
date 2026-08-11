@@ -1,9 +1,19 @@
 import { NarrativePanel } from '../narrative/NarrativePanel';
 import { introEntries } from '../narrative/narrativeArchive';
 
-type Props = { lineIndex: number; onAdvance: () => void };
+type Props = {
+  lineIndex: number;
+  canSkip: boolean;
+  onAdvance: () => void;
+  onSkip: () => void;
+};
 
-export function IntroDialogue({ lineIndex, onAdvance }: Props) {
+export function IntroDialogue({
+  lineIndex,
+  canSkip,
+  onAdvance,
+  onSkip,
+}: Props) {
   const line =
     introEntries[Math.min(lineIndex, introEntries.length - 1)] ??
     introEntries[0];
@@ -17,6 +27,14 @@ export function IntroDialogue({ lineIndex, onAdvance }: Props) {
         lineIndex >= introEntries.length - 1 ? '探索を始める' : '次へ'
       }
       onAdvance={onAdvance}
+      {...(canSkip
+        ? {
+            secondaryAction: {
+              label: '既読会話をスキップ',
+              onSelect: onSkip,
+            },
+          }
+        : {})}
       autoFocus
     />
   );
