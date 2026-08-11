@@ -104,6 +104,19 @@ button:focus-visible {
   letter-spacing: 0.12em;
 }
 
+.title-actions {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.title-actions button:not(.primary-action) {
+  min-height: 2.8rem;
+  border: 1px solid rgb(201 213 213 / 45%);
+  color: #e7efed;
+  background: rgb(9 14 16 / 75%);
+  cursor: pointer;
+}
+
 .primary-action:hover,
 .system-screen button:hover {
   background: rgb(44 91 88 / 80%);
@@ -170,10 +183,15 @@ button:focus-visible {
   text-shadow: 0 2px 8px #000;
 }
 
-.system-button {
+.hud-actions {
   position: absolute;
   top: max(1.25rem, env(safe-area-inset-top));
   right: max(1.5rem, env(safe-area-inset-right));
+  display: flex;
+  gap: 0.6rem;
+}
+
+.system-button {
   min-height: 2.75rem;
   padding: 0 1rem;
   border: 1px solid rgb(201 213 213 / 45%);
@@ -181,6 +199,44 @@ button:focus-visible {
   background: rgb(9 14 16 / 75%);
   pointer-events: auto;
   cursor: pointer;
+}
+
+.view-navigation {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  top: 7%;
+  left: 50%;
+  gap: 0.35rem;
+  transform: translateX(-50%);
+}
+
+.view-navigation button,
+.world-actions button {
+  min-width: 2.8rem;
+  min-height: 2.8rem;
+  border: 1px solid rgb(201 213 213 / 40%);
+  color: #e7efed;
+  background: rgb(8 13 15 / 78%);
+  cursor: pointer;
+}
+
+.view-navigation button[aria-current='true'] {
+  border-color: #58b8b0;
+  color: #8de1d8;
+}
+
+.world-actions {
+  position: absolute;
+  z-index: 5;
+  top: 51%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.world-actions button {
+  padding: 0.6rem 1rem;
+  background: rgb(8 13 15 / 62%);
 }
 
 .subtitle-panel {
@@ -207,6 +263,120 @@ button:focus-visible {
   margin: 0.45rem 0 0;
   font-size: clamp(0.95rem, 1.8vw, 1.35rem);
   line-height: 1.65;
+}
+
+.dialogue-overlay,
+.puzzle-modal {
+  position: absolute;
+  z-index: 10;
+  right: 8%;
+  bottom: 8%;
+  left: 8%;
+  padding: clamp(1rem, 2vw, 2rem);
+  border: 1px solid rgb(88 184 176 / 45%);
+  background: rgb(5 9 10 / 96%);
+  box-shadow: 0 20px 90px #000;
+}
+
+.dialogue-overlay p {
+  min-height: 2.5rem;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+}
+
+.dialogue-overlay button,
+.puzzle-modal button {
+  min-height: 2.8rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgb(201 213 213 / 45%);
+  color: #e7efed;
+  background: #192526;
+  cursor: pointer;
+}
+
+.puzzle-modal {
+  top: 7%;
+  bottom: 7%;
+  overflow: auto;
+}
+
+.puzzle-modal h2 {
+  margin: 0;
+  font-weight: 400;
+}
+
+.breaker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin: 1.2rem 0;
+}
+
+.breaker-grid .breaker {
+  display: grid;
+  min-height: 12rem;
+  padding: 1rem;
+  gap: 0.7rem;
+  place-items: center;
+}
+
+.lever {
+  width: 1.8rem;
+  height: 5.5rem;
+  border: 4px solid #65716f;
+  border-radius: 0.4rem;
+  background: #273133;
+  transform: translateY(0.8rem);
+  transition:
+    transform 140ms ease,
+    background 140ms ease;
+}
+
+.breaker.is-on .lever {
+  background: #58b8b0;
+  transform: translateY(-0.8rem);
+}
+
+.pitch {
+  width: 100%;
+  padding-top: 0.3rem;
+  border-top: solid #8de1d8;
+  color: #a9cfcb;
+  font-size: 0.72rem;
+}
+
+.pitch.level-1 {
+  border-top-width: 2px;
+}
+.pitch.level-2 {
+  border-top-width: 5px;
+}
+.pitch.level-3 {
+  border-top-width: 8px;
+}
+.pitch.level-4 {
+  border-top-width: 11px;
+}
+
+.puzzle-feedback {
+  min-height: 1.5rem;
+  color: #f0b2b5;
+}
+
+.puzzle-modal footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toast {
+  position: absolute;
+  z-index: 12;
+  top: 15%;
+  left: 50%;
+  padding: 0.7rem 1rem;
+  border: 1px solid #58b8b0;
+  background: rgb(5 9 10 / 92%);
+  transform: translateX(-50%);
 }
 
 .screen-noise {

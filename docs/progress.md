@@ -9,11 +9,11 @@
 | P1-01 | completed | Vite・React・PixiJS・XStateの単一actor基盤、1920×1080 Canvas、React overlay、error boundary、非対応環境画面を実装 | `npm run check`、Playwright Chromium title→play E2E | なし |
 | P1-02 | completed | dev/build/preview/typecheck/lint/test/E2E/content・asset validation/check commandを実装 | `npm run check` | なし |
 | P1-03 | completed | Node 24 + npm ci、check、Chromium E2E、build容量記録のGitHub Actionsを実装 | workflow構文の手動確認、localの同等command成功 | remote CI実行はpush権限外 |
-| P2-01 | pending |  |  | P1 Gate |
-| P2-02 | pending |  |  | P1 Gate |
-| P2-03 | pending |  |  | P1 Gate |
-| P2-04 | pending |  |  | P1 Gate |
-| P2-05 | pending |  |  | P1 Gate |
+| P2-01 | completed | 1920×1080 letterbox、Canvas・HUD・modal・system layer、pointer/touch/keyboard共通event、reduced-motionを実装 | `npm run check`、desktop Chromium E2E | なし |
+| P2-02 | completed | 北東南西4視点を正規ID付きruntime Canvas代替素材で描画し、hotspot・方向移動・DOM accessibility操作を接続 | mouse/keyboard/touch E2E | 本番画像はP4で差替 |
+| P2-03 | completed | 暗い北壁、非常灯、BATTERY 00:19:48、冒頭7台詞、音声unlock、字幕、目的表示を実装 | unit、字幕ありE2E | 本番音声待ち |
+| P2-04 | completed | 4レバー、4音高、低→高判定、誤答全reset、視覚補助、電源復旧状態を実装 | 正解・誤答・再試行unit、無音・視覚補助・keyboard E2E | 音はWeb Audio仮音 |
+| P2-05 | completed | 電源復旧直後のversion付きlocalStorage自動保存、安全checkpoint復元、破損・書込失敗表示を実装 | round-trip・破損unit、reload復元E2E | なし |
 | P3-01 | pending |  |  | P2 Gate |
 | P3-02 | pending |  |  | P2 Gate |
 | P3-03 | pending |  |  | P2 Gate |
