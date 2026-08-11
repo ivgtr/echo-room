@@ -6,15 +6,28 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 
-import type { BreakerId, HotspotId, LocationId } from '../game/domain/ids';
+import {
+  BREAKER_ORDER,
+  type BreakerId,
+  type HotspotId,
+  type LocationId,
+} from '../game/domain/ids';
 import type {
   ItemId,
   StoryStage,
   TerminalMenuId,
 } from '../game/machine/gameMachine';
-import type { PacketId } from '../game/puzzles/storyPuzzles';
-import { worldViewAssets } from '../world/assets/worldAssets';
+import {
+  isLockerCodeCorrect,
+  type PacketId,
+} from '../game/puzzles/storyPuzzles';
+import {
+  getHotspotBounds,
+  worldViewAssets,
+  type WorldHotspot,
+} from '../world/assets/worldAssets';
 import { WorldCanvas } from '../world/renderer/WorldCanvas';
+import { ModalFocusScope } from './accessibility/ModalFocusScope';
 import { IntroDialogue } from './dialogue/IntroDialogue';
 import { EndingPanel } from './ending/EndingPanel';
 import { HintPanel } from './hints/HintPanel';
@@ -86,12 +99,21 @@ export function GameScreen(props: Props) {
     y: number;
   } | null>(null);
   const systemReturnFocusRef = useRef<HTMLElement | null>(null);
+  const inspectionReturnFocusRef = useRef<HTMLElement | null>(null);
+  const systemButtonRef = useRef<HTMLButtonElement>(null);
   const cueTimerRef = useRef<number | null>(null);
+  const inspectionTimerRef = useRef<number | null>(null);
+  const inspectionLockedRef = useRef(false);
   const [locationCue, setLocationCue] = useState<string | null>(null);
+  const [inspectionTargetId, setInspectionTargetId] =
+    useState<HotspotId | null>(null);
+  const [inspectionPhase, setInspectionPhase] = useState<
+    'idle' | 'approaching' | 'active'
+  >('idle');
   const ending =
     props.storyStage === 'ending' || props.storyStage === 'completed';
   const inspectionModalOpen =
-    props.selectedHotspotId === 'hotspot_terminal' ||
+    (props.powerRestored && props.selectedHotspotId === 'hotspot_terminal') ||
     (props.selectedHotspotId === 'hotspot_locker' &&
       props.storyStage === 'unlock_locker') ||
     (props.selectedHotspotId === 'hotspot_analysis_panel' &&
@@ -102,16 +124,29 @@ export function GameScreen(props: Props) {
     props.inventoryOpen ||
     props.hintOpen ||
     props.systemMenuOpen ||
+    inspectionPhase !== 'idle' ||
     inspectionModalOpen ||
     Boolean(props.subtitle) ||
     ending;
   const explorationControlsVisible =
     !props.intro && !props.breakerPuzzle && !ending;
+  const availableHotspots = worldViewAssets[props.locationId].hotspots.filter(
+    ({ id }) =>
+      (id !== 'hotspot_breaker' || !props.powerRestored) &&
+      (id !== 'hotspot_analysis_panel' || props.storyStage === 'analyze_voice'),
+  );
+  const displayedInspectionTargetId =
+    props.selectedHotspotId ?? inspectionTargetId;
+  const inspectionTarget = displayedInspectionTargetId
+    ? (findHotspot(displayedInspectionTargetId) ?? null)
+    : null;
 
   useEffect(
     () => () => {
       if (cueTimerRef.current !== null)
         window.clearTimeout(cueTimerRef.current);
+      if (inspectionTimerRef.current !== null)
+        window.clearTimeout(inspectionTimerRef.current);
     },
     [],
   );
@@ -132,6 +167,63 @@ export function GameScreen(props: Props) {
           : null;
     }
     props.onSystemToggle();
+  }
+
+  function requestHotspot(hotspotId: HotspotId) {
+    const hotspot = availableHotspots.find(({ id }) => id === hotspotId);
+    if (!hotspot || overlayOpen || inspectionLockedRef.current) return;
+    inspectionLockedRef.current = true;
+    inspectionReturnFocusRef.current = document.querySelector<HTMLElement>(
+      `[data-hotspot-id="${hotspotId}"]`,
+    );
+    setInspectionTargetId(hotspotId);
+    setInspectionPhase('approaching');
+    inspectionTimerRef.current = window.setTimeout(() => {
+      setInspectionPhase('active');
+      props.onHotspotSelected(hotspotId);
+    }, 380);
+  }
+
+  function finishInspection() {
+    inspectionLockedRef.current = false;
+    setInspectionPhase('idle');
+    setInspectionTargetId(null);
+  }
+
+  function closeInspection() {
+    props.onClose();
+    finishInspection();
+  }
+
+  function handleBreakerToggle(breakerId: BreakerId) {
+    props.onBreakerToggle(breakerId);
+    const sequence = [...props.breakerSequence, breakerId];
+    if (
+      sequence.length === BREAKER_ORDER.length &&
+      sequence.every((id, index) => id === BREAKER_ORDER[index])
+    ) {
+      finishInspection();
+    }
+  }
+
+  function handleLockerSubmit(answer: string) {
+    props.onLockerSubmit(answer);
+    if (isLockerCodeCorrect(answer)) finishInspection();
+  }
+
+  function handleLogsConfirmed() {
+    props.onLogsConfirmed();
+    finishInspection();
+  }
+
+  function handlePacketPlayed(packetId: PacketId) {
+    props.onPacketPlayed(packetId);
+    if (packetId === 'audio_packet_04') finishInspection();
+  }
+
+  function handleTransmit() {
+    props.onTransmit();
+    finishInspection();
   }
 
   useEffect(() => {
@@ -178,16 +270,53 @@ export function GameScreen(props: Props) {
     turn(deltaX < 0 ? 1 : -1);
   }
 
-  const availableHotspots = worldViewAssets[props.locationId].hotspots.filter(
-    ({ id }) =>
-      (id !== 'hotspot_breaker' || !props.powerRestored) &&
-      (id !== 'hotspot_analysis_panel' || props.storyStage === 'analyze_voice'),
-  );
+  const inspectionDialog = props.breakerPuzzle ? (
+    <BreakerPuzzle
+      sequence={props.breakerSequence}
+      failures={props.breakerFailures}
+      visualAssist={props.visualAssist}
+      audioEnabled={props.audioEnabled}
+      onToggleAssist={props.onToggleAssist}
+      onToggle={handleBreakerToggle}
+      onClose={closeInspection}
+    />
+  ) : props.powerRestored &&
+    props.selectedHotspotId === 'hotspot_terminal' &&
+    !ending ? (
+    <TerminalPanel
+      menuId={props.terminalMenuId}
+      stage={props.storyStage}
+      finalReady={props.finalReady}
+      onSelect={props.onTerminalMenu}
+      onClose={closeInspection}
+      onLogsConfirmed={handleLogsConfirmed}
+      onMapInspected={() => props.onMapInspected('security')}
+      onPacketPlayed={handlePacketPlayed}
+      onFinalSubmit={props.onFinalSubmit}
+      onTransmit={handleTransmit}
+    />
+  ) : props.selectedHotspotId === 'hotspot_locker' &&
+    props.storyStage === 'unlock_locker' ? (
+    <LockerPanel
+      failures={props.lockerFailures}
+      onSubmit={handleLockerSubmit}
+      onClose={closeInspection}
+    />
+  ) : props.selectedHotspotId === 'hotspot_analysis_panel' &&
+    props.storyStage === 'analyze_voice' ? (
+    <AnalysisPanel
+      onComplete={props.onAnalysisComplete}
+      onClose={closeInspection}
+    />
+  ) : null;
 
   return (
     <main className="game-shell">
       <div
-        className="logical-stage"
+        className={`logical-stage${overlayOpen ? ' world-input-locked' : ''}${inspectionPhase !== 'idle' ? ` is-inspection-${inspectionPhase}` : ''}`}
+        data-inspection-phase={inspectionPhase}
+        data-inspection-motion="zoom-or-crossfade"
+        style={inspectionStageStyle(inspectionTarget)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerCancel={() => {
@@ -197,7 +326,7 @@ export function GameScreen(props: Props) {
         <WorldCanvas
           locationId={props.locationId}
           powerRestored={props.powerRestored}
-          onHotspotSelected={props.onHotspotSelected}
+          onHotspotSelected={requestHotspot}
         />
         <div className="hud-layer">
           <div className="status-cluster" aria-label="現在の状況">
@@ -211,6 +340,7 @@ export function GameScreen(props: Props) {
               <button
                 type="button"
                 className="system-entry"
+                ref={systemButtonRef}
                 aria-haspopup="dialog"
                 aria-expanded={props.systemMenuOpen}
                 onClick={toggleSystemMenu}
@@ -240,8 +370,9 @@ export function GameScreen(props: Props) {
                   className="hotspot-control"
                   key={hotspot.id}
                   aria-label={hotspot.label}
-                  style={hotspotStyle(hotspot.rect)}
-                  onClick={() => props.onHotspotSelected(hotspot.id)}
+                  data-hotspot-id={hotspot.id}
+                  style={hotspotStyle(hotspot)}
+                  onClick={() => requestHotspot(hotspot.id)}
                 >
                   <span>{hotspot.label}</span>
                 </button>
@@ -257,6 +388,16 @@ export function GameScreen(props: Props) {
             </button>
           </div>
         )}
+        {inspectionPhase === 'approaching' && inspectionTarget && (
+          <div
+            className="inspection-transition-marker"
+            style={hotspotStyle(inspectionTarget)}
+            role="status"
+            aria-label={inspectionTarget.label}
+          >
+            <span>{inspectionTarget.label}</span>
+          </div>
+        )}
         {locationCue && !overlayOpen && (
           <div className="location-cue" role="status">
             <span>E-01</span>
@@ -270,7 +411,7 @@ export function GameScreen(props: Props) {
             aria-atomic="true"
           >
             <p>{props.subtitle}</p>
-            <button type="button" onClick={props.onClose}>
+            <button type="button" onClick={closeInspection}>
               閉じる
             </button>
           </section>
@@ -281,62 +422,45 @@ export function GameScreen(props: Props) {
             onAdvance={props.onDialogueAdvance}
           />
         )}
-        {props.breakerPuzzle && (
-          <BreakerPuzzle
-            sequence={props.breakerSequence}
-            failures={props.breakerFailures}
-            visualAssist={props.visualAssist}
-            audioEnabled={props.audioEnabled}
-            onToggleAssist={props.onToggleAssist}
-            onToggle={props.onBreakerToggle}
-            onClose={props.onClose}
-          />
+        {inspectionDialog && (
+          <ModalFocusScope
+            focusKey={
+              props.breakerPuzzle
+                ? 'hotspot_breaker'
+                : (props.selectedHotspotId ?? 'inspection')
+            }
+            returnFocusRef={inspectionReturnFocusRef}
+            fallbackFocusRef={systemButtonRef}
+          >
+            {inspectionDialog}
+          </ModalFocusScope>
         )}
-        {props.powerRestored &&
-          props.selectedHotspotId === 'hotspot_terminal' &&
-          !ending && (
-            <TerminalPanel
-              menuId={props.terminalMenuId}
-              stage={props.storyStage}
-              finalReady={props.finalReady}
-              onSelect={props.onTerminalMenu}
-              onClose={props.onClose}
-              onLogsConfirmed={props.onLogsConfirmed}
-              onMapInspected={() => props.onMapInspected('security')}
-              onPacketPlayed={props.onPacketPlayed}
-              onFinalSubmit={props.onFinalSubmit}
-              onTransmit={props.onTransmit}
-            />
-          )}
-        {props.selectedHotspotId === 'hotspot_locker' &&
-          props.storyStage === 'unlock_locker' && (
-            <LockerPanel
-              failures={props.lockerFailures}
-              onSubmit={props.onLockerSubmit}
-              onClose={props.onClose}
-            />
-          )}
-        {props.selectedHotspotId === 'hotspot_analysis_panel' &&
-          props.storyStage === 'analyze_voice' && (
-            <AnalysisPanel
-              onComplete={props.onAnalysisComplete}
-              onClose={props.onClose}
-            />
-          )}
         {props.inventoryOpen && (
-          <InventoryPanel
-            items={props.inventory}
-            onInspectMap={() => props.onMapInspected('inventory')}
-            onClose={props.onInventoryToggle}
-          />
+          <ModalFocusScope
+            focusKey="inventory"
+            returnFocusRef={systemReturnFocusRef}
+            fallbackFocusRef={systemButtonRef}
+          >
+            <InventoryPanel
+              items={props.inventory}
+              onInspectMap={() => props.onMapInspected('inventory')}
+              onClose={props.onInventoryToggle}
+            />
+          </ModalFocusScope>
         )}
         {props.hintOpen && (
-          <HintPanel
-            stage={props.storyStage}
-            level={props.hintLevel}
-            onReveal={props.onHintReveal}
-            onClose={props.onHintToggle}
-          />
+          <ModalFocusScope
+            focusKey="hint"
+            returnFocusRef={systemReturnFocusRef}
+            fallbackFocusRef={systemButtonRef}
+          >
+            <HintPanel
+              stage={props.storyStage}
+              level={props.hintLevel}
+              onReveal={props.onHintReveal}
+              onClose={props.onHintToggle}
+            />
+          </ModalFocusScope>
         )}
         {props.systemMenuOpen && (
           <SystemMenu
@@ -373,18 +497,36 @@ export function GameScreen(props: Props) {
   );
 }
 
-function hotspotStyle(rect: {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}): CSSProperties {
+function hotspotStyle(hotspot: WorldHotspot): CSSProperties {
+  const bounds = getHotspotBounds(hotspot);
+  const clipPath = hotspot.polygon
+    .map(
+      ([x, y]) =>
+        `${((x - bounds.x) / bounds.width) * 100}% ${((y - bounds.y) / bounds.height) * 100}%`,
+    )
+    .join(', ');
   return {
-    left: `${(rect.x / 1920) * 100}%`,
-    top: `${(rect.y / 1080) * 100}%`,
-    width: `${(rect.width / 1920) * 100}%`,
-    height: `${(rect.height / 1080) * 100}%`,
+    left: `${(bounds.x / 1920) * 100}%`,
+    top: `${(bounds.y / 1080) * 100}%`,
+    width: `${(bounds.width / 1920) * 100}%`,
+    height: `${(bounds.height / 1080) * 100}%`,
+    clipPath: `polygon(${clipPath})`,
   };
+}
+
+function inspectionStageStyle(hotspot: WorldHotspot | null) {
+  if (!hotspot) return undefined;
+  const bounds = getHotspotBounds(hotspot);
+  return {
+    '--inspection-x': `${((bounds.x + bounds.width / 2) / 1920) * 100}%`,
+    '--inspection-y': `${((bounds.y + bounds.height / 2) / 1080) * 100}%`,
+  } as CSSProperties;
+}
+
+function findHotspot(hotspotId: HotspotId) {
+  return Object.values(worldViewAssets)
+    .flatMap(({ hotspots }) => hotspots)
+    .find(({ id }) => id === hotspotId);
 }
 
 function getRotatedView(locationId: LocationId, offset: -1 | 1) {

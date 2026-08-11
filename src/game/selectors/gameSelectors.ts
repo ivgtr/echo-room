@@ -83,5 +83,11 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   ) {
     return '固定パネルだ。今は開ける理由がない。';
   }
+  if (
+    snapshot.context.selectedHotspotId === 'hotspot_locker' &&
+    snapshot.context.storyStage !== 'unlock_locker'
+  ) {
+    return '電子錠が掛かっている。今は使うべき時刻が分からない。';
+  }
   return null;
 };

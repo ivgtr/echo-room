@@ -8,7 +8,8 @@
 - P4は本素材統合の途中。P4-02の現行画面は利用者から肯定評価を受け、UI工程へ進む指示があったため、実機確認待ちのblockerは2026-08-11に解除された。
 - P4-02には正式高解像度原本、独立parallax layer、hit mask、残状態差分が残る。これらはP4-02内で継続するが、P5およびUI品質向上の着手を止めない。
 - UIQ-01は完了。方角タブ、矩形調査ボタン、常時目的、常時露出していた音声・タイトル操作を撤去し、画面端・左右キー・スワイプ、背景直接ホットスポット、SYSTEMメニューの単一構造へ置き換えた。
-- 次の優先作業は`quality-up-plan.md`のUIQ-02。現行の矩形hotspotを画像輪郭へ合わせ、hover・focus・touch markerと接写遷移を完成させる。
+- UIQ-02は完了。ReactとPixiJSが共有する6〜10点の輪郭polygon hotspot、hover・focus・touch接近marker、380msの寄り、動き軽減crossfade、遷移中・modal中のWorld入力停止とfocus復帰を実装した。
+- 次の優先作業は`quality-up-plan.md`のUIQ-03。Narrative・Inventory・System UIを用途別の一時表示へ整理し、会話履歴・資料再読・字幕設定を統合する。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
@@ -31,16 +32,16 @@
 | P3-06 | completed | 4台詞選択・並べ替え、誤順拒否、-00:20:00送信、冒頭会話再現、ドア解錠、白い光、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
 | P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
-| P4-02 | in_progress | 3 bundle・25画像、画像輪郭hotspot、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit 6件を含む8 files/19 tests、同一Canvas維持・全4面fade・電源復旧・全編・touch E2E 4件 | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-01の着手は阻害しない |
+| P4-02 | in_progress | 3 bundle・25画像、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。UIQ-02でReact・Pixi共通の6〜10点polygon hotspotへ更新。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit、同一Canvas維持・全4面fade・電源復旧・全編・touch・輪郭外click拒否E2E | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-03の着手は阻害しない |
 | P4-03 | pending |  |  | 依存済み。P4-02・UIQと並行着手可能 |
 | P4-04 | pending |  |  | 本番音声 |
-| P4-05 | pending |  |  | P4-02〜04 |
+| P4-05 | in_progress | UIQ-02として広角から調査対象への380msの寄り、接近中の視覚marker、動き軽減時のcrossfade代替を実装 | 通常・reduced-motion E2E、1280×720北壁の接近表示を目視確認 | 非常灯・通信・声紋解析・送信・ドア解錠・endingの本番演出はP4-02〜04とUIQ-03・04 |
 | P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
-| P5-02 | pending |  |  | 依存済み。UIQ-02・03と統合して実装 |
-| P5-03 | in_progress | UIQ-01として探索HUD簡素化、左右端・左右キー・swipe、背景座標連動hotspot、SYSTEMへの操作統合、目的再確認、focus trap・復帰を実装 | `npm run check`（9 files/21 tests）、Chromium E2E 5件、通常探索・SYSTEM代表画面の目視確認 | UIQ-02以降の遷移中input、画面回転、会話履歴・資料再読は継続 |
+| P5-02 | in_progress | UIQ-02としてpolygon hotspotの名前・role・focus表示、調査・所持品・ヒントmodalのfocus trapと起点復帰、動き軽減時のcrossfadeを実装 | keyboard focus/trap/復帰、reduced-motion、輪郭外click拒否、resize E2E | 字幕設定、重要音の視覚通知、全編ARIAはUIQ-03・04で継続 |
+| P5-03 | in_progress | UIQ-01の単一探索HUDに加え、UIQ-02で380ms接近中の即時input lock、連打防止、modal中World停止、resize・縦横復帰を実装 | Node 24で`npm run check`（9 files/21 tests）、Chromium E2E 7件、1280×720代表画面の目視確認 | 会話履歴・資料再読・既読会話速度はUIQ-03で継続 |
 | P5-04 | pending |  |  | 依存済み。UIQ-04と統合して実装 |
 | UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
-| UIQ-02 | pending | 背景直接操作と調査遷移の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-01。P5-02・03、P4-05と統合 |
+| UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
 | UIQ-03 | pending | Narrative・Inventory・System UIの仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-02。P5-02・03、P4-05と統合 |
 | UIQ-04 | pending | 非常システムと時間演出の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-03。P5-04、P4-05と統合 |
 | P6-01 | pending |  |  | P4・P5 |
@@ -62,7 +63,7 @@
 ## 次作業者への引き継ぎ
 
 1. `docs/README.md`のUIルーティングに従い、`requirements.md` 9〜13章、`technical-design.md` 7・10・15章、`quality-up-plan.md`、`implementation-plan.md`のP2・P5・10章を読む。
-2. UIQ-02を次の作業パッケージとして開始する。`worldViewAssets`を正本にした直接hotspot構造を維持し、矩形を画像輪郭へ合わせ、hover・focus・初回touch markerを調整する。
-3. 広角から接写への300〜500ms遷移、動き軽減時のcrossfade、modal中のWorld入力停止とfocus復帰を、既存の単一Pixi Applicationとscene収束処理へ接続する。
-4. UIQ-01で撤去した方角タブ、矩形調査ボタン、常時目的、個別system操作を再導入・二重化しない。
-5. UIQ-02完了時はresize、横向きtouch、連打、遷移中input、focus輪郭と対象名を検証し、P5-02・03、P4-05、UIQ-02の進捗を更新してローカルcommitする。
+2. UIQ-03を次の作業パッケージとして開始する。独白、会話、通信、取得物を用途別の一時表示へ整理し、字幕・話者・通信状態の視覚言語を統一する。
+3. Inventoryを必要時だけ展開する構造を維持し、会話履歴、資料再読、字幕サイズ・背景・表示速度、音量設定をSYSTEMへ接続する。
+4. UIQ-01の単一探索HUDとUIQ-02のpolygon hotspot・接近遷移・共通focus scopeを再導入・二重化せず利用する。
+5. UIQ-03完了時は無音、字幕拡大、会話終了後の背景復元、所持品のmouse・touch・keyboard操作を検証し、P5-02・03、P4-05、UIQ-03の進捗を更新してローカルcommitする。

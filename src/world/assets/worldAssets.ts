@@ -5,7 +5,7 @@ export type WorldLightingState = 'emergency' | 'powered';
 export type WorldHotspot = {
   id: HotspotId;
   label: string;
-  rect: Readonly<{ x: number; y: number; width: number; height: number }>;
+  polygon: ReadonlyArray<readonly [number, number]>;
 };
 
 type WorldViewAsset = {
@@ -25,17 +25,46 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
       {
         id: 'hotspot_clock',
         label: 'アナログ時計を調べる',
-        rect: { x: 315, y: 95, width: 210, height: 230 },
+        polygon: [
+          [347, 113],
+          [389, 86],
+          [451, 89],
+          [498, 126],
+          [515, 187],
+          [498, 253],
+          [452, 298],
+          [384, 300],
+          [337, 260],
+          [318, 196],
+        ],
       },
       {
         id: 'hotspot_door',
         label: '鉄製ドアを調べる',
-        rect: { x: 700, y: 205, width: 520, height: 730 },
+        polygon: [
+          [760, 206],
+          [1148, 206],
+          [1218, 274],
+          [1218, 868],
+          [1152, 936],
+          [752, 936],
+          [686, 868],
+          [686, 274],
+        ],
       },
       {
         id: 'hotspot_intercom',
         label: 'インターホンを調べる',
-        rect: { x: 1230, y: 350, width: 210, height: 290 },
+        polygon: [
+          [1264, 348],
+          [1404, 348],
+          [1436, 380],
+          [1436, 622],
+          [1400, 658],
+          [1260, 658],
+          [1228, 624],
+          [1228, 380],
+        ],
       },
     ],
   },
@@ -49,12 +78,30 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
       {
         id: 'hotspot_terminal',
         label: '壁面端末を調べる',
-        rect: { x: 700, y: 310, width: 520, height: 440 },
+        polygon: [
+          [746, 302],
+          [1168, 302],
+          [1228, 358],
+          [1228, 704],
+          [1170, 762],
+          [742, 762],
+          [682, 704],
+          [682, 358],
+        ],
       },
       {
         id: 'hotspot_analysis_panel',
         label: '解析パネルを調べる',
-        rect: { x: 1230, y: 370, width: 210, height: 280 },
+        polygon: [
+          [1262, 360],
+          [1415, 360],
+          [1444, 388],
+          [1444, 635],
+          [1414, 666],
+          [1260, 666],
+          [1229, 635],
+          [1229, 390],
+        ],
       },
     ],
   },
@@ -68,7 +115,14 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
       {
         id: 'hotspot_desk',
         label: 'デスクの紙を調べる',
-        rect: { x: 500, y: 545, width: 830, height: 390 },
+        polygon: [
+          [590, 527],
+          [1260, 527],
+          [1368, 702],
+          [1308, 921],
+          [542, 921],
+          [484, 704],
+        ],
       },
     ],
   },
@@ -82,12 +136,30 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
       {
         id: 'hotspot_locker',
         label: 'ロッカーを調べる',
-        rect: { x: 275, y: 120, width: 300, height: 790 },
+        polygon: [
+          [316, 112],
+          [552, 112],
+          [584, 150],
+          [584, 886],
+          [550, 922],
+          [314, 922],
+          [278, 886],
+          [278, 150],
+        ],
       },
       {
         id: 'hotspot_breaker',
         label: 'ブレーカーパネルを調べる',
-        rect: { x: 1270, y: 270, width: 380, height: 390 },
+        polygon: [
+          [1312, 262],
+          [1608, 262],
+          [1654, 308],
+          [1654, 618],
+          [1608, 666],
+          [1310, 666],
+          [1264, 618],
+          [1264, 308],
+        ],
       },
     ],
   },
@@ -103,4 +175,14 @@ export function getAllWorldImages() {
   return Object.values(worldViewAssets).flatMap((asset) =>
     Object.values(asset.images),
   );
+}
+
+export function getHotspotBounds(hotspot: WorldHotspot) {
+  const xs = hotspot.polygon.map(([x]) => x);
+  const ys = hotspot.polygon.map(([, y]) => y);
+  const left = Math.min(...xs);
+  const top = Math.min(...ys);
+  const right = Math.max(...xs);
+  const bottom = Math.max(...ys);
+  return { x: left, y: top, width: right - left, height: bottom - top };
 }

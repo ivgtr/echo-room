@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('safe checkpoint reaches transmission complete through every remaining puzzle', async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   await page.addInitScript(() => {
     localStorage.setItem(
       'echo-room:progress',
@@ -28,6 +29,9 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await terminal.getByRole('button', { name: 'LOG' }).click();
   await expect(terminal.getByText('02:37:18')).toBeVisible();
   await terminal.getByRole('button', { name: '20分の差を確認した' }).click();
+  await expect(
+    page.getByRole('button', { name: '壁面端末を調べる' }),
+  ).toBeFocused();
 
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');

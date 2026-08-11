@@ -149,6 +149,101 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   await expect(
     page.getByRole('button', { name: '鉄製ドアを調べる' }),
   ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: '鉄製ドアを調べる' }),
+  ).not.toHaveCSS('clip-path', 'none');
+  const doorBox = await page
+    .getByRole('button', { name: '鉄製ドアを調べる' })
+    .boundingBox();
+  expect(doorBox).not.toBeNull();
+  await page.mouse.click(doorBox!.x + 2, doorBox!.y + 2);
+  await expect(page.locator('.logical-stage')).toHaveAttribute(
+    'data-inspection-phase',
+    'idle',
+  );
+});
+
+test('inspection approach locks duplicate input and restores hotspot focus', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'echo-room:progress',
+      JSON.stringify({
+        schemaVersion: 1,
+        contentVersion: '0.1.0',
+        savedAt: new Date().toISOString(),
+        progress: {
+          checkpointId: 'checkpoint_power_restored',
+          powerRestored: true,
+          locationId: 'location_east_wall',
+        },
+      }),
+    );
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: '続きから' }).click();
+  const stage = page.locator('.logical-stage');
+  const terminalHotspot = page.getByRole('button', {
+    name: '壁面端末を調べる',
+  });
+  await terminalHotspot.evaluate((element) => {
+    if (element instanceof HTMLElement) {
+      element.click();
+      element.click();
+    }
+  });
+  await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
+  await expect(page.locator('.inspection-transition-marker')).toBeVisible();
+  const terminal = page.getByRole('dialog', { name: '壁面端末' });
+  await expect(terminal).toHaveCount(1);
+  await expect(stage).toHaveAttribute('data-inspection-phase', 'active');
+  const worldCanvas = page.getByTestId('world-canvas').locator('canvas');
+  await expect(worldCanvas).toHaveAttribute('aria-label', /東壁/);
+  await page.keyboard.press('ArrowRight');
+  await expect(worldCanvas).toHaveAttribute('aria-label', /東壁/);
+  const firstControl = terminal.getByRole('button', { name: 'SYSTEM' });
+  await expect(firstControl).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(
+    terminal.getByRole('button', { name: '端末を閉じる' }),
+  ).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(firstControl).toBeFocused();
+  await terminal.getByRole('button', { name: '端末を閉じる' }).click();
+  await expect(terminalHotspot).toBeFocused();
+  await expect(stage).toHaveAttribute('data-inspection-phase', 'idle');
+});
+
+test('reduced motion uses a crossfade and hotspot alignment survives resize', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await enterRoom(page);
+  await page.setViewportSize({ width: 1000, height: 700 });
+  const stage = page.locator('.logical-stage');
+  const world = page.getByTestId('world-canvas');
+  const door = page.getByRole('button', { name: '鉄製ドアを調べる' });
+  await expect(door).toBeVisible();
+  const stageBox = await stage.boundingBox();
+  const doorBox = await door.boundingBox();
+  expect(stageBox).not.toBeNull();
+  expect(doorBox).not.toBeNull();
+  expect((doorBox!.x - stageBox!.x) / stageBox!.width).toBeCloseTo(
+    686 / 1920,
+    2,
+  );
+  expect((doorBox!.y - stageBox!.y) / stageBox!.height).toBeCloseTo(
+    206 / 1080,
+    2,
+  );
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 844, height: 390 });
+  await door.dispatchEvent('click');
+  await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
+  await expect(world).toHaveCSS('transform', 'none');
+  await expect(page.getByText('非常ロックが作動している。')).toBeVisible();
 });
 
 test.describe('touch input', () => {
@@ -174,10 +269,10 @@ test.describe('touch input', () => {
     await expect(
       page.getByTestId('world-canvas').locator('canvas'),
     ).toHaveAttribute('aria-label', /西壁/);
-    await page
+    const breaker = page
       .getByLabel('調査対象')
-      .getByRole('button', { name: 'ブレーカーパネルを調べる' })
-      .tap();
+      .getByRole('button', { name: 'ブレーカーパネルを調べる' });
+    await breaker.tap();
     await expect(
       page.getByRole('heading', { name: '非常電源ブレーカー' }),
     ).toBeVisible();

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { locationIds } from '../../src/game/domain/ids';
 import {
+  getHotspotBounds,
   getWorldImage,
   worldViewAssets,
 } from '../../src/world/assets/worldAssets';
@@ -14,16 +15,19 @@ describe('world runtime assets', () => {
     }
   });
 
-  it('keeps hotspot rectangles inside the logical canvas', () => {
+  it('keeps hotspot polygons inside the logical canvas', () => {
     for (const locationId of locationIds) {
       const ids = new Set<string>();
       for (const hotspot of worldViewAssets[locationId].hotspots) {
         expect(ids.has(hotspot.id)).toBe(false);
         ids.add(hotspot.id);
-        expect(hotspot.rect.x).toBeGreaterThanOrEqual(0);
-        expect(hotspot.rect.y).toBeGreaterThanOrEqual(0);
-        expect(hotspot.rect.x + hotspot.rect.width).toBeLessThanOrEqual(1920);
-        expect(hotspot.rect.y + hotspot.rect.height).toBeLessThanOrEqual(1080);
+        expect(hotspot.polygon.length).toBeGreaterThanOrEqual(6);
+        for (const [x, y] of hotspot.polygon) {
+          expect(x).toBeGreaterThanOrEqual(0);
+          expect(y).toBeGreaterThanOrEqual(0);
+          expect(x).toBeLessThanOrEqual(1920);
+          expect(y).toBeLessThanOrEqual(1080);
+        }
       }
     }
   });
@@ -31,10 +35,13 @@ describe('world runtime assets', () => {
   it('matches the approved west-wall object order', () => {
     const west = worldViewAssets.location_west_wall.hotspots;
     expect(
-      west.find((hotspot) => hotspot.id === 'hotspot_locker')?.rect.x,
-    ).toBe(275);
+      getHotspotBounds(west.find((hotspot) => hotspot.id === 'hotspot_locker')!)
+        .x,
+    ).toBe(278);
     expect(
-      west.find((hotspot) => hotspot.id === 'hotspot_breaker')?.rect.x,
-    ).toBe(1270);
+      getHotspotBounds(
+        west.find((hotspot) => hotspot.id === 'hotspot_breaker')!,
+      ).x,
+    ).toBe(1264);
   });
 });

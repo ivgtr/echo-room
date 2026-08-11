@@ -307,13 +307,12 @@ function buildScene(
   container.addChild(background);
 
   for (const hotspot of asset.hotspots) {
-    const { x, y, width, height } = hotspot.rect;
     const target = new Graphics({
       label: hotspot.id,
       eventMode: 'static',
       cursor: 'pointer',
     })
-      .rect(x, y, width, height)
+      .poly(hotspot.polygon.flat(), true)
       .fill({ color: '#ffffff', alpha: 0.001 });
     target.on('pointertap', () => hotspotHandlerRef.current(hotspot.id));
     container.addChild(target);
