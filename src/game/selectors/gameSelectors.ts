@@ -41,7 +41,7 @@ export const selectEndingLineIndex = (snapshot: GameSnapshot) =>
 export const selectHintLevel = (snapshot: GameSnapshot) =>
   snapshot.context.hintLevel;
 
-export const selectSubtitle = (snapshot: GameSnapshot) => {
+export const selectObjective = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;
   if (snapshot.matches({ playing: 'powered' })) {
     const objectives: Record<string, string> = {
@@ -54,11 +54,34 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
     };
     return objectives[snapshot.context.storyStage] ?? 'よし。次は端末だ。';
   }
+  return '非常電源を復旧する。室内を観察し、電源設備を探す。';
+};
+
+export const selectSubtitle = (snapshot: GameSnapshot) => {
+  if (!snapshot.matches('playing')) return null;
   if (snapshot.context.selectedHotspotId === 'hotspot_door') {
     return '非常ロックが作動している。電源系統を確認する必要がある。';
+  }
+  if (snapshot.context.selectedHotspotId === 'hotspot_clock') {
+    return 'アナログ時計は02:17で止まっている。';
+  }
+  if (snapshot.context.selectedHotspotId === 'hotspot_intercom') {
+    return '通信回線は生きている。受信を待つしかなさそうだ。';
   }
   if (snapshot.context.selectedHotspotId === 'hotspot_desk') {
     return 'EMERGENCY POWER TEST――起動順序：周波数の低い回路から接続すること。';
   }
-  return '現在目的：電源を戻す。西壁のブレーカーパネルを調べよう。';
+  if (
+    snapshot.context.selectedHotspotId === 'hotspot_terminal' &&
+    !snapshot.context.powerRestored
+  ) {
+    return '端末には電源が来ていない。';
+  }
+  if (
+    snapshot.context.selectedHotspotId === 'hotspot_analysis_panel' &&
+    snapshot.context.storyStage !== 'analyze_voice'
+  ) {
+    return '固定パネルだ。今は開ける理由がない。';
+  }
+  return null;
 };

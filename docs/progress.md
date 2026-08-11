@@ -7,7 +7,8 @@
 - P0〜P3は完了し、代替画像・字幕・仮音声で冒頭からエンディングまで通して遊べる。
 - P4は本素材統合の途中。P4-02の現行画面は利用者から肯定評価を受け、UI工程へ進む指示があったため、実機確認待ちのblockerは2026-08-11に解除された。
 - P4-02には正式高解像度原本、独立parallax layer、hit mask、残状態差分が残る。これらはP4-02内で継続するが、P5およびUI品質向上の着手を止めない。
-- 次の優先作業は`quality-up-plan.md`のUIQ-01。P5-03の一部として探索HUDを簡素化し、旧UIを残さず単一の操作構造へ置き換える。
+- UIQ-01は完了。方角タブ、矩形調査ボタン、常時目的、常時露出していた音声・タイトル操作を撤去し、画面端・左右キー・スワイプ、背景直接ホットスポット、SYSTEMメニューの単一構造へ置き換えた。
+- 次の優先作業は`quality-up-plan.md`のUIQ-02。現行の矩形hotspotを画像輪郭へ合わせ、hover・focus・touch markerと接写遷移を完成させる。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
@@ -36,9 +37,9 @@
 | P4-05 | pending |  |  | P4-02〜04 |
 | P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
 | P5-02 | pending |  |  | 依存済み。UIQ-02・03と統合して実装 |
-| P5-03 | pending |  |  | 依存済み。UIQ-01を次に着手 |
+| P5-03 | in_progress | UIQ-01として探索HUD簡素化、左右端・左右キー・swipe、背景座標連動hotspot、SYSTEMへの操作統合、目的再確認、focus trap・復帰を実装 | `npm run check`（9 files/21 tests）、Chromium E2E 5件、通常探索・SYSTEM代表画面の目視確認 | UIQ-02以降の遷移中input、画面回転、会話履歴・資料再読は継続 |
 | P5-04 | pending |  |  | 依存済み。UIQ-04と統合して実装 |
-| UIQ-01 | pending | 探索HUD簡素化の仕様・受け入れ条件を正本化 | 文書整合、Prettier | 次の着手点。P5-03として実装 |
+| UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
 | UIQ-02 | pending | 背景直接操作と調査遷移の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-01。P5-02・03、P4-05と統合 |
 | UIQ-03 | pending | Narrative・Inventory・System UIの仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-02。P5-02・03、P4-05と統合 |
 | UIQ-04 | pending | 非常システムと時間演出の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-03。P5-04、P4-05と統合 |
@@ -61,7 +62,7 @@
 ## 次作業者への引き継ぎ
 
 1. `docs/README.md`のUIルーティングに従い、`requirements.md` 9〜13章、`technical-design.md` 7・10・15章、`quality-up-plan.md`、`implementation-plan.md`のP2・P5・10章を読む。
-2. UIQ-01をP5-03の最初の作業パッケージとして開始する。方角タブ、矩形の調査ボタン、常時目的表示、常時露出する音声・タイトル操作を、計画書の単一構造へ置き換える。
-3. 見た目を非表示にしても、hotspotの名前・役割・focus順、左右キー、Tab操作、focus輪郭を失わせない。
-4. 既存のPixi Application、double buffer、scene収束処理を再導入・二重化せず、その上へ入力とUIを接続する。
-5. UIQ-01完了時はdesktop mouse/keyboard、touch、SYSTEMのfocus復帰、目的復帰導線を検証し、P5-03とUIQ-01の進捗を更新してローカルcommitする。
+2. UIQ-02を次の作業パッケージとして開始する。`worldViewAssets`を正本にした直接hotspot構造を維持し、矩形を画像輪郭へ合わせ、hover・focus・初回touch markerを調整する。
+3. 広角から接写への300〜500ms遷移、動き軽減時のcrossfade、modal中のWorld入力停止とfocus復帰を、既存の単一Pixi Applicationとscene収束処理へ接続する。
+4. UIQ-01で撤去した方角タブ、矩形調査ボタン、常時目的、個別system操作を再導入・二重化しない。
+5. UIQ-02完了時はresize、横向きtouch、連打、遷移中input、focus輪郭と対象名を検証し、P5-02・03、P4-05、UIQ-02の進捗を更新してローカルcommitする。

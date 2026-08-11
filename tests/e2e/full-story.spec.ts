@@ -29,7 +29,8 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await expect(terminal.getByText('02:37:18')).toBeVisible();
   await terminal.getByRole('button', { name: '20分の差を確認した' }).click();
 
-  await page.getByRole('button', { name: '西壁を見る' }).click();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
   await page
     .getByLabel('調査対象')
     .getByRole('button', { name: 'ロッカーを調べる' })
@@ -41,11 +42,16 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await locker.getByLabel('解錠コード').fill('0237');
   await locker.getByRole('button', { name: '入力する' }).click();
 
-  await page.getByRole('button', { name: '所持品' }).click();
+  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  await page
+    .getByRole('dialog', { name: 'SYSTEM' })
+    .getByRole('button', { name: 'INVENTORY / 所持品' })
+    .click();
   const inventory = page.getByRole('dialog', { name: '所持品' });
   await inventory.getByRole('button', { name: '展開して確認' }).click();
   await inventory.getByRole('button', { name: '閉じる' }).click();
-  await page.getByRole('button', { name: '東壁を見る' }).click();
+  await page.getByRole('button', { name: /右を向く（北壁/ }).click();
+  await page.getByRole('button', { name: /右を向く（東壁/ }).click();
   await page
     .getByLabel('調査対象')
     .getByRole('button', { name: '壁面端末を調べる' })

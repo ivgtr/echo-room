@@ -251,6 +251,7 @@ export const gameMachine = setup({
               { guard: 'selectedBreaker', target: 'breakerPuzzle' },
               { actions: 'selectHotspot' },
             ],
+            PUZZLE_CLOSED: { actions: 'closeInspection' },
           },
         },
         breakerPuzzle: {

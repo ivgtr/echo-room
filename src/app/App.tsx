@@ -18,6 +18,7 @@ import {
   selectIsPlaying,
   selectLocation,
   selectLockerFailures,
+  selectObjective,
   selectPowerRestored,
   selectSelectedHotspot,
   selectSubtitle,
@@ -37,6 +38,7 @@ export function App() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
+  const [systemMenuOpen, setSystemMenuOpen] = useState(false);
   const actorRef = useActorRef(gameMachine);
   const isPlaying = useSelector(actorRef, selectIsPlaying);
   const intro = useSelector(actorRef, selectIsIntro);
@@ -55,6 +57,7 @@ export function App() {
   const finalReady = useSelector(actorRef, selectFinalOrderReady);
   const endingLineIndex = useSelector(actorRef, selectEndingLineIndex);
   const hintLevel = useSelector(actorRef, selectHintLevel);
+  const objective = useSelector(actorRef, selectObjective);
   const savedPowerRef = useRef(false);
 
   useEffect(() => {
@@ -109,6 +112,7 @@ export function App() {
       locationId={locationId}
       selectedHotspotId={selectedHotspotId}
       subtitle={subtitle}
+      objective={objective ?? ''}
       powerRestored={powerRestored}
       intro={intro}
       introLineIndex={introLineIndex}
@@ -127,6 +131,7 @@ export function App() {
       endingLineIndex={endingLineIndex}
       hintLevel={hintLevel}
       hintOpen={hintOpen}
+      systemMenuOpen={systemMenuOpen}
       onDialogueAdvance={() => actorRef.send({ type: 'DIALOGUE_ADVANCED' })}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}
@@ -134,7 +139,10 @@ export function App() {
       onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleAudio={() => setAudioEnabled((value) => !value)}
-      onExit={() => actorRef.send({ type: 'RETURNED_TO_TITLE' })}
+      onExit={() => {
+        setSystemMenuOpen(false);
+        actorRef.send({ type: 'RETURNED_TO_TITLE' });
+      }}
       onTerminalMenu={(menuId) =>
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
       }
@@ -142,7 +150,10 @@ export function App() {
       onLockerSubmit={(answer) =>
         actorRef.send({ type: 'LOCKER_SUBMITTED', answer })
       }
-      onInventoryToggle={() => setInventoryOpen((value) => !value)}
+      onInventoryToggle={() => {
+        setSystemMenuOpen(false);
+        setInventoryOpen((value) => !value);
+      }}
       onMapInspected={(source) =>
         actorRef.send({ type: 'FLOOR_MAP_INSPECTED', source })
       }
@@ -157,8 +168,16 @@ export function App() {
       }
       onTransmit={() => actorRef.send({ type: 'TRANSMISSION_CONFIRMED' })}
       onEndingAdvance={() => actorRef.send({ type: 'ENDING_ADVANCED' })}
-      onHintToggle={() => setHintOpen((value) => !value)}
+      onHintToggle={() => {
+        setSystemMenuOpen(false);
+        setHintOpen((value) => !value);
+      }}
       onHintReveal={() => actorRef.send({ type: 'HINT_REQUESTED' })}
+      onSystemToggle={() => {
+        setInventoryOpen(false);
+        setHintOpen(false);
+        setSystemMenuOpen((value) => !value);
+      }}
     />
   );
 }
