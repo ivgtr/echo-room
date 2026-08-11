@@ -22,6 +22,8 @@ export const selectBreakerFailures = (snapshot: GameSnapshot) =>
   snapshot.context.breakerFailures;
 export const selectIntroLineIndex = (snapshot: GameSnapshot) =>
   snapshot.context.introLineIndex;
+export const selectTerminalMenu = (snapshot: GameSnapshot) =>
+  snapshot.context.terminalMenuId;
 
 export const selectSubtitle = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;

@@ -16,6 +16,7 @@ import {
   selectPowerRestored,
   selectSelectedHotspot,
   selectSubtitle,
+  selectTerminalMenu,
 } from '../game/selectors/gameSelectors';
 import { GameScreen } from '../ui/GameScreen';
 import { TitleScreen } from '../ui/TitleScreen';
@@ -39,6 +40,7 @@ export function App() {
   const breakerSequence = useSelector(actorRef, selectBreakerSequence);
   const breakerFailures = useSelector(actorRef, selectBreakerFailures);
   const introLineIndex = useSelector(actorRef, selectIntroLineIndex);
+  const terminalMenuId = useSelector(actorRef, selectTerminalMenu);
   const savedPowerRef = useRef(false);
 
   useEffect(() => {
@@ -102,6 +104,7 @@ export function App() {
       visualAssist={visualAssist}
       audioEnabled={audioEnabled}
       saveMessage={saveMessage}
+      terminalMenuId={terminalMenuId}
       onDialogueAdvance={() => actorRef.send({ type: 'DIALOGUE_ADVANCED' })}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}
@@ -110,6 +113,9 @@ export function App() {
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleAudio={() => setAudioEnabled((value) => !value)}
       onExit={() => actorRef.send({ type: 'RETURNED_TO_TITLE' })}
+      onTerminalMenu={(menuId) =>
+        actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
+      }
     />
   );
 }

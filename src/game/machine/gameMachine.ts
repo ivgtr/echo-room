@@ -15,6 +15,7 @@ export type GameEvent =
   | { type: 'HOTSPOT_SELECTED'; hotspotId: HotspotId }
   | { type: 'BREAKER_TOGGLED'; breakerId: BreakerId }
   | { type: 'PUZZLE_CLOSED' }
+  | { type: 'TERMINAL_MENU_SELECTED'; menuId: TerminalMenuId }
   | { type: 'RETURNED_TO_TITLE' };
 
 export type GameContext = {
@@ -24,7 +25,10 @@ export type GameContext = {
   breakerSequence: BreakerId[];
   breakerFailures: number;
   powerRestored: boolean;
+  terminalMenuId: TerminalMenuId;
 };
+
+export type TerminalMenuId = 'system' | 'log' | 'audio' | 'security';
 
 const isCorrectFinalInput = ({
   context,
@@ -107,7 +111,13 @@ export const gameMachine = setup({
       breakerSequence: [],
       breakerFailures: 0,
       powerRestored: false,
+      terminalMenuId: 'system',
     }),
+    selectTerminalMenu: assign({
+      terminalMenuId: ({ event }) =>
+        event.type === 'TERMINAL_MENU_SELECTED' ? event.menuId : 'system',
+    }),
+    closeInspection: assign({ selectedHotspotId: null }),
   },
 }).createMachine({
   id: 'echoRoom',
@@ -119,6 +129,7 @@ export const gameMachine = setup({
     breakerSequence: [],
     breakerFailures: 0,
     powerRestored: false,
+    terminalMenuId: 'system',
   },
   states: {
     title: {
@@ -168,6 +179,8 @@ export const gameMachine = setup({
           on: {
             VIEW_CHANGED: { actions: 'changeView' },
             HOTSPOT_SELECTED: { actions: 'selectHotspot' },
+            TERMINAL_MENU_SELECTED: { actions: 'selectTerminalMenu' },
+            PUZZLE_CLOSED: { actions: 'closeInspection' },
           },
         },
       },

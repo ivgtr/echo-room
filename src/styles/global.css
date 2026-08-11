@@ -266,7 +266,8 @@ button:focus-visible {
 }
 
 .dialogue-overlay,
-.puzzle-modal {
+.puzzle-modal,
+.terminal-modal {
   position: absolute;
   z-index: 10;
   right: 8%;
@@ -276,6 +277,76 @@ button:focus-visible {
   border: 1px solid rgb(88 184 176 / 45%);
   background: rgb(5 9 10 / 96%);
   box-shadow: 0 20px 90px #000;
+}
+
+.terminal-modal {
+  position: absolute;
+  z-index: 10;
+  inset: 7% 10%;
+  padding: clamp(1rem, 2vw, 2rem);
+  border: 8px solid #303a3b;
+  color: #aee4df;
+  background: rgb(5 18 18 / 98%);
+  overflow: auto;
+}
+
+.terminal-modal h2 {
+  margin: 0 0 1rem;
+  font-weight: 400;
+}
+.terminal-modal nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.terminal-modal button {
+  min-height: 2.8rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #58b8b0;
+  color: inherit;
+  background: #102829;
+  cursor: pointer;
+}
+.terminal-modal button:disabled {
+  color: #63716f;
+  border-color: #3e4b49;
+  cursor: not-allowed;
+}
+.terminal-modal button[aria-current='page'] {
+  color: #071011;
+  background: #8de1d8;
+}
+.terminal-display {
+  min-height: 55%;
+  margin: 1rem 0;
+  padding: 1.2rem;
+  border: 1px solid rgb(88 184 176 / 30%);
+}
+.terminal-display dl {
+  display: grid;
+  gap: 0.8rem;
+}
+.terminal-display dl div {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed rgb(88 184 176 / 30%);
+}
+.terminal-display dd {
+  margin: 0;
+}
+.terminal-display table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.terminal-display caption {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+.terminal-display th,
+.terminal-display td {
+  padding: 0.7rem;
+  border-bottom: 1px solid rgb(88 184 176 / 25%);
 }
 
 .dialogue-overlay p {

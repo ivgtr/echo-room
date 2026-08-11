@@ -15,7 +15,7 @@
 | P2-04 | completed | 4レバー、4音高、低→高判定、誤答全reset、視覚補助、電源復旧状態を実装 | 正解・誤答・再試行unit、無音・視覚補助・keyboard E2E | 音はWeb Audio仮音 |
 | P2-05 | completed | 電源復旧直後のversion付きlocalStorage自動保存、安全checkpoint復元、破損・書込失敗表示を実装 | round-trip・破損unit、reload復元E2E | なし |
 | P3-01 | completed | scene関連ID、dialogue、item、document、7 puzzle、21 hint、許可condition/effectのZod schemaとYAMLを実装 | `npm run check`、schema・重複ID・20分差unit、PACKET/参照validation | なし |
-| P3-02 | pending |  |  | P2 Gate |
+| P3-02 | completed | SYSTEM・LOG・AUDIO・SECURITYを持つ端末UI、進行lock、英語見出しと日本語補助、重要時刻の再確認を実装 | `npm run check`、端末component test | AUDIO・SECURITY解放はP3-04 |
 | P3-03 | pending |  |  | P2 Gate |
 | P3-04 | pending |  |  | P2 Gate |
 | P3-05 | pending |  |  | P2 Gate |

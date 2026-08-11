@@ -1,7 +1,9 @@
 import type { BreakerId, HotspotId, LocationId } from '../game/domain/ids';
+import type { TerminalMenuId } from '../game/machine/gameMachine';
 import { WorldCanvas } from '../world/renderer/WorldCanvas';
 import { IntroDialogue } from './dialogue/IntroDialogue';
 import { BreakerPuzzle } from './puzzles/BreakerPuzzle';
+import { TerminalPanel } from './terminal/TerminalPanel';
 
 const views: { id: LocationId; label: string; short: string }[] = [
   { id: 'location_north_wall', label: '北壁を見る', short: '北' },
@@ -23,6 +25,7 @@ type Props = {
   visualAssist: boolean;
   audioEnabled: boolean;
   saveMessage: string | null;
+  terminalMenuId: TerminalMenuId;
   onDialogueAdvance: () => void;
   onViewChanged: (locationId: LocationId) => void;
   onHotspotSelected: (hotspotId: HotspotId) => void;
@@ -31,6 +34,7 @@ type Props = {
   onToggleAssist: () => void;
   onToggleAudio: () => void;
   onExit: () => void;
+  onTerminalMenu: (menuId: TerminalMenuId) => void;
 };
 
 export function GameScreen(props: Props) {
@@ -142,6 +146,14 @@ export function GameScreen(props: Props) {
             onClose={props.onBreakerClose}
           />
         )}
+        {props.powerRestored &&
+          props.selectedHotspotId === 'hotspot_terminal' && (
+            <TerminalPanel
+              menuId={props.terminalMenuId}
+              onSelect={props.onTerminalMenu}
+              onClose={props.onBreakerClose}
+            />
+          )}
         {props.saveMessage && (
           <div className="toast" role="status">
             {props.saveMessage}
