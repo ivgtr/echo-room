@@ -6,9 +6,9 @@
 |---|---|---|---|---|
 | P0-01 | completed | 固定・保留条件、資料優先順位、ID命名規則を`project-decisions.md`へ整理 | 全正本の通読、参照と固定条件の手動照合 | なし |
 | P0-02 | completed | Node.js 24.15.0、npm 11系、対象browser、標準commandを確定 | `mise ls node`、`node --version`、`npm --version` | なし |
-| P1-01 | pending |  |  | なし |
-| P1-02 | pending |  |  | なし |
-| P1-03 | pending |  |  | なし |
+| P1-01 | completed | Vite・React・PixiJS・XStateの単一actor基盤、1920×1080 Canvas、React overlay、error boundary、非対応環境画面を実装 | `npm run check`、Playwright Chromium title→play E2E | なし |
+| P1-02 | completed | dev/build/preview/typecheck/lint/test/E2E/content・asset validation/check commandを実装 | `npm run check` | なし |
+| P1-03 | completed | Node 24 + npm ci、check、Chromium E2E、build容量記録のGitHub Actionsを実装 | workflow構文の手動確認、localの同等command成功 | remote CI実行はpush権限外 |
 | P2-01 | pending |  |  | P1 Gate |
 | P2-02 | pending |  |  | P1 Gate |
 | P2-03 | pending |  |  | P1 Gate |
