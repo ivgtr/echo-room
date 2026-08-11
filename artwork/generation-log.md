@@ -2,16 +2,34 @@
 
 ## GFX-ITEM-003 主人公の職員証写真
 
-- 生成日: 2026-08-11
+- 初回生成日: 2026-08-11
+- 現行版更新日: 2026-08-12
 - 用途: 職員用アクセスカード、VOICE ANALYSISの本人照合
-- provider / mode: OpenAI built-in `image_gen`、承認済みGFX-REF-001 cinematic v6を美術方向参照とした新規生成
+- provider / mode: OpenAI built-in `image_gen`。旧承認写真を編集対象とした`style-transfer`
 - model / model version / seed: built-in toolから非公開
 - 人物設定: 32歳前後の日本人男性。短い黒髪。地下研究施設の設備保守・運用担当。濃灰の高襟作業着。氏名と不要な経歴は設定しない。
-- prompt要旨: 正面、頭肩、平坦な寒色白色光、無地の寒色グレー背景、自然で落ち着いた普通の表情。文字、ロゴ、職員証、記章、道具、劇的な色光、英雄的・美容的演出を禁止。
-- 無加工生成物: built-in toolの保存原本を保持し、作業用copyを`tmp/imagegen/gfx-item-003__source.png`へ配置。
+- 修正方針: 写実的な証明写真から、世界観に合う抑制的なセミリアル2D塗りへ変更。上方の施設照明と眉骨による自然な影で目元の情報量を下げ、黒塗り、目隠し、ホラー表現、強いアニメ記号化を避ける。
+- 無加工生成物: built-in toolの保存原本を保持し、作業用copyを`tmp/imagegen/portrait-revision/generated-source.png`へ配置。旧原本とruntimeも同directoryへ退避した。
 - 承認原本: `items/gfx-item-003/gfx-item-003__approved__portrait-master__1120x1400.png`。生成時の1122×1402から中心を各辺1pxだけcropし、正確な4:5にした。
 - runtime: 同じ承認原本から512×640 WebPを1点書き出し、職員証用と声紋解析用の2 IDから共有する。
-- 目視検収: 単一人物、年齢感、髪型、保守作業着、正面性、crop安全域、無地背景を確認。生成文字、ロゴ、透かし、記章、背景設備、赤／cyanの色光は見られない。
+- 目視検収: 写真の肌・髪の微細質感が残らず、抑制的な2D筆致であることを確認。単一人物、年齢感、髪型、保守作業着、正面性、crop安全域、無地背景を維持し、512×640で目元の影が主に見える。生成文字、ロゴ、透かし、記章、黒い目隠し、背景設備は見られない。
+
+### 現行版prompt
+
+```text
+Use case: style-transfer
+Asset type: in-game institutional staff ID portrait and voiceprint identity-match portrait for ECHO ROOM / 残響室
+Input images: Image 1 is the edit target and the source of truth for the same adult Japanese male character, pose, crop, clothing, and identity.
+Primary request: restyle the portrait from photorealistic ID photography into restrained semi-realistic 2D painted game artwork that matches a grounded cinematic Japanese science-fiction mystery adventure. Make it clearly illustrated rather than a real photograph, but only mildly anime-influenced and still mature and believable.
+Subject: the same Japanese man around age 32, short straight black hair, ordinary calm neutral expression, front-facing head and shoulders, charcoal-gray high-collar facility maintenance jacket with understated blue-gray piping.
+Composition/framing: preserve the exact centered 4:5 institutional portrait composition, head scale, straight posture, direct front view, both shoulders visible, and crop-safe margins.
+Lighting/mood: dim cool overhead facility light. The brow ridge and upper lighting cast a soft natural shadow across both eye sockets so the eyes and irises are difficult to read at a glance, while the nose, lower face, silhouette, and identity remain legible. The shadow must feel photographic/physical within the painted style, not like a black bar, mask, bruise, horror effect, or supernatural darkness.
+Style/medium: polished hand-painted 2D adventure-game character portrait; simplified skin texture, controlled brushwork, subtle cel-like value grouping, restrained line definition, realistic proportions. Between realistic concept art and mature anime, leaning more toward concept art. No glossy pores or camera-photo microdetail.
+Scene/backdrop: plain cool blue-gray institutional background with a subtle vignette, no room details.
+Color palette: charcoal, blue-gray, cool neutral skin tones; low saturation, consistent with a dark industrial research facility.
+Constraints: change the rendering style and eye-region lighting only; preserve the same person, approximate age, facial proportions, hairstyle, expression, jacket design, frontal pose, and 4:5 composition. No text, logo, badge, insignia, watermark, UI, or decorative frame.
+Avoid: photorealism, uncanny hyperreal skin, glamour portrait, beauty retouching, bright catchlights, clearly visible irises, oversized anime eyes, manga line art, cartoon exaggeration, youthful teen appearance, chibi, painterly abstraction, sinister grin, horror, bruising, black censor band, blindfold, face covering, deep black eye holes, cyberpunk neon, red light.
+```
 
 ## GFX-REF-001 美術方向キーフレーム
 

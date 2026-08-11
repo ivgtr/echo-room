@@ -664,7 +664,7 @@ assets:
     category: character_portrait
     stage: 4
     priority: required
-    method: reference_guided_generation
+    method: reference_guided_style_transfer
     references: [gfx-ref-001]
     prompt_parts: [reference_lock, negative]
     canvas:
@@ -672,13 +672,16 @@ assets:
       runtime: [512, 640]
       aspect_ratio: "4:5"
     prompt: >-
-      Neutral institutional ID photograph of one Japanese man around age 32 who
-      works in equipment maintenance and operations. Short straight black hair,
-      calm ordinary expression, direct front view and both shoulders visible.
-      Charcoal-gray high-collar facility work jacket with understated blue-gray
-      piping. Even flat cool-white lighting and a plain cool-gray background.
-      Realistic and grounded, with no text, logo, badge, insignia, dramatic light
-      or beauty-portrait styling.
+      Restrained semi-realistic 2D painted institutional portrait of one Japanese
+      man around age 32 who works in equipment maintenance and operations. Short
+      straight black hair, calm ordinary expression, direct front view and both
+      shoulders visible. Charcoal-gray high-collar facility work jacket with
+      understated blue-gray piping. Dim cool overhead facility light creates a
+      soft natural shadow from the brow across both eye sockets, making the eyes
+      difficult to read without hiding the face. Mature grounded adventure-game
+      concept art with mild anime influence, simplified skin texture and realistic
+      proportions. Plain cool blue-gray background. No photorealism, oversized
+      anime eyes, black eye mask, horror effect, text, logo, badge or insignia.
     deliverables:
       - approved_portrait_master
       - badge_crop
