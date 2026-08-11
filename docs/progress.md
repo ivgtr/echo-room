@@ -22,7 +22,7 @@
 | P3-06 | completed | 4台詞選択・並べ替え、誤順拒否、-00:20:00送信、冒頭会話再現、ドア解錠、白い光、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
 | P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
-| P4-02 | in_progress | 承認済み4方向previewを実ゲームへ差し替えるruntime asset・manifest・hotspot輪郭の実装に着手 |  | 全接写、視差layer、状態差分、高解像度原本、実機debug |
+| P4-02 | in_progress | 承認済み4方向をpowered/emergency WebPへ派生し、2 bundle・8画像のmanifest、Pixi背景読込、軽微なcamera drift、画像輪郭hotspot、fallbackを実装。支援技術操作はHTMLへ一本化 | asset実在validation、world asset unit 3件、全4面読込・全編・touch E2E | 全接写、独立視差layer、状態差分、高解像度原本、実機debug |
 | P4-03 | pending |  |  | P4-01 |
 | P4-04 | pending |  |  | 本番音声 |
 | P4-05 | pending |  |  | P4-02〜04 |

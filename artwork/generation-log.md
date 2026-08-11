@@ -121,3 +121,12 @@ REF-002は1672×941のgeometry承認用preview。REF-003 / 004は2048×2048。ge
 
 - 横断preview: `wide/gfx-wide-stage2__dressed-v2-contact-sheet-preview.jpg`（1920×1080、北東南西の2×2比較）
 - 現解像度: 全4面1672×941。探索密度とcross-view continuityの利用者承認を得るまで、接写・state差分・高解像度制作へ進まない。
+
+### P4-02 runtime広角統合
+
+- 利用者承認日: 2026-08-11
+- 入力: 各`dressed-v2-preview-flat.png`。元画像を変更せず、runtime用WebPを別出力した。
+- powered: 品質88のWebPへ書き出し。生成previewの1672×941を維持し、ゲーム側で1920×1080論理Canvasへfitする暫定runtime素材とした。
+- emergency: poweredと同一geometryから明度・彩度を抑え、深い赤色gradeを重ねて派生。物体位置を再生成していない。
+- 出力: `public/assets/images/world/gfx-wide-001`〜`004`の`powered.webp` / `emergency.webp`。
+- 制約: 3840×2160以上の制作原本、1920×1080の正式runtime書き出し、layer分離は未完了。単純拡大を制作原本として扱わず、P4-02内で継続する。

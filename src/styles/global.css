@@ -164,18 +164,21 @@ button:focus-visible {
   filter: brightness(1.08);
 }
 
-.canvas-placeholder-label {
+.canvas-asset-status {
   position: absolute;
-  z-index: 2;
-  top: 5%;
+  z-index: 3;
+  top: 50%;
   left: 50%;
-  color: #9fb0ad;
+  max-width: 80%;
+  padding: 0.65rem 0.9rem;
+  color: #d6dfdd;
+  background: rgb(5 8 9 / 82%);
   font:
-    clamp(0.7rem, 1.4vw, 1.4rem) ui-monospace,
+    clamp(0.7rem, 1.1vw, 1rem) ui-monospace,
     monospace;
   line-height: 1.5;
   text-align: center;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 

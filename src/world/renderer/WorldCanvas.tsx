@@ -1,18 +1,21 @@
-import { AccessibilitySystem, Application, Container, Graphics } from 'pixi.js';
+import {
+  AccessibilitySystem,
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  type Texture,
+} from 'pixi.js';
 import 'pixi.js/accessibility';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { HotspotId, LocationId } from '../../game/domain/ids';
+import { getWorldImage, worldViewAssets } from '../assets/worldAssets';
 
 const LOGICAL_WIDTH = 1920;
 const LOGICAL_HEIGHT = 1080;
-
-const viewNames: Record<LocationId, string> = {
-  location_north_wall: '北壁 / ドア・時計・インターホン',
-  location_east_wall: '東壁 / 壁面端末・解析パネル',
-  location_south_wall: '南壁 / デスク',
-  location_west_wall: '西壁 / ブレーカー・ロッカー',
-};
+const CAMERA_OVERSCAN = 1.012;
 
 type Props = {
   locationId: LocationId;
@@ -28,134 +31,106 @@ export function WorldCanvas({
   onHotspotSelected,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const [assetState, setAssetState] = useState<'loading' | 'ready' | 'error'>(
+    'loading',
+  );
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+
     AccessibilitySystem.defaultOptions.enabledByDefault = true;
     const app = new Application();
+    const asset = worldViewAssets[locationId];
+    const imageUrl = getWorldImage(locationId, powerRestored);
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
     let disposed = false;
     let initialized = false;
+    queueMicrotask(() => {
+      if (!disposed) setAssetState('loading');
+    });
 
     void app
       .init({
         width: LOGICAL_WIDTH,
         height: LOGICAL_HEIGHT,
-        background: '#11181c',
+        background: '#080b0c',
         antialias: true,
         preference: 'webgl',
       })
-      .then(() => {
+      .then(async () => {
         initialized = true;
         if (disposed) return app.destroy(true);
-        app.canvas.setAttribute(
-          'aria-label',
-          `実験室E-01 ${viewNames[locationId]}`,
-        );
-        host.append(app.canvas);
-        const room = new Container({ label: locationId });
-        const wall = new Graphics()
-          .rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT)
-          .fill(powerRestored ? '#303a3b' : '#171f22');
-        const floor = new Graphics()
-          .poly([0, 790, LOGICAL_WIDTH, 790, LOGICAL_WIDTH, 1080, 0, 1080])
-          .fill('#252d30');
-        const glow = new Graphics().circle(960, 180, 620).fill({
-          color: powerRestored ? '#c9d5d5' : '#9a1f24',
-          alpha: powerRestored ? 0.2 : 0.16,
-        });
-        room.addChild(wall, glow, floor);
 
-        const addProp = (
-          id: HotspotId,
-          x: number,
-          y: number,
-          w: number,
-          h: number,
-          color: string,
-          title: string,
-        ) => {
-          const prop = new Graphics({
-            label: id,
-            accessible: true,
-            accessibleTitle: title,
-            tabIndex: 0,
+        app.canvas.setAttribute('aria-label', `実験室E-01 ${asset.label}`);
+        host.append(app.canvas);
+
+        const room = new Container({ label: locationId });
+        room.scale.set(CAMERA_OVERSCAN);
+        room.position.set(
+          (-LOGICAL_WIDTH * (CAMERA_OVERSCAN - 1)) / 2,
+          (-LOGICAL_HEIGHT * (CAMERA_OVERSCAN - 1)) / 2,
+        );
+        app.stage.addChild(room);
+
+        try {
+          const texture = await Assets.load<Texture>(imageUrl);
+          if (disposed) return;
+          const background = new Sprite(texture);
+          background.width = LOGICAL_WIDTH;
+          background.height = LOGICAL_HEIGHT;
+          room.addChild(background);
+          setAssetState('ready');
+        } catch {
+          if (disposed) return;
+          const fallback = new Graphics()
+            .rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT)
+            .fill(powerRestored ? '#303a3b' : '#171f22');
+          room.addChild(fallback);
+          setAssetState('error');
+        }
+
+        for (const hotspot of asset.hotspots) {
+          const { x, y, width, height } = hotspot.rect;
+          const selected = selectedHotspotId === hotspot.id;
+          const target = new Graphics({
+            label: hotspot.id,
             eventMode: 'static',
             cursor: 'pointer',
           })
-            .roundRect(x, y, w, h, 8)
-            .fill(color)
-            .stroke({ color: '#71807d', width: 6 });
-          prop.on('pointertap', () => onHotspotSelected(id));
-          room.addChild(prop);
-        };
-        if (locationId === 'location_north_wall') {
-          addProp(
-            'hotspot_door',
-            685,
-            180,
-            550,
-            680,
-            '#273133',
-            '鉄製ドアを調べる',
-          );
-          addProp(
-            'hotspot_intercom',
-            1350,
-            340,
-            180,
-            260,
-            '#323c3c',
-            'インターホンを調べる',
-          );
+            .rect(x, y, width, height)
+            .fill({ color: '#ffffff', alpha: 0.001 });
+          if (selected) {
+            target.stroke({ color: '#80d5ce', alpha: 0.7, width: 3 });
+          }
+          target.on('pointertap', () => onHotspotSelected(hotspot.id));
+          room.addChild(target);
         }
-        if (locationId === 'location_east_wall')
-          addProp(
-            'hotspot_terminal',
-            610,
-            210,
-            700,
-            500,
-            powerRestored ? '#28504e' : '#182123',
-            '壁面端末を調べる',
-          );
-        if (locationId === 'location_south_wall')
-          addProp(
-            'hotspot_desk',
-            410,
-            500,
-            1100,
-            250,
-            '#48534f',
-            'デスクの紙を調べる',
-          );
-        if (locationId === 'location_west_wall') {
-          addProp(
-            'hotspot_breaker',
-            380,
-            240,
-            430,
-            500,
-            '#3f4947',
-            'ブレーカーパネルを調べる',
-          );
-          addProp(
-            'hotspot_locker',
-            1110,
-            160,
-            390,
-            700,
-            '#48534f',
-            'ロッカーを調べる',
-          );
+
+        if (!reduceMotion) {
+          const onPointerMove = (event: PointerEvent) => {
+            const bounds = app.canvas.getBoundingClientRect();
+            const xRatio = (event.clientX - bounds.left) / bounds.width - 0.5;
+            const yRatio = (event.clientY - bounds.top) / bounds.height - 0.5;
+            room.position.set(
+              (-LOGICAL_WIDTH * (CAMERA_OVERSCAN - 1)) / 2 - xRatio * 8,
+              (-LOGICAL_HEIGHT * (CAMERA_OVERSCAN - 1)) / 2 - yRatio * 5,
+            );
+          };
+          app.canvas.addEventListener('pointermove', onPointerMove);
         }
-        app.stage.addChild(room);
+      })
+      .catch(() => {
+        if (!disposed) setAssetState('error');
       });
+
     return () => {
       disposed = true;
       if (initialized) app.destroy(true);
     };
-  }, [locationId, onHotspotSelected, powerRestored]);
+  }, [locationId, onHotspotSelected, powerRestored, selectedHotspotId]);
 
   return (
     <div
@@ -164,12 +139,15 @@ export function WorldCanvas({
       }
       ref={hostRef}
       data-testid="world-canvas"
+      data-asset-state={assetState}
     >
-      <span className="canvas-placeholder-label" aria-hidden="true">
-        {viewNames[locationId]}
-        <br />
-        PLACEHOLDER 1920×1080
-      </span>
+      {assetState !== 'ready' && (
+        <span className="canvas-asset-status" role="status">
+          {assetState === 'error'
+            ? '背景素材を読み込めませんでした。簡易表示で続行します。'
+            : '背景素材を読み込んでいます…'}
+        </span>
+      )}
     </div>
   );
 }

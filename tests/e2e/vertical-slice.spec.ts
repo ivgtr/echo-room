@@ -1,4 +1,29 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function enterRoom(page: Page) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ゲーム開始' }).click();
+  for (let index = 0; index < 6; index += 1) {
+    await page.getByRole('button', { name: '次へ' }).click();
+  }
+  await page.getByRole('button', { name: '探索を始める' }).click();
+}
+
+test('loads the approved artwork in all four room views', async ({ page }) => {
+  await enterRoom(page);
+  const world = page.getByTestId('world-canvas');
+  await expect(world).toHaveAttribute('data-asset-state', 'ready');
+
+  for (const direction of [
+    '東壁を見る',
+    '南壁を見る',
+    '西壁を見る',
+    '北壁を見る',
+  ]) {
+    await page.getByRole('button', { name: direction }).click();
+    await expect(world).toHaveAttribute('data-asset-state', 'ready');
+  }
+});
 
 test('keyboard-capable route restores power and resumes after reload', async ({
   page,

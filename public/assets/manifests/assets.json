@@ -1,6 +1,65 @@
 {
   "schemaVersion": 1,
   "contentVersion": "0.1.0",
-  "bundles": [],
-  "placeholderPolicy": "runtime_canvas"
+  "bundles": [
+    {
+      "id": "room_emergency",
+      "images": [
+        {
+          "id": "gfx-wide-001__emergency",
+          "src": "/assets/images/world/gfx-wide-001/emergency.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-wide-002__emergency",
+          "src": "/assets/images/world/gfx-wide-002/emergency.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-wide-003__emergency",
+          "src": "/assets/images/world/gfx-wide-003/emergency.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-wide-004__emergency",
+          "src": "/assets/images/world/gfx-wide-004/emergency.webp",
+          "width": 1672,
+          "height": 941
+        }
+      ]
+    },
+    {
+      "id": "room_powered",
+      "images": [
+        {
+          "id": "gfx-wide-001__powered",
+          "src": "/assets/images/world/gfx-wide-001/powered.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-wide-002__powered",
+          "src": "/assets/images/world/gfx-wide-002/powered.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-wide-003__powered",
+          "src": "/assets/images/world/gfx-wide-003/powered.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-wide-004__powered",
+          "src": "/assets/images/world/gfx-wide-004/powered.webp",
+          "width": 1672,
+          "height": 941
+        }
+      ]
+    }
+  ],
+  "placeholderPolicy": "missing_assets_only"
 }
