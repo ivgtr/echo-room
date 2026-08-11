@@ -11,6 +11,7 @@ import {
   isLockerCodeCorrect,
   type PacketId,
 } from '../puzzles/storyPuzzles';
+import { EMERGENCY_POWER_DURATION_MS } from '../time/emergencyPower';
 
 export type TerminalMenuId = 'system' | 'log' | 'audio' | 'security';
 export type StoryStage =
@@ -26,7 +27,12 @@ export type ItemId = 'item_screwdriver' | 'item_staff_card' | 'item_floor_map';
 
 export type GameEvent =
   | { type: 'GAME_STARTED' }
-  | { type: 'PROGRESS_RESTORED' }
+  | {
+      type: 'PROGRESS_RESTORED';
+      activeElapsedMs: number;
+      reservePower: boolean;
+    }
+  | { type: 'ACTIVE_TIME_ELAPSED'; deltaMs: number }
   | { type: 'DIALOGUE_ADVANCED' }
   | { type: 'VIEW_CHANGED'; locationId: LocationId }
   | { type: 'HOTSPOT_SELECTED'; hotspotId: HotspotId }
@@ -60,6 +66,8 @@ export type GameContext = {
   finalOrderReady: boolean;
   endingLineIndex: number;
   hintLevel: number;
+  activeElapsedMs: number;
+  reservePower: boolean;
 };
 
 const initialContext: GameContext = {
@@ -78,6 +86,8 @@ const initialContext: GameContext = {
   finalOrderReady: false,
   endingLineIndex: 0,
   hintLevel: 0,
+  activeElapsedMs: 0,
+  reservePower: false,
 };
 
 export const gameMachine = setup({
@@ -147,6 +157,25 @@ export const gameMachine = setup({
       powerRestored: true,
       selectedHotspotId: null,
       locationId: 'location_east_wall',
+      activeElapsedMs: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.activeElapsedMs : 0,
+      reservePower: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED'
+          ? event.reservePower ||
+            event.activeElapsedMs >= EMERGENCY_POWER_DURATION_MS
+          : false,
+    }),
+    advanceActiveTime: assign({
+      activeElapsedMs: ({ context, event }) =>
+        event.type === 'ACTIVE_TIME_ELAPSED'
+          ? context.activeElapsedMs + Math.max(0, event.deltaMs)
+          : context.activeElapsedMs,
+      reservePower: ({ context, event }) =>
+        event.type === 'ACTIVE_TIME_ELAPSED'
+          ? context.reservePower ||
+            context.activeElapsedMs + Math.max(0, event.deltaMs) >=
+              EMERGENCY_POWER_DURATION_MS
+          : context.reservePower,
     }),
     resetSession: assign(() => ({ ...initialContext })),
     selectTerminalMenu: assign({
@@ -234,6 +263,10 @@ export const gameMachine = setup({
       },
     },
     playing: {
+      on: {
+        ACTIVE_TIME_ELAPSED: { actions: 'advanceActiveTime' },
+        RETURNED_TO_TITLE: { target: 'title', actions: 'resetSession' },
+      },
       initial: 'intro',
       states: {
         intro: {
@@ -307,7 +340,6 @@ export const gameMachine = setup({
           },
         },
       },
-      on: { RETURNED_TO_TITLE: { target: 'title', actions: 'resetSession' } },
     },
   },
 });

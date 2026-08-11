@@ -48,6 +48,8 @@ import type {
   SubtitleSettings,
 } from './system/uiSettings';
 import { TerminalPanel } from './terminal/TerminalPanel';
+import { EmergencyPowerStatus } from './status/EmergencyPowerStatus';
+import { getEmergencyPowerPhase } from '../game/time/emergencyPower';
 
 const viewOrder: LocationId[] = [
   'location_north_wall',
@@ -85,6 +87,8 @@ type Props = {
   hintLevel: number;
   hintOpen: boolean;
   systemMenuOpen: boolean;
+  activeElapsedMs: number;
+  reservePower: boolean;
   onDialogueAdvance: () => void;
   onViewChanged: (id: LocationId) => void;
   onHotspotSelected: (id: HotspotId) => void;
@@ -112,6 +116,9 @@ type Props = {
 };
 
 export function GameScreen(props: Props) {
+  const powerPhase = props.reservePower
+    ? 'reserve'
+    : getEmergencyPowerPhase(props.activeElapsedMs);
   const swipeRef = useRef<{
     pointerId: number;
     x: number;
@@ -350,6 +357,7 @@ export function GameScreen(props: Props) {
         data-subtitle-size={props.subtitleSettings.size}
         data-subtitle-background={props.subtitleSettings.background}
         data-text-speed={props.subtitleSettings.speed}
+        data-power-phase={powerPhase}
         style={inspectionStageStyle(inspectionTarget)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
@@ -364,10 +372,11 @@ export function GameScreen(props: Props) {
         />
         <div className="hud-layer">
           <div className="status-cluster" aria-label="現在の状況">
-            <span>
-              {props.powerRestored ? 'MAIN POWER ONLINE' : 'EMERGENCY LOCK'}
-            </span>
-            <strong>BATTERY 00:19:48</strong>
+            <EmergencyPowerStatus
+              activeElapsedMs={props.activeElapsedMs}
+              powerRestored={props.powerRestored}
+              reservePower={props.reservePower}
+            />
           </div>
           <div className="hud-actions">
             {!ending && (
@@ -526,6 +535,9 @@ export function GameScreen(props: Props) {
         {props.systemMenuOpen && (
           <SystemMenu
             objective={props.objective}
+            activeElapsedMs={props.activeElapsedMs}
+            powerRestored={props.powerRestored}
+            reservePower={props.reservePower}
             audioEnabled={props.audioEnabled}
             audioLevels={props.audioLevels}
             subtitleSettings={props.subtitleSettings}

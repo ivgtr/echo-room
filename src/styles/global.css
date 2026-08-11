@@ -214,6 +214,63 @@ button:focus-visible {
   text-shadow: 0 2px 8px #000;
 }
 
+.emergency-status {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.emergency-status strong {
+  font-size: 1.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.emergency-status strong > span {
+  font-weight: 400;
+}
+
+.emergency-phase {
+  width: fit-content;
+  padding: 0.18rem 0.35rem;
+  border-left: 2px solid currentcolor;
+  color: #e2a3a6;
+  background: rgb(32 5 8 / 66%);
+  letter-spacing: 0.04em;
+}
+
+.emergency-status[data-power-phase='low'] {
+  color: #e2a3a6;
+}
+
+.emergency-status[data-power-phase='critical'],
+.emergency-status[data-power-phase='reserve'] {
+  color: #f1b0b4;
+}
+
+.logical-stage[data-power-phase='critical'] .canvas-host {
+  filter: brightness(0.72) saturate(0.76);
+  animation: voltage-drop 2.6s steps(1, end) 3;
+}
+
+.logical-stage[data-power-phase='reserve'] .canvas-host {
+  filter: brightness(0.58) saturate(0.62);
+}
+
+@keyframes voltage-drop {
+  0%,
+  84%,
+  100% {
+    opacity: 1;
+  }
+
+  86% {
+    opacity: 0.68;
+  }
+
+  90% {
+    opacity: 0.9;
+  }
+}
+
 .hud-actions {
   position: absolute;
   top: max(1.25rem, env(safe-area-inset-top));
@@ -588,6 +645,33 @@ button:focus-visible {
   margin: 0;
   font-family: inherit;
   line-height: 1.7;
+}
+
+.system-power {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 34rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgb(216 138 142 / 35%);
+  background: rgb(32 5 8 / 20%);
+}
+
+.system-power h3,
+.system-power p {
+  margin: 0;
+}
+
+.system-power h3 {
+  color: #b98c8f;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+
+.system-power p {
+  color: #9faeac;
+  font-family: system-ui, sans-serif;
+  font-size: 0.78rem;
 }
 
 .system-menu-actions {

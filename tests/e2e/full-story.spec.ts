@@ -17,6 +17,8 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
           checkpointId: 'checkpoint_power_restored',
           powerRestored: true,
           locationId: 'location_east_wall',
+          activeElapsedMs: 1_188_000,
+          reservePower: true,
         },
       }),
     );

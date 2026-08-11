@@ -10,6 +10,8 @@ const saveSchema = z.object({
     checkpointId: z.literal('checkpoint_power_restored'),
     powerRestored: z.literal(true),
     locationId: z.literal('location_east_wall'),
+    activeElapsedMs: z.number().nonnegative().default(0),
+    reservePower: z.boolean().default(false),
   }),
 });
 
@@ -19,7 +21,10 @@ export type LoadResult =
   | { status: 'valid'; data: SaveData }
   | { status: 'corrupt' };
 
-export const createPowerRestoredSave = (): SaveData => ({
+export const createPowerRestoredSave = (
+  activeElapsedMs = 0,
+  reservePower = false,
+): SaveData => ({
   schemaVersion: 1,
   contentVersion: '0.1.0',
   savedAt: new Date().toISOString(),
@@ -27,11 +32,20 @@ export const createPowerRestoredSave = (): SaveData => ({
     checkpointId: 'checkpoint_power_restored',
     powerRestored: true,
     locationId: 'location_east_wall',
+    activeElapsedMs,
+    reservePower,
   },
 });
 
-export const saveProgress = (storage: Storage = window.localStorage) => {
-  storage.setItem(SAVE_KEY, JSON.stringify(createPowerRestoredSave()));
+export const saveProgress = (
+  storage: Storage = window.localStorage,
+  activeElapsedMs = 0,
+  reservePower = false,
+) => {
+  storage.setItem(
+    SAVE_KEY,
+    JSON.stringify(createPowerRestoredSave(activeElapsedMs, reservePower)),
+  );
 };
 
 export const loadProgress = (

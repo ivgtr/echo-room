@@ -40,6 +40,10 @@ export const selectEndingLineIndex = (snapshot: GameSnapshot) =>
   snapshot.context.endingLineIndex;
 export const selectHintLevel = (snapshot: GameSnapshot) =>
   snapshot.context.hintLevel;
+export const selectActiveElapsedMs = (snapshot: GameSnapshot) =>
+  snapshot.context.activeElapsedMs;
+export const selectReservePower = (snapshot: GameSnapshot) =>
+  snapshot.context.reservePower;
 
 export const selectObjective = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;

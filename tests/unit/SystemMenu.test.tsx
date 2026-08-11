@@ -15,6 +15,9 @@ describe('SystemMenu', () => {
     render(
       <SystemMenu
         objective="端末を確認する。"
+        activeElapsedMs={0}
+        powerRestored
+        reservePower={false}
         audioEnabled={false}
         audioLevels={defaultAudioLevels}
         subtitleSettings={defaultSubtitleSettings}

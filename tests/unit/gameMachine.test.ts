@@ -2,6 +2,7 @@ import { createActor } from 'xstate';
 import { describe, expect, it } from 'vitest';
 
 import { gameMachine } from '../../src/game/machine/gameMachine';
+import { EMERGENCY_POWER_DURATION_MS } from '../../src/game/time/emergencyPower';
 
 const enterPuzzle = () => {
   const actor = createActor(gameMachine).start();
@@ -48,8 +49,25 @@ describe('gameMachine vertical slice', () => {
 
   it('restores directly to the safe powered checkpoint', () => {
     const actor = createActor(gameMachine).start();
-    actor.send({ type: 'PROGRESS_RESTORED' });
+    actor.send({
+      type: 'PROGRESS_RESTORED',
+      activeElapsedMs: 0,
+      reservePower: false,
+    });
     expect(actor.getSnapshot().matches({ playing: 'powered' })).toBe(true);
     expect(actor.getSnapshot().context.powerRestored).toBe(true);
+  });
+
+  it('enters reserve power at zero without blocking game progression', () => {
+    const actor = createActor(gameMachine).start();
+    actor.send({
+      type: 'PROGRESS_RESTORED',
+      activeElapsedMs: EMERGENCY_POWER_DURATION_MS - 10,
+      reservePower: false,
+    });
+    actor.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs: 10 });
+    expect(actor.getSnapshot().context.reservePower).toBe(true);
+    actor.send({ type: 'LOGS_CONFIRMED' });
+    expect(actor.getSnapshot().context.storyStage).toBe('unlock_locker');
   });
 });

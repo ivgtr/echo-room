@@ -18,11 +18,15 @@ import type {
   SubtitleSize,
   TextSpeed,
 } from './uiSettings';
+import { EmergencyPowerStatus } from '../status/EmergencyPowerStatus';
 
 type View = 'main' | 'archive' | 'settings';
 
 type Props = {
   objective: string;
+  activeElapsedMs: number;
+  powerRestored: boolean;
+  reservePower: boolean;
   audioEnabled: boolean;
   audioLevels: AudioLevels;
   subtitleSettings: SubtitleSettings;
@@ -111,6 +115,16 @@ export function SystemMenu(props: Props) {
           >
             <h3 id="objective-title">CURRENT OBJECTIVE / 現在目的</h3>
             <p>{props.objective}</p>
+          </section>
+          <section className="system-power" aria-labelledby="power-title">
+            <h3 id="power-title">EMERGENCY SYSTEM / 非常システム</h3>
+            <EmergencyPowerStatus
+              activeElapsedMs={props.activeElapsedMs}
+              powerRestored={props.powerRestored}
+              reservePower={props.reservePower}
+              paused
+            />
+            <p>この画面を閉じるまで、実プレイ時間は進みません。</p>
           </section>
           <div className="system-menu-actions">
             <button type="button" onClick={() => setView('archive')}>

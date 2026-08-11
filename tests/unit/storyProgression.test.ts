@@ -5,7 +5,11 @@ import { gameMachine } from '../../src/game/machine/gameMachine';
 
 const poweredActor = () => {
   const actor = createActor(gameMachine).start();
-  actor.send({ type: 'PROGRESS_RESTORED' });
+  actor.send({
+    type: 'PROGRESS_RESTORED',
+    activeElapsedMs: 0,
+    reservePower: false,
+  });
   return actor;
 };
 

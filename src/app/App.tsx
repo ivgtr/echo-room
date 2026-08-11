@@ -8,6 +8,7 @@ import { loadProgress, saveProgress } from '../game/save/saveManager';
 import {
   selectBreakerFailures,
   selectBreakerSequence,
+  selectActiveElapsedMs,
   selectEndingLineIndex,
   selectFinalOrderReady,
   selectHintLevel,
@@ -21,6 +22,7 @@ import {
   selectLockerFailures,
   selectObjective,
   selectPowerRestored,
+  selectReservePower,
   selectSelectedHotspot,
   selectSubtitle,
   selectStoryStage,
@@ -67,6 +69,9 @@ export function App() {
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const [systemMenuOpen, setSystemMenuOpen] = useState(false);
+  const [pageVisible, setPageVisible] = useState(
+    () => document.visibilityState === 'visible',
+  );
   const actorRef = useActorRef(gameMachine);
   const isPlaying = useSelector(actorRef, selectIsPlaying);
   const intro = useSelector(actorRef, selectIsIntro);
@@ -87,8 +92,56 @@ export function App() {
   const endingLineIndex = useSelector(actorRef, selectEndingLineIndex);
   const hintLevel = useSelector(actorRef, selectHintLevel);
   const objective = useSelector(actorRef, selectObjective);
+  const activeElapsedMs = useSelector(actorRef, selectActiveElapsedMs);
+  const reservePower = useSelector(actorRef, selectReservePower);
   const savedPowerRef = useRef(false);
   const previousInventoryRef = useRef<ItemId[]>([]);
+  const activeElapsedRef = useRef(activeElapsedMs);
+  const reservePowerRef = useRef(reservePower);
+
+  const persistPowerCheckpoint = useCallback(
+    (
+      elapsedMs = activeElapsedRef.current,
+      onReservePower = reservePowerRef.current,
+    ) => {
+      try {
+        saveProgress(window.localStorage, elapsedMs, onReservePower);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    activeElapsedRef.current = activeElapsedMs;
+    reservePowerRef.current = reservePower;
+  }, [activeElapsedMs, reservePower]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () =>
+      setPageVisible(document.visibilityState === 'visible');
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isPlaying || systemMenuOpen || !pageVisible) return;
+    let previousTime = performance.now();
+    const commitElapsedTime = () => {
+      const currentTime = performance.now();
+      const deltaMs = Math.max(0, currentTime - previousTime);
+      previousTime = currentTime;
+      if (deltaMs > 0) actorRef.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs });
+    };
+    const timer = window.setInterval(commitElapsedTime, 250);
+    return () => {
+      window.clearInterval(timer);
+      commitElapsedTime();
+    };
+  }, [actorRef, isPlaying, pageVisible, systemMenuOpen]);
 
   const appendHistory = useCallback((entries: readonly NarrativeEntry[]) => {
     setNarrativeHistory((current) => {
@@ -100,16 +153,41 @@ export function App() {
   useEffect(() => {
     if (!powerRestored || savedPowerRef.current) return;
     savedPowerRef.current = true;
-    try {
-      saveProgress();
+    if (persistPowerCheckpoint()) {
       queueMicrotask(() => setSaveMessage('電源復旧地点を自動保存しました'));
-    } catch {
+    } else {
       queueMicrotask(() =>
         setSaveMessage('保存できませんでした。プレイは続行できます'),
       );
     }
     queueMicrotask(() => appendHistory([powerRestoredEntry]));
-  }, [appendHistory, powerRestored]);
+  }, [appendHistory, persistPowerCheckpoint, powerRestored]);
+
+  useEffect(() => {
+    if (!powerRestored || (!systemMenuOpen && pageVisible)) return;
+    persistPowerCheckpoint(activeElapsedMs, reservePower);
+  }, [
+    activeElapsedMs,
+    pageVisible,
+    powerRestored,
+    reservePower,
+    systemMenuOpen,
+    persistPowerCheckpoint,
+  ]);
+
+  useEffect(() => {
+    if (!powerRestored || !reservePower) return;
+    persistPowerCheckpoint(activeElapsedRef.current, true);
+  }, [persistPowerCheckpoint, powerRestored, reservePower]);
+
+  useEffect(() => {
+    const persistActiveTime = () => {
+      if (!savedPowerRef.current) return;
+      persistPowerCheckpoint();
+    };
+    window.addEventListener('pagehide', persistActiveTime);
+    return () => window.removeEventListener('pagehide', persistActiveTime);
+  }, [persistPowerCheckpoint]);
 
   useEffect(() => {
     if (!subtitle) return;
@@ -176,7 +254,11 @@ export function App() {
               onContinue: () => {
                 savedPowerRef.current = true;
                 setNarrativeHistory([...introEntries, powerRestoredEntry]);
-                actorRef.send({ type: 'PROGRESS_RESTORED' });
+                actorRef.send({
+                  type: 'PROGRESS_RESTORED',
+                  activeElapsedMs: loadResult.data.progress.activeElapsedMs,
+                  reservePower: loadResult.data.progress.reservePower,
+                });
               },
             }
           : {})}
@@ -214,6 +296,8 @@ export function App() {
       hintLevel={hintLevel}
       hintOpen={hintOpen}
       systemMenuOpen={systemMenuOpen}
+      activeElapsedMs={activeElapsedMs}
+      reservePower={reservePower}
       onDialogueAdvance={() => {
         const entry = introEntries[introLineIndex];
         if (entry) appendHistory([entry]);
@@ -232,6 +316,7 @@ export function App() {
         setSubtitleSettings((current) => ({ ...current, [key]: value }))
       }
       onExit={() => {
+        if (powerRestored) persistPowerCheckpoint();
         setSystemMenuOpen(false);
         actorRef.send({ type: 'RETURNED_TO_TITLE' });
       }}
