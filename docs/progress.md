@@ -41,7 +41,7 @@
 | P5-03 | in_progress | UIQ-01の単一探索HUDに加え、UIQ-02で380ms接近中の即時input lock、連打防止、modal中World停止、resize・縦横復帰を実装 | Node 24で`npm run check`（9 files/21 tests）、Chromium E2E 7件、1280×720代表画面の目視確認 | 会話履歴・資料再読・既読会話速度はUIQ-03で継続 |
 | P5-04 | pending |  |  | 依存済み。UIQ-04と統合して実装 |
 | UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
-| UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
+| UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
 | UIQ-03 | pending | Narrative・Inventory・System UIの仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-02。P5-02・03、P4-05と統合 |
 | UIQ-04 | pending | 非常システムと時間演出の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-03。P5-04、P4-05と統合 |
 | P6-01 | pending |  |  | P4・P5 |

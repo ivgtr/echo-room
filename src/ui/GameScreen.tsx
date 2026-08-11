@@ -365,17 +365,23 @@ export function GameScreen(props: Props) {
             </button>
             <div className="hotspot-layer" aria-label="調査対象">
               {availableHotspots.map((hotspot) => (
-                <button
-                  type="button"
-                  className="hotspot-control"
+                <div
+                  className="hotspot-target"
                   key={hotspot.id}
-                  aria-label={hotspot.label}
-                  data-hotspot-id={hotspot.id}
-                  style={hotspotStyle(hotspot)}
-                  onClick={() => requestHotspot(hotspot.id)}
+                  style={hotspotBoundsStyle(hotspot)}
                 >
-                  <span>{hotspot.label}</span>
-                </button>
+                  <button
+                    type="button"
+                    className="hotspot-control"
+                    aria-label={hotspot.label}
+                    data-hotspot-id={hotspot.id}
+                    style={hotspotClipStyle(hotspot)}
+                    onClick={() => requestHotspot(hotspot.id)}
+                  />
+                  <span className="hotspot-label" aria-hidden="true">
+                    {hotspot.label}
+                  </span>
+                </div>
               ))}
             </div>
             <button
@@ -390,12 +396,19 @@ export function GameScreen(props: Props) {
         )}
         {inspectionPhase === 'approaching' && inspectionTarget && (
           <div
-            className="inspection-transition-marker"
-            style={hotspotStyle(inspectionTarget)}
+            className="inspection-transition-target"
+            style={hotspotBoundsStyle(inspectionTarget)}
             role="status"
             aria-label={inspectionTarget.label}
           >
-            <span>{inspectionTarget.label}</span>
+            <div
+              className="inspection-transition-marker"
+              style={hotspotClipStyle(inspectionTarget)}
+              aria-hidden="true"
+            />
+            <span className="inspection-transition-label" aria-hidden="true">
+              {inspectionTarget.label}
+            </span>
           </div>
         )}
         {locationCue && !overlayOpen && (
@@ -497,7 +510,17 @@ export function GameScreen(props: Props) {
   );
 }
 
-function hotspotStyle(hotspot: WorldHotspot): CSSProperties {
+function hotspotBoundsStyle(hotspot: WorldHotspot): CSSProperties {
+  const bounds = getHotspotBounds(hotspot);
+  return {
+    left: `${(bounds.x / 1920) * 100}%`,
+    top: `${(bounds.y / 1080) * 100}%`,
+    width: `${(bounds.width / 1920) * 100}%`,
+    height: `${(bounds.height / 1080) * 100}%`,
+  };
+}
+
+function hotspotClipStyle(hotspot: WorldHotspot): CSSProperties {
   const bounds = getHotspotBounds(hotspot);
   const clipPath = hotspot.polygon
     .map(
@@ -505,13 +528,7 @@ function hotspotStyle(hotspot: WorldHotspot): CSSProperties {
         `${((x - bounds.x) / bounds.width) * 100}% ${((y - bounds.y) / bounds.height) * 100}%`,
     )
     .join(', ');
-  return {
-    left: `${(bounds.x / 1920) * 100}%`,
-    top: `${(bounds.y / 1080) * 100}%`,
-    width: `${(bounds.width / 1920) * 100}%`,
-    height: `${(bounds.height / 1080) * 100}%`,
-    clipPath: `polygon(${clipPath})`,
-  };
+  return { clipPath: `polygon(${clipPath})` };
 }
 
 function inspectionStageStyle(hotspot: WorldHotspot | null) {

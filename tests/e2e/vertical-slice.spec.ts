@@ -152,6 +152,52 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   await expect(
     page.getByRole('button', { name: '鉄製ドアを調べる' }),
   ).not.toHaveCSS('clip-path', 'none');
+  await page.setViewportSize({ width: 304, height: 296 });
+  const intercom = page.getByRole('button', {
+    name: 'インターホンを調べる',
+  });
+  await intercom.focus();
+  const intercomLabel = intercom.locator('..').locator('.hotspot-label');
+  await expect(intercomLabel).toBeVisible();
+  const stageBox = await page.locator('.logical-stage').boundingBox();
+  const intercomBox = await intercom.boundingBox();
+  const intercomLabelBox = await intercomLabel.boundingBox();
+  expect(stageBox).not.toBeNull();
+  expect(intercomBox).not.toBeNull();
+  expect(intercomLabelBox).not.toBeNull();
+  expect(intercomLabelBox!.width).toBeGreaterThan(intercomBox!.width);
+  expect(intercomLabelBox!.x).toBeGreaterThanOrEqual(stageBox!.x);
+  expect(intercomLabelBox!.x + intercomLabelBox!.width).toBeLessThanOrEqual(
+    stageBox!.x + stageBox!.width,
+  );
+  await page.clock.install();
+  await intercom.dispatchEvent('click');
+  const transitionMetrics = await page
+    .locator('.inspection-transition-target')
+    .evaluate((target) => {
+      const marker = target.querySelector('.inspection-transition-marker');
+      const label = target.querySelector('.inspection-transition-label');
+      if (!(marker instanceof HTMLElement) || !(label instanceof HTMLElement))
+        return null;
+      const markerBox = marker.getBoundingClientRect();
+      const labelBox = label.getBoundingClientRect();
+      return {
+        markerWidth: markerBox.width,
+        labelWidth: labelBox.width,
+        labelLeft: labelBox.left,
+        labelRight: labelBox.right,
+      };
+    });
+  expect(transitionMetrics).not.toBeNull();
+  expect(transitionMetrics!.labelWidth).toBeGreaterThan(
+    transitionMetrics!.markerWidth,
+  );
+  expect(transitionMetrics!.labelLeft).toBeGreaterThanOrEqual(stageBox!.x);
+  expect(transitionMetrics!.labelRight).toBeLessThanOrEqual(
+    stageBox!.x + stageBox!.width,
+  );
+  await page.clock.fastForward(380);
+  await page.getByRole('button', { name: '閉じる' }).click();
   const doorBox = await page
     .getByRole('button', { name: '鉄製ドアを調べる' })
     .boundingBox();

@@ -302,8 +302,15 @@ button:focus-visible {
   pointer-events: none;
 }
 
+.hotspot-target {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
 .hotspot-control {
   position: absolute;
+  inset: 0;
   border: 1px solid transparent;
   color: #dff8f5;
   background: transparent;
@@ -336,7 +343,7 @@ button:focus-visible {
   border-bottom: 1px solid;
 }
 
-.hotspot-control > span {
+.hotspot-label {
   position: absolute;
   bottom: 0.45rem;
   left: 50%;
@@ -355,9 +362,16 @@ button:focus-visible {
   pointer-events: none;
 }
 
-.inspection-transition-marker {
+.inspection-transition-target {
   position: absolute;
   z-index: 8;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.inspection-transition-marker {
+  position: absolute;
+  inset: 0;
   border: 1px solid rgb(111 231 226 / 74%);
   background: rgb(88 184 176 / 5%);
   box-shadow:
@@ -366,7 +380,7 @@ button:focus-visible {
   pointer-events: none;
 }
 
-.inspection-transition-marker > span {
+.inspection-transition-label {
   position: absolute;
   bottom: 0.6rem;
   left: 50%;
@@ -386,8 +400,8 @@ button:focus-visible {
 .hotspot-control:hover::after,
 .hotspot-control:focus-visible::before,
 .hotspot-control:focus-visible::after,
-.hotspot-control:hover > span,
-.hotspot-control:focus-visible > span {
+.hotspot-control:hover + .hotspot-label,
+.hotspot-control:focus-visible + .hotspot-label {
   opacity: 1;
 }
 
