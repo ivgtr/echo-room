@@ -21,7 +21,7 @@
 | P3-05 | completed | ドライバー使用、VOICE ANALYSIS、98〜100%演出、E-01 OCCUPANTと仮人物写真、正体判明導線を実装 | story transition unit、全編E2E | `protagonist_unknown`代替写真 |
 | P3-06 | completed | 4台詞選択・並べ替え、誤順拒否、-00:20:00送信、冒頭会話再現、ドア解錠、白い光、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
 | P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
-| P4-01 | blocked | GFX-REF-001の方向性候補3案を生成・窓なしへ修正し、承認用previewと生成ログを作成 | 3候補の寸法・構図・禁止要素を目視検収 | 利用者によるA/B/Cのart direction承認 |
+| P4-01 | blocked | GFX-REF-001は方向性Cを採用し、構図固定の参照編集で控えめなローポリ面構成へ調整 | 調整版Cの寸法、構図、設備、密閉性、禁止要素を目視検収 | 利用者による調整版Cのart direction最終承認 |
 | P4-02 | pending |  |  | P4-01 |
 | P4-03 | pending |  |  | P4-01 |
 | P4-04 | pending |  |  | 本番音声 |
