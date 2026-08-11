@@ -4,6 +4,7 @@ import {
   PUZZLE_DEFINITIONS,
   type PuzzleId,
 } from '../../game/puzzles/storyPuzzles';
+import { FacilityMap } from '../evidence/FacilityMap';
 
 type Props = {
   puzzleId: PuzzleId;
@@ -49,6 +50,10 @@ export function PuzzleWorkbench({
 
   const complete = answers.every((answer) => answer !== null);
   const patterns = waveformPatterns[puzzleId];
+  const hasReadout =
+    Boolean(definition.readout?.length) ||
+    Boolean(patterns) ||
+    puzzleId === 'puzzle_signal_route';
 
   return (
     <section
@@ -59,24 +64,28 @@ export function PuzzleWorkbench({
       data-puzzle-id={puzzleId}
     >
       <header className="reasoning-puzzle-header">
-        <p className="eyebrow">
-          PUZZLE {String(definition.number).padStart(2, '0')} /{' '}
-          {definition.eyebrow}
-        </p>
+        <p className="eyebrow">{definition.eyebrow}</p>
         <h2 id="reasoning-puzzle-title">{definition.title}</h2>
         <p>{definition.instruction}</p>
       </header>
 
-      <div className="reasoning-layout">
-        <aside className="puzzle-evidence" aria-label="見つけた手掛かり">
-          <h3>EVIDENCE / 手掛かり</h3>
-          <ul>
-            {definition.evidence.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-          {patterns && <WaveformBoard patterns={patterns} />}
-        </aside>
+      <div
+        className={`reasoning-layout${hasReadout ? '' : ' is-readout-free'}`}
+      >
+        {hasReadout && (
+          <aside className="device-readout" aria-label="装置の表示">
+            <h3>DEVICE READOUT</h3>
+            {definition.readout && (
+              <ul>
+                {definition.readout.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            )}
+            {puzzleId === 'puzzle_signal_route' && <FacilityMap conduitLayer />}
+            {patterns && <WaveformBoard patterns={patterns} />}
+          </aside>
+        )}
 
         <div className="puzzle-decisions">
           {definition.tasks.map((task, taskIndex) => (
@@ -151,7 +160,7 @@ function WaveformBoard({ patterns }: { patterns: readonly number[][] }) {
           <output>{pattern.join('-')}</output>
         </div>
       ))}
-      <figcaption>線の高さと数字は、同じ波の形を表している。</figcaption>
+      <figcaption>MONITOR / 線の高さと数字は同じデータ</figcaption>
     </figure>
   );
 }

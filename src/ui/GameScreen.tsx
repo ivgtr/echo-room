@@ -68,6 +68,7 @@ type Props = {
   soundLevels: SoundLevels;
   subtitleSettings: SubtitleSettings;
   saveMessage: string | null;
+  eventNarrative: NarrativeEntry | null;
   narrativeHistory: readonly NarrativeEntry[];
   archiveDocuments: readonly ArchiveDocument[];
   acquiredItems: readonly ItemId[];
@@ -105,6 +106,7 @@ type Props = {
   onDismissAcquisition: () => void;
   onUiClick: () => void;
   onTextBlip: () => void;
+  onEventNarrativeAdvance: () => void;
 };
 
 export function GameScreen(props: Props) {
@@ -149,12 +151,15 @@ export function GameScreen(props: Props) {
     inspectionPhase !== 'idle' ||
     inspectionModalOpen ||
     Boolean(props.subtitle) ||
+    Boolean(props.eventNarrative) ||
     ending;
   const explorationControlsVisible =
     !props.intro && !props.powerPuzzle && !ending;
   const availableHotspots = worldViewAssets[props.locationId].hotspots.filter(
     ({ id }) =>
-      (id !== 'hotspot_breaker' || !props.powerRestored) &&
+      (id !== 'hotspot_breaker' ||
+        !props.powerRestored ||
+        props.storyStage === 'puzzle_maintenance_lock') &&
       (id !== 'hotspot_analysis_panel' ||
         props.storyStage === 'puzzle_voiceprint_calibration'),
   );
@@ -247,6 +252,11 @@ export function GameScreen(props: Props) {
           closeInspection();
           return;
         }
+        if (props.eventNarrative) {
+          event.preventDefault();
+          props.onEventNarrativeAdvance();
+          return;
+        }
         if (!ending) {
           event.preventDefault();
           toggleSystemMenu();
@@ -298,7 +308,12 @@ export function GameScreen(props: Props) {
   ) : props.selectedHotspotId === 'hotspot_clock' ? (
     <InspectionEvidencePanel kind="clock" onClose={closeInspection} />
   ) : props.selectedHotspotId === 'hotspot_desk' ? (
-    <InspectionEvidencePanel kind="power-test" onClose={closeInspection} />
+    <InspectionEvidencePanel
+      kind="desk"
+      powerRestored={props.powerRestored}
+      stage={props.storyStage}
+      onClose={closeInspection}
+    />
   ) : props.powerRestored &&
     props.selectedHotspotId === 'hotspot_terminal' &&
     !ending ? (
@@ -482,6 +497,27 @@ export function GameScreen(props: Props) {
             onTextBlip={props.onTextBlip}
           />
         )}
+        {props.eventNarrative && (
+          <ModalFocusScope
+            focusKey={`event-${props.eventNarrative.id}`}
+            returnFocusRef={inspectionReturnFocusRef}
+            fallbackFocusRef={systemButtonRef}
+          >
+            <NarrativePanel
+              kind={props.eventNarrative.kind}
+              {...(props.eventNarrative.speaker
+                ? { speaker: props.eventNarrative.speaker }
+                : {})}
+              text={props.eventNarrative.text}
+              actionLabel="続ける"
+              onAdvance={props.onEventNarrativeAdvance}
+              autoFocus
+              textSpeed={props.subtitleSettings.speed}
+              motionReduced={props.motionReduced}
+              onTextBlip={props.onTextBlip}
+            />
+          </ModalFocusScope>
+        )}
         {inspectionDialog && (
           <ModalFocusScope
             focusKey={
@@ -495,7 +531,7 @@ export function GameScreen(props: Props) {
             {inspectionDialog}
           </ModalFocusScope>
         )}
-        {props.acquiredItems.length > 0 && (
+        {props.acquiredItems.length > 0 && !props.eventNarrative && (
           <ModalFocusScope
             focusKey="item-acquisition"
             returnFocusRef={inspectionReturnFocusRef}

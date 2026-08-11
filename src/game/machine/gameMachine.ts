@@ -50,18 +50,6 @@ const nextStage: Record<PuzzleId, StoryStage> = {
   puzzle_transmission_window: 'transmission_ready',
 };
 
-const menuForStage = (stage: StoryStage): TerminalMenuId => {
-  if (stage === 'puzzle_log_pairing') return 'log';
-  if (stage === 'puzzle_signal_route') return 'security';
-  if (
-    stage === 'puzzle_packet_repair' ||
-    stage === 'puzzle_temporal_anomaly' ||
-    stage === 'puzzle_voiceprint_calibration'
-  )
-    return 'audio';
-  return 'system';
-};
-
 export type GameEvent =
   | { type: 'GAME_STARTED' }
   | { type: 'PROGRESS_RESTORED'; progress: SavedProgress }
@@ -190,10 +178,7 @@ export const gameMachine = setup({
         event.type === 'PROGRESS_RESTORED' ? event.progress.endingLineIndex : 0,
       hintLevel: ({ event }) =>
         event.type === 'PROGRESS_RESTORED' ? event.progress.hintLevel : 0,
-      terminalMenuId: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED'
-          ? menuForStage(event.progress.storyStage)
-          : 'system',
+      terminalMenuId: 'system',
       activeElapsedMs: ({ event }) =>
         event.type === 'PROGRESS_RESTORED' ? event.progress.activeElapsedMs : 0,
       reservePower: ({ event }) =>
@@ -248,10 +233,7 @@ export const gameMachine = setup({
           ? ['item_screwdriver', 'item_staff_card', 'item_floor_map']
           : context.inventory,
       selectedHotspotId: null,
-      terminalMenuId: ({ event }) =>
-        event.type === 'PUZZLE_SUBMITTED'
-          ? menuForStage(nextStage[event.puzzleId])
-          : 'system',
+      terminalMenuId: 'system',
       hintLevel: 0,
     }),
     beginEnding: assign({

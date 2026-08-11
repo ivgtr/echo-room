@@ -24,6 +24,18 @@ async function enterRoom(page: Page) {
   await page.getByRole('button', { name: '探索を始める' }).click();
 }
 
+async function dismissEventNarrative(page: Page) {
+  const narrative = page.locator('.narrative-panel:visible');
+  while ((await narrative.count()) > 0) {
+    await expect(narrative.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+      { timeout: 10_000 },
+    );
+    await narrative.getByRole('button', { name: '続ける' }).press('Enter');
+  }
+}
+
 test('keeps one canvas while crossfading all four room views', async ({
   page,
 }) => {
@@ -178,9 +190,7 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     .getByRole('button', { name: 'この答えで確認する' })
     .press('Enter');
   await expect(
-    page.getByText(
-      '電源が止まった。合計容量、ドアの線、起動する順番を見直そう。',
-    ),
+    page.getByText('保護回路が切れた。負荷か起動順が合っていない。'),
   ).toBeVisible();
   await powerPuzzle
     .getByRole('group', { name: '切り離す線' })
@@ -198,9 +208,10 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   );
   const saveToast = page.getByText('自動保存しました');
   await expect(saveToast).toBeVisible();
+  await dismissEventNarrative(page);
   await page.getByRole('button', { name: '壁面端末を調べる' }).press('Enter');
   const terminal = page.getByRole('dialog', { name: '壁面端末' });
-  await expect(terminal.getByText('波のずれを直す')).toBeVisible();
+  await expect(terminal.getByText('回線同期')).toBeVisible();
   await expect(saveToast).toBeHidden({ timeout: 5000 });
   await terminal.getByRole('button', { name: '端末を閉じる' }).press('Enter');
   await page.reload();
@@ -208,13 +219,13 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(saveToast).toHaveCount(0);
   await expect(
-    page.getByText('端末のSYSTEMで、A・B・Cの波のずれを直す。'),
+    page.getByText('デスクの保守メモと、端末の波の位置を見比べる。'),
   ).toBeHidden();
   await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   await expect(
     page
       .getByRole('dialog', { name: 'SYSTEM' })
-      .getByText('端末のSYSTEMで、A・B・Cの波のずれを直す。'),
+      .getByText('デスクの保守メモと、端末の波の位置を見比べる。'),
   ).toBeVisible();
 });
 
@@ -523,7 +534,7 @@ test.describe('touch input', () => {
       .getByRole('button', { name: 'ブレーカーパネルを調べる' });
     await breaker.tap();
     await expect(
-      page.getByRole('heading', { name: '非常電源をつなぐ' }),
+      page.getByRole('heading', { name: '非常電源切替' }),
     ).toBeVisible();
   });
 });

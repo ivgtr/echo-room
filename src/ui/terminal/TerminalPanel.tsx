@@ -24,6 +24,15 @@ const puzzleMenu: Partial<Record<PuzzleId, TerminalMenuId>> = {
   puzzle_transmission_window: 'system',
 };
 
+const terminalStatus: Partial<Record<StoryStage, string>> = {
+  puzzle_maintenance_lock: 'WEST MAINTENANCE LOCK / LOCAL CONTROL',
+  puzzle_log_pairing: 'LOG / 3 UNMATCHED RECORDS',
+  puzzle_signal_route: 'SECURITY / FACILITY MAP AVAILABLE',
+  puzzle_packet_repair: 'SIGNAL / DAMAGED FRAME DETECTED',
+  puzzle_temporal_anomaly: 'SIGNAL / EVENT RECORD INCOMPLETE',
+  puzzle_voiceprint_calibration: 'VOICEPRINT DATA / EXTERNAL PANEL',
+};
+
 type Props = {
   menuId: TerminalMenuId;
   stage: StoryStage;
@@ -84,7 +93,6 @@ export function TerminalPanel(props: Props) {
             menuId={props.menuId}
             stage={props.stage}
             completedPuzzleIds={props.completedPuzzleIds}
-            currentPuzzleMenu={currentPuzzleMenu}
           />
         )}
       </div>
@@ -99,16 +107,20 @@ function TerminalMenuContent({
   menuId,
   stage,
   completedPuzzleIds,
-  currentPuzzleMenu,
 }: {
   menuId: TerminalMenuId;
   stage: StoryStage;
   completedPuzzleIds: readonly PuzzleId[];
-  currentPuzzleMenu: TerminalMenuId | undefined;
 }) {
   if (menuId === 'system')
     return (
       <div className="terminal-system-grid">
+        {stage === 'puzzle_maintenance_lock' && (
+          <div>
+            <span>DEVICE NAMEPLATE</span>
+            <strong>TERMINAL ║</strong>
+          </div>
+        )}
         <div>
           <span>NEGATIVE DELAY</span>
           <strong>-00:20:00</strong>
@@ -121,15 +133,7 @@ function TerminalMenuContent({
           <span>PUZZLES VERIFIED</span>
           <strong>{completedPuzzleIds.length} / 10</strong>
         </div>
-        <p>
-          {currentPuzzleMenu
-            ? `次は ${menuLabels[currentPuzzleMenu]} を開く。`
-            : stage === 'puzzle_voiceprint_calibration'
-              ? '端末の横にある解析パネルで、声紋データを合わせる。'
-              : stage === 'puzzle_maintenance_lock'
-                ? '必要な道具は、西壁の保守ロッカーに入っている。'
-                : '送信の準備を確認している。'}
-        </p>
+        <p>{terminalStatus[stage] ?? 'TRANSMISSION BUS / STANDBY'}</p>
       </div>
     );
 
@@ -165,9 +169,6 @@ function TerminalMenuContent({
       {['01', '02', '03', '04'].map((id) => (
         <span key={id}>PACKET {id} / DATA FRAME</span>
       ))}
-      {currentPuzzleMenu && currentPuzzleMenu !== menuId && (
-        <p>次は {menuLabels[currentPuzzleMenu]} を開く。</p>
-      )}
     </div>
   );
 }

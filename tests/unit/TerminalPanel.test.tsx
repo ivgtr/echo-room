@@ -27,8 +27,10 @@ describe('TerminalPanel', () => {
         stage="puzzle_carrier_sync"
       />,
     );
-    expect(screen.getByText('波のずれを直す')).toBeVisible();
+    expect(screen.getByText('回線同期')).toBeVisible();
     expect(screen.getByLabelText('波形の比較')).toBeVisible();
+    expect(screen.getByText('SERVICE PROCEDURE / DESK COPY')).toBeVisible();
+    expect(screen.queryByText(/早い波は右/)).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'この答えで確認する' }),
     ).toBeDisabled();
@@ -42,8 +44,23 @@ describe('TerminalPanel', () => {
         stage="puzzle_signal_route"
       />,
     );
-    expect(screen.getByText('通信線をたどる')).toBeVisible();
-    expect(screen.getByText(/ECHO BUFFER RETURNも丸/)).toBeVisible();
+    expect(screen.getByText('通信配線')).toBeVisible();
+    expect(screen.getByText('ECHO BUFFER RETURN ○')).toBeVisible();
+  });
+
+  it('shows diegetic status and the terminal nameplate before the locker', () => {
+    render(
+      <TerminalPanel
+        {...baseProps}
+        menuId="system"
+        stage="puzzle_maintenance_lock"
+      />,
+    );
+    expect(screen.getByText('TERMINAL ║')).toBeVisible();
+    expect(
+      screen.getByText('WEST MAINTENANCE LOCK / LOCAL CONTROL'),
+    ).toBeVisible();
+    expect(screen.queryByText('保守ロッカー')).not.toBeInTheDocument();
   });
 
   it('makes the red button a payoff only after puzzle ten', () => {

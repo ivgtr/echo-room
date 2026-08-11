@@ -2,16 +2,16 @@ schemaVersion: 2
 contentVersion: '0.2.0'
 chapters:
   - { id: chapter_intro, label: 覚醒 }
-  - { id: chapter_power_route, label: 非常電源をつなぐ }
-  - { id: chapter_carrier_sync, label: 波のずれを直す }
-  - { id: chapter_maintenance_lock, label: ロッカーの記号 }
-  - { id: chapter_log_pairing, label: 同じ通信を探す }
-  - { id: chapter_signal_route, label: 通信線をたどる }
-  - { id: chapter_packet_repair, label: PACKETをつなぎ直す }
-  - { id: chapter_temporal_anomaly, label: まだ起きていないこと }
-  - { id: chapter_voiceprint, label: 声紋データを合わせる }
-  - { id: chapter_causal_script, label: 会話を並べ直す }
-  - { id: chapter_transmission, label: 20分前へ送る }
+  - { id: chapter_power_route, label: 非常電源切替 }
+  - { id: chapter_carrier_sync, label: 回線同期 }
+  - { id: chapter_maintenance_lock, label: 保守ロッカー }
+  - { id: chapter_log_pairing, label: 通信ログ }
+  - { id: chapter_signal_route, label: 通信配線 }
+  - { id: chapter_packet_repair, label: 破損PACKET }
+  - { id: chapter_temporal_anomaly, label: PACKET検査 }
+  - { id: chapter_voiceprint, label: 声紋照合 }
+  - { id: chapter_causal_script, label: 送信文編集 }
+  - { id: chapter_transmission, label: 送信予約 }
   - { id: chapter_ending, label: 脱出 }
 locations:
   - { id: location_north_wall, label: 北壁 }
@@ -71,12 +71,17 @@ documents:
   - {
       id: document_power_plan,
       title: EMERGENCY BYPASS PLAN,
-      body: 容量は7 UNIT。ドアの線はショートしている。BUFFERは最後につなぐ。,
+      body: 容量は7 UNIT。ドアの線はショート。起動順は端末、通話器、BUFFER。,
+    }
+  - {
+      id: document_synchronization_note,
+      title: CARRIER START POSITION,
+      body: 基準より先に出る波は右へ、後に出る波は左へ動かす。,
     }
   - {
       id: document_maintenance_order,
       title: MAINTENANCE ORDER,
-      body: 点検する機器を、同じ機器の記号に置き換える。,
+      body: 点検順は端末、通話器、ECHO BUFFER、ドア。各機器の銘板記号を使う。,
     }
   - {
       id: document_conduit_map,
@@ -128,19 +133,19 @@ puzzles:
   - id: puzzle_power_route
     kind: routing
     correctAnswer: [door, terminal, intercom, buffer]
-    incorrectFeedback: 合計容量、ドアの線、起動する順番を見直す。
+    incorrectFeedback: 保護回路が切れた。負荷か起動順が合っていない。
     effects: [{ type: unlockTerminal, menuId: system }]
     hintIds: [hint_power_1, hint_power_2, hint_power_3]
   - id: puzzle_carrier_sync
     kind: calibration
     correctAnswer: [right-2, none, left-1]
-    incorrectFeedback: 早い波は右、遅い波は左へ動かす。
+    incorrectFeedback: 同期できない。開始位置が基準と合っていない。
     effects: [{ type: advanceChapter, chapterId: chapter_maintenance_lock }]
     hintIds: [hint_carrier_1, hint_carrier_2, hint_carrier_3]
   - id: puzzle_maintenance_lock
     kind: correlation
     correctAnswer: [double, ring, triangle, node]
-    incorrectFeedback: 点検順の機器を、一つずつ記号に置き換える。
+    incorrectFeedback: ロックは開かない。銘板の並びと一致していない。
     effects:
       - { type: grantItem, itemId: item_screwdriver }
       - { type: grantItem, itemId: item_staff_card }
@@ -149,44 +154,44 @@ puzzles:
   - id: puzzle_log_pairing
     kind: correlation
     correctAnswer: [s-b, s-c, s-a]
-    incorrectFeedback: 3つの波がすべて同じになる組を探す。
+    incorrectFeedback: 組み合わせの中に、違う波形がある。
     effects: [{ type: advanceChapter, chapterId: chapter_signal_route }]
     hintIds: [hint_log_1, hint_log_2, hint_log_3]
   - id: puzzle_signal_route
     kind: routing
     correctAnswer: [signal, ring-relay, echo-buffer]
-    incorrectFeedback: 実線と同じ形の端子を続けてたどる。
+    incorrectFeedback: 選んだ線は、途中で接続が切れている。
     effects: [{ type: advanceChapter, chapterId: chapter_packet_repair }]
     hintIds: [hint_route_1, hint_route_2, hint_route_3]
   - id: puzzle_packet_repair
     kind: reconstruction
     correctAnswer: [c, d, a, b]
-    incorrectFeedback: 最初と最後を決め、同じ記号の端を合わせる。
+    incorrectFeedback: フレーム検査に失敗した。断片の端がつながっていない。
     effects: [{ type: advanceChapter, chapterId: chapter_temporal_anomaly }]
     hintIds: [hint_repair_1, hint_repair_2, hint_repair_3]
   - id: puzzle_temporal_anomaly
     kind: correlation
     correctAnswer: [packet-04, unseen-event]
-    incorrectFeedback: すでに起きたことと、まだ起きていないことを分ける。
+    incorrectFeedback: その判断では、記録済みの出来事と矛盾しない。
     effects: [{ type: advanceChapter, chapterId: chapter_voiceprint }]
     hintIds: [hint_anomaly_1, hint_anomaly_2, hint_anomaly_3]
   - id: puzzle_voiceprint_calibration
     kind: calibration
     correctAnswer: [compress-half, invert, left-2]
-    incorrectFeedback: 間隔、上下、開始位置を一つずつ見本に合わせる。
+    incorrectFeedback: 一致しない。3つの特徴のどれかが記録と違う。
     effects: [{ type: advanceChapter, chapterId: chapter_causal_script }]
     hintIds: [hint_voice_1, hint_voice_2, hint_voice_3]
   - id: puzzle_causal_script
     kind: reconstruction
     correctAnswer: [packet-01, packet-02, packet-03, packet-04]
-    incorrectFeedback: それぞれの発言を聞いたときの出来事を思い出す。
+    incorrectFeedback: この順番では、過去の応答記録とつながらない。
     effects: [{ type: advanceChapter, chapterId: chapter_transmission }]
     hintIds: [hint_script_1, hint_script_2, hint_script_3]
   - id: puzzle_transmission_window
     kind: routing
     correctAnswer:
       [packet-01, packet-02, packet-03, packet-04, minus-20, echo-return]
-    incorrectFeedback: 発言の順番、20分前、送り先を見直す。
+    incorrectFeedback: 送信テストに失敗した。設定のどこかが記録と違う。
     effects: [{ type: advanceChapter, chapterId: chapter_ending }]
     hintIds: [hint_send_1, hint_send_2, hint_send_3]
 hints:

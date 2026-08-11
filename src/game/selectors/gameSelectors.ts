@@ -39,16 +39,16 @@ export const selectReservePower = (snapshot: GameSnapshot) =>
   snapshot.context.reservePower;
 
 const objectives: Partial<Record<StoryStage, string>> = {
-  puzzle_carrier_sync: '端末のSYSTEMで、A・B・Cの波のずれを直す。',
-  puzzle_maintenance_lock: '西壁のロッカーを、4つの記号で開ける。',
-  puzzle_log_pairing: '端末のLOGで、同じ形の通信を組み合わせる。',
-  puzzle_signal_route: 'SECURITYの配線図で、通信線の行き先を調べる。',
-  puzzle_packet_repair: 'SIGNALで、壊れたPACKETをつなぎ直す。',
-  puzzle_temporal_anomaly: '4つの発言から、未来を知っているものを探す。',
-  puzzle_voiceprint_calibration:
-    '解析パネルで、受信データを職員記録に合わせる。',
-  puzzle_causal_script: 'SYSTEMで、4つの発言を正しい順に並べる。',
-  puzzle_transmission_window: '4つの発言を、20分前へ送る準備をする。',
+  puzzle_carrier_sync: 'デスクの保守メモと、端末の波の位置を見比べる。',
+  puzzle_maintenance_lock: 'デスクの点検順と、部屋にある4つの銘板を調べる。',
+  puzzle_log_pairing: '端末のLOGで、同じ波形を持つ通信を探す。',
+  puzzle_signal_route: 'インターホンとSECURITYの配線図を見比べる。',
+  puzzle_packet_repair: 'SIGNALに残った破損PACKETを調べる。',
+  puzzle_temporal_anomaly: '復元した4文を、これまでの出来事と比べる。',
+  puzzle_voiceprint_calibration: '職員カードと解析パネルの波形を見比べる。',
+  puzzle_causal_script: '会話履歴を読み返し、送信する4文を並べる。',
+  puzzle_transmission_window:
+    '判明した時間差と回線を使い、送信予約を完成させる。',
   transmission_ready: 'SYSTEMで送る内容を確認し、赤いボタンを押す。',
 };
 
@@ -63,6 +63,14 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;
   const hotspot = snapshot.context.selectedHotspotId;
   const stage = snapshot.context.storyStage;
+  if (stage === 'puzzle_maintenance_lock') {
+    if (hotspot === 'hotspot_door')
+      return 'ドアの銘板には、ひし形の「◆」が刻まれている。';
+    if (hotspot === 'hotspot_intercom')
+      return '通話器の銘板には、丸い「○」が刻まれている。';
+    if (hotspot === 'hotspot_breaker')
+      return 'ECHO BUFFER回路の銘板には、三角の「△」が刻まれている。';
+  }
   if (hotspot === 'hotspot_door')
     return stage === 'transmission_ready'
       ? '送信が終われば、ドアのロックが外れるはずだ。'

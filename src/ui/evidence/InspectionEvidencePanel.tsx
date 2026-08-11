@@ -1,9 +1,18 @@
+import type { StoryStage } from '../../game/machine/gameMachine';
+
 type Props = {
-  kind: 'clock' | 'power-test';
+  kind: 'clock' | 'desk';
+  powerRestored?: boolean;
+  stage?: StoryStage;
   onClose: () => void;
 };
 
-export function InspectionEvidencePanel({ kind, onClose }: Props) {
+export function InspectionEvidencePanel({
+  kind,
+  powerRestored = false,
+  stage = 'puzzle_carrier_sync',
+  onClose,
+}: Props) {
   const clock = kind === 'clock';
   return (
     <section
@@ -12,7 +21,11 @@ export function InspectionEvidencePanel({ kind, onClose }: Props) {
       aria-modal="true"
       aria-labelledby="evidence-title"
     >
-      {clock ? <ClockEvidence /> : <PowerTestEvidence />}
+      {clock ? (
+        <ClockEvidence />
+      ) : (
+        <DeskEvidence powerRestored={powerRestored} stage={stage} />
+      )}
       <button type="button" onClick={onClose}>
         閉じる
       </button>
@@ -42,7 +55,20 @@ function ClockEvidence() {
   );
 }
 
-function PowerTestEvidence() {
+function DeskEvidence({
+  powerRestored,
+  stage,
+}: {
+  powerRestored: boolean;
+  stage: StoryStage;
+}) {
+  if (powerRestored && stage === 'puzzle_carrier_sync')
+    return <SynchronizationNote />;
+  if (powerRestored) return <MaintenanceOrder />;
+  return <PowerPlan />;
+}
+
+function PowerPlan() {
   return (
     <div className="document-evidence">
       <p className="eyebrow">FACILITY E-01 / MAINTENANCE DOCUMENT</p>
@@ -56,7 +82,47 @@ function PowerTestEvidence() {
           TERMINAL 2 / INTERCOM 1 / ECHO BUFFER 3 / DOOR 4
         </p>
         <p className="document-annotation">
-          DOOR LINE: SHORT DETECTED / BUFFER STARTS LAST
+          DOOR LINE: SHORT DETECTED
+          <br />
+          START: TERMINAL → INTERCOM → BUFFER
+        </p>
+      </article>
+    </div>
+  );
+}
+
+function SynchronizationNote() {
+  return (
+    <div className="document-evidence">
+      <p className="eyebrow">ECHO BUFFER / SERVICE NOTE</p>
+      <article className="document-sheet" aria-labelledby="evidence-title">
+        <p>CARRIER START POSITION</p>
+        <h2 id="evidence-title">同期調整メモ</h2>
+        <div className="document-rule" aria-hidden="true" />
+        <p className="document-instruction">
+          基準より先に出る波：<strong>DELAY / 右へ</strong>
+          <br />
+          基準より後に出る波：<strong>ADVANCE / 左へ</strong>
+        </p>
+        <p className="document-annotation">波が出る位置を0に合わせること。</p>
+      </article>
+    </div>
+  );
+}
+
+function MaintenanceOrder() {
+  return (
+    <div className="document-evidence">
+      <p className="eyebrow">FACILITY E-01 / INSPECTION SHEET</p>
+      <article className="document-sheet" aria-labelledby="evidence-title">
+        <p>LAST MANUAL INSPECTION</p>
+        <h2 id="evidence-title">夜間点検順</h2>
+        <div className="document-rule" aria-hidden="true" />
+        <p className="document-instruction">
+          TERMINAL → INTERCOM → ECHO BUFFER → DOOR
+        </p>
+        <p className="document-annotation">
+          ロッカーには各機器の銘板記号を入力する。
         </p>
       </article>
     </div>

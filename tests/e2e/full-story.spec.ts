@@ -5,7 +5,7 @@ import { createProgressSave, installProgressSave } from './saveFixture';
 test('keyboard-only route solves all ten deductions before transmission', async ({
   page,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   await page.addInitScript(
     installProgressSave,
     createProgressSave({ activeElapsedMs: 1_188_000, reservePower: true }),
@@ -39,6 +39,7 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await openHotspot(page, '壁面端末を調べる');
+  await page.getByRole('button', { name: 'LOG' }).press('Enter');
   await solve(page, [
     ['R1 と同じ波のSOURCE', 'S-B'],
     ['R2 と同じ波のSOURCE', 'S-C'],
@@ -46,6 +47,7 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
+  await page.getByRole('button', { name: 'SECURITY' }).press('Enter');
   await solve(page, [
     ['たどる線', '実線 / 通信'],
     ['壁の中で通る場所', 'J-2 / 丸端子'],
@@ -53,6 +55,7 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
+  await page.getByRole('button', { name: 'SIGNAL' }).press('Enter');
   await solve(page, [
     ['1番目の断片', '断片C'],
     ['2番目の断片', '断片D'],
@@ -61,8 +64,9 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   ]);
 
   await openHotspot(page, '壁面端末を調べる');
+  await page.getByRole('button', { name: 'SIGNAL' }).press('Enter');
   await solve(page, [
-    ['未来のことを知っているPACKET', /PACKET 04/],
+    ['異常があるPACKET', /PACKET 04/],
     ['そう判断できる理由', 'まだしていない操作を知っている'],
   ]);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_07');
@@ -137,6 +141,19 @@ async function solve(
     .getByRole('button', { name: 'この答えで確認する' })
     .press('Enter');
   await expect(puzzle).toBeHidden();
+  await dismissEventNarrative(page);
+}
+
+async function dismissEventNarrative(page: Page) {
+  const narrative = page.locator('.narrative-panel:visible');
+  while ((await narrative.count()) > 0) {
+    await expect(narrative.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+      { timeout: 10_000 },
+    );
+    await narrative.getByRole('button', { name: '続ける' }).press('Enter');
+  }
 }
 
 async function expectSavedCheckpoint(page: Page, checkpointId: string) {

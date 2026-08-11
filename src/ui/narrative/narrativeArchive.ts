@@ -57,6 +57,40 @@ export const powerRestoredEntry: NarrativeEntry = {
 
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
   {
+    puzzle_power_route: [
+      {
+        id: 'power_direction',
+        kind: 'communication',
+        speaker: 'UNKNOWN',
+        text: 'よし。次は端末だ。',
+      },
+      {
+        id: 'power_suspicion',
+        kind: 'monologue',
+        text: 'ずいぶん詳しいな。',
+      },
+      {
+        id: 'power_answer',
+        kind: 'communication',
+        speaker: 'UNKNOWN',
+        text: '……前に見たことがある。',
+      },
+    ],
+    puzzle_carrier_sync: [
+      {
+        id: 'locker_cue',
+        kind: 'discovery',
+        text: '回線がそろった。西壁から、ロックの外れる音がした。',
+      },
+    ],
+    puzzle_maintenance_lock: [
+      {
+        id: 'log_cue',
+        kind: 'system',
+        speaker: 'FACILITY SYSTEM',
+        text: '壁面端末に、未確認の通信ログが3件ある。',
+      },
+    ],
     puzzle_log_pairing: [
       {
         id: 'offset_discovered',
@@ -68,6 +102,11 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         kind: 'communication',
         speaker: 'UNKNOWN',
         text: 'ログは気にするな。',
+      },
+      {
+        id: 'security_cue',
+        kind: 'monologue',
+        text: '職員カードなら、SECURITYの施設図を開けるはずだ。',
       },
     ],
     puzzle_signal_route: [
@@ -82,12 +121,31 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         speaker: 'UNKNOWN',
         text: '分かってる。まだ説明できない。',
       },
+      {
+        id: 'damaged_packet_cue',
+        kind: 'system',
+        speaker: 'FACILITY SYSTEM',
+        text: 'SIGNALに、破損したPACKETが残っている。',
+      },
+    ],
+    puzzle_packet_repair: [
+      {
+        id: 'packet_question',
+        kind: 'monologue',
+        text: '4つ目の文だけ、聞いた覚えがない。いつ届いた？',
+      },
     ],
     puzzle_temporal_anomaly: [
       {
         id: 'future_packet',
         kind: 'discovery',
         text: 'PACKET 04は、まだ見ていない赤いボタンを知っている。',
+      },
+      {
+        id: 'voiceprint_cue',
+        kind: 'system',
+        speaker: 'FACILITY SYSTEM',
+        text: 'PACKET 04に、照合できる声紋データが残っている。',
       },
     ],
     puzzle_voiceprint_calibration: [
@@ -101,6 +159,28 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         kind: 'communication',
         speaker: '20分後の自分',
         text: '20分後のお前だ。',
+      },
+      {
+        id: 'script_cue',
+        kind: 'communication',
+        speaker: '20分後の自分',
+        text: 'お前が受け取った4つの文を、順番どおりに戻せ。',
+      },
+    ],
+    puzzle_causal_script: [
+      {
+        id: 'transmission_cue',
+        kind: 'system',
+        speaker: 'FACILITY SYSTEM',
+        text: '送信文を登録。送る時刻と回線は未設定。',
+      },
+    ],
+    puzzle_transmission_window: [
+      {
+        id: 'transmission_ready_cue',
+        kind: 'system',
+        speaker: 'FACILITY SYSTEM',
+        text: '送信テスト完了。赤い送信ボタンを使用できる。',
       },
     ],
   };
@@ -124,6 +204,12 @@ const maintenanceSheet: ArchiveDocument = {
   body: '点検順：端末、通話器、ECHO BUFFER、ドア。それぞれを機器の記号に置き換える。',
 };
 
+const synchronizationNote: ArchiveDocument = {
+  id: 'document_synchronization_note',
+  title: 'CARRIER START POSITION',
+  body: '基準より先に出る波は右へ、後に出る波は左へ動かし、開始位置を0に合わせる。',
+};
+
 const floorMap: ArchiveDocument = {
   id: 'document_floor_map',
   title: 'FACILITY / CONDUIT MAP',
@@ -136,7 +222,9 @@ export function getArchiveDocuments(
   inventory: readonly ItemId[],
 ) {
   const documents: ArchiveDocument[] = [];
-  if (powerRestored) documents.push(powerPlan, maintenanceSheet);
+  if (powerRestored) documents.push(powerPlan, synchronizationNote);
+  if (powerRestored && _stage !== 'puzzle_carrier_sync')
+    documents.push(maintenanceSheet);
   if (inventory.includes('item_floor_map')) documents.push(floorMap);
   return documents;
 }

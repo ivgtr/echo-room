@@ -79,6 +79,9 @@ export function App() {
   const [narrativeHistory, setNarrativeHistory] = useState<NarrativeEntry[]>(
     [],
   );
+  const [eventNarrativeQueue, setEventNarrativeQueue] = useState<
+    NarrativeEntry[]
+  >([]);
   const [acquiredItems, setAcquiredItems] = useState<ItemId[]>([]);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
@@ -326,6 +329,7 @@ export function App() {
     previousInventoryRef.current = [];
     setSaveMessage(null);
     setNarrativeHistory([]);
+    setEventNarrativeQueue([]);
     setAcquiredItems([]);
     void soundManager.unlock().catch(() => undefined);
     actorRef.send({ type: 'GAME_STARTED' });
@@ -344,13 +348,11 @@ export function App() {
         appendHistory([discoveryEntry('アナログ時計は02:17で止まっている。')]);
       if (hotspotId === 'hotspot_desk')
         appendHistory([
-          discoveryEntry(
-            '非常電源は7 UNITまで。ドアの線はショートしている。BUFFERは最後に起動する。',
-          ),
+          discoveryEntry(deskDiscoveryText(powerRestored, storyStage)),
         ]);
       actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId });
     },
-    [actorRef, appendHistory],
+    [actorRef, appendHistory, powerRestored, storyStage],
   );
   const handleView = useCallback(
     (nextLocationId: LocationId) =>
@@ -367,7 +369,11 @@ export function App() {
             : 'terminal_connect'
           : 'locker_error',
       );
-      if (correct) appendHistory(getPuzzleCompletionEntries(puzzleId));
+      if (correct) {
+        const entries = [...getPuzzleCompletionEntries(puzzleId)];
+        appendHistory(entries);
+        setEventNarrativeQueue(entries);
+      }
       actorRef.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
     },
     [actorRef, appendHistory],
@@ -395,6 +401,7 @@ export function App() {
                 lastSavedCheckpointRef.current = progress.checkpointId;
                 previousInventoryRef.current = [...progress.inventory];
                 setAcquiredItems([]);
+                setEventNarrativeQueue([]);
                 setNarrativeHistory(getRestoredNarrativeHistory(progress));
                 actorRef.send({
                   type: 'PROGRESS_RESTORED',
@@ -437,6 +444,7 @@ export function App() {
       soundLevels={soundLevels}
       subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
+      eventNarrative={eventNarrativeQueue[0] ?? null}
       narrativeHistory={narrativeHistory}
       archiveDocuments={archiveDocuments}
       acquiredItems={acquiredItems}
@@ -509,8 +517,19 @@ export function App() {
       onDismissAcquisition={() => setAcquiredItems([])}
       onUiClick={handleUiClick}
       onTextBlip={handleTextBlip}
+      onEventNarrativeAdvance={() =>
+        setEventNarrativeQueue((current) => current.slice(1))
+      }
     />
   );
+}
+
+function deskDiscoveryText(powerRestored: boolean, stage: string) {
+  if (!powerRestored)
+    return '非常電源は7 UNITまで。ドアの線はショートしている。起動順も記されている。';
+  if (stage === 'puzzle_carrier_sync')
+    return '同期調整メモだ。早い波は右へ、遅い波は左へ動かす。';
+  return '夜間点検は、端末、通話器、ECHO BUFFER、ドアの順だ。各機器の銘板記号を使う。';
 }
 
 function progressFingerprint(progress: SavedProgress) {

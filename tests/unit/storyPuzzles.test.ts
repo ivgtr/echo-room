@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isPuzzleAnswerCorrect,
+  puzzleIds,
   type PuzzleId,
 } from '../../src/game/puzzles/storyPuzzles';
+import { getPuzzleCompletionEntries } from '../../src/ui/narrative/narrativeArchive';
 
 const solutions: Record<PuzzleId, string[]> = {
   puzzle_power_route: ['door', 'terminal', 'intercom', 'buffer'],
@@ -26,6 +28,11 @@ const solutions: Record<PuzzleId, string[]> = {
 };
 
 describe('story puzzle validators', () => {
+  it('gives every solved device an in-world consequence or lead', () => {
+    for (const puzzleId of puzzleIds)
+      expect(getPuzzleCompletionEntries(puzzleId).length).toBeGreaterThan(0);
+  });
+
   it.each(Object.entries(solutions))(
     '%s accepts only its complete ordered deduction',
     (puzzleId, solution) => {

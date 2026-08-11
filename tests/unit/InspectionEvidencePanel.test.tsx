@@ -17,11 +17,37 @@ describe('InspectionEvidencePanel', () => {
   });
 
   it('renders the capacity and fault evidence on the desk paper', () => {
-    render(<InspectionEvidencePanel kind="power-test" onClose={vi.fn()} />);
+    render(<InspectionEvidencePanel kind="desk" onClose={vi.fn()} />);
     expect(
       screen.getByRole('heading', { name: '非常電源配分表' }),
     ).toBeVisible();
     expect(screen.getByText(/TERMINAL 2.*INTERCOM 1/)).toBeVisible();
     expect(screen.getByText(/SHORT DETECTED/)).toBeVisible();
+  });
+
+  it('changes the desk document as the investigation advances', () => {
+    const { rerender } = render(
+      <InspectionEvidencePanel
+        kind="desk"
+        powerRestored
+        stage="puzzle_carrier_sync"
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: '同期調整メモ' })).toBeVisible();
+    expect(screen.getByText(/DELAY \/ 右へ/)).toBeVisible();
+
+    rerender(
+      <InspectionEvidencePanel
+        kind="desk"
+        powerRestored
+        stage="puzzle_maintenance_lock"
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: '夜間点検順' })).toBeVisible();
+    expect(
+      screen.getByText('TERMINAL → INTERCOM → ECHO BUFFER → DOOR'),
+    ).toBeVisible();
   });
 });

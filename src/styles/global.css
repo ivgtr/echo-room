@@ -1818,14 +1818,18 @@ button:focus-visible {
   gap: clamp(0.8rem, 2vw, 1.5rem);
 }
 
-.puzzle-evidence {
+.reasoning-layout.is-readout-free {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.device-readout {
   padding: 0.8rem;
   border: 1px solid rgb(88 184 176 / 32%);
   background: rgb(5 20 21 / 76%);
   overflow: auto;
 }
 
-.puzzle-evidence h3,
+.device-readout h3,
 .puzzle-decisions legend {
   color: #8de1d8;
   font:
@@ -1834,7 +1838,7 @@ button:focus-visible {
   letter-spacing: 0.08em;
 }
 
-.puzzle-evidence ul {
+.device-readout ul {
   margin: 0;
   padding-left: 1.2rem;
   color: #d2dcda;

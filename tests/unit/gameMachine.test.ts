@@ -74,6 +74,7 @@ describe('gameMachine vertical slice', () => {
       'puzzle_voiceprint_calibration',
     );
     expect(actor.getSnapshot().context.inventory).toHaveLength(3);
+    expect(actor.getSnapshot().context.terminalMenuId).toBe('system');
   });
 
   it('enters reserve power at zero without blocking progression', () => {
