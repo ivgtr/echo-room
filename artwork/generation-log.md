@@ -6,7 +6,7 @@
 - 用途: P4 Stage 0 art-direction approval preview
 - provider: OpenAI built-in `image_gen`
 - model / model version / seed: built-in toolから非公開
-生成方式: 新規生成3候補後、各候補を参照編集で1回修正
+- 生成方式: 新規生成3候補後、各候補を参照編集で1回修正
 
 ### 共通prompt
 
@@ -72,3 +72,17 @@
 ### 解像度の扱い
 
 previewはすべて1672×941。美術方向の選定にのみ使用する。シネマティック表面調整v6の承認後、これを単一参照としてGFX-REF-001 masterとGFX-REF-002を制作し、仕様の3840×2160以上を満たす。単純な拡大補間は行わない。
+
+## Stage 1 基準画像・制作基準
+
+- art direction承認日: 2026-08-11
+- 承認内容: GFX-REF-001 cinematic v6を正本とし、重厚な金属、非言語的な謎情報、密室感、赤／青緑の静かな非常時照明を以後へ継承する。
+- provider: GFX-REF-002のみOpenAI built-in `image_gen`。GFX-REF-003 / 004はImageMagickによる手動raster制作。
+
+| ID          | 出力                                                    | 生成・制作内容                                          | 検収                                                                     |
+| ----------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| GFX-REF-002 | `reference/gfx-ref-002/gfx-ref-002__preview-flat.png`   | v6を美術正本、REF-004を配置正本として北壁正面を参照生成 | 中央密閉扉、空表示筐体、左上時計、右intercom、字幕安全域、窓・別開口なし |
+| GFX-REF-003 | `reference/gfx-ref-003/gfx-ref-003__material-board.png` | v6とREF-002から6種の表面cropと7色の基準swatchを整理     | 新規材質を追加せず、金属、樹脂、床、赤灯、cyan glassを固定               |
+| GFX-REF-004 | `reference/gfx-ref-004/gfx-ref-004__reference.png`      | canonical_spaceを2048角の同一原点4 layerへ手動作図      | 5.2m×4.0m、4壁の設備位置、開始視点、開口禁止を明記                       |
+
+REF-002は1672×941のgeometry承認用preview。REF-003 / 004は2048×2048。geometry承認後に単純拡大ではない高解像度制作原本とruntime書き出しへ進む。

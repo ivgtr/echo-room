@@ -24,9 +24,14 @@ prompt_library:
       panels, matte black polymer, reinforced frosted glass, exposed conduits
       and precise industrial fasteners. A believable mixture of expensive
       near-future prototype equipment and durable analog controls. Recently
-      occupied and functional, lightly worn but not abandoned. Cinematic
-      realistic digital environment art, highly coherent geometry, restrained
-      detail, readable interactive objects, quiet tension, no characters.
+      occupied and functional, lightly worn but not abandoned. Premium
+      cinematic 2D environment concept art for an intellectual escape
+      adventure, with heavy natural metal surfaces, coherent shadows and
+      restrained reflections. Organize seams, fasteners, interlocks, status
+      lamps and cable paths as meaningful nonverbal information. Highly
+      coherent geometry, readable interactive objects, claustrophobic quiet
+      tension, no characters. Avoid low-poly facets and cheap glossy 3D-render
+      surfaces.
       Designed as a first-person point-and-click adventure background made from
       layered 2D images, with clear foreground, midground and background
       separation.
@@ -62,8 +67,9 @@ prompt_library:
       object identity. Do not redesign the room or the machine.
   negative:
     text: >-
-      No 3D model render aesthetic, no glossy spaceship corridor, no cyberpunk
-      neon city palette, no fantasy technology, no floating holograms, no
+      No low-poly facets, no triangulated surface patchwork, no cheap 3D model
+      render aesthetic, no plastic materials, no glossy spaceship corridor, no
+      cyberpunk neon city palette, no fantasy technology, no floating holograms, no
       steampunk, no military bunker, no hospital, no abandoned ruin, no heavy
       rust, no vegetation, no cobwebs, no blood, no gore, no body, no monster,
       no visible person, no protagonist hands, no weapons, no windows, no

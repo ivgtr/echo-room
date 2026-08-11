@@ -79,8 +79,10 @@
 
 ### 3.2 美術方向
 
-- 写実寄りのシネマティックなデジタル背景美術。
-- 実写写真そのものではなく、ゲーム背景として形と情報が読み取りやすい精密なコンセプトアート。
+- 重厚で静かな緊張感を持つ、シネマティックなSF脱出ADVのデジタル背景美術。
+- 実写写真そのものではなく、ゲーム背景として形、機能、謎の手掛かりが読み取りやすい精密な2Dコンセプトアート。
+- 多角形facetやカクカクした面構成を避け、塗装鋼板、金属trim、樹脂、強化glassを自然な陰影、反射、擦れで描き分ける。
+- 安価な3D renderの光沢やplastic感を避け、機械の継ぎ目、留め具、interlock、状態灯、配線を整理して配置する。
 - レトロフューチャーではあるが、1970年代風に寄せすぎない。
 - アナログなレバー、時計、頑丈なロッカーと、薄型ではない研究用端末を共存させる。
 - 表面は使用感を持つが、錆、血、苔、崩壊を主役にしない。
@@ -160,7 +162,7 @@
 ### 4.1 WORLD_PROMPT
 
 ```text
-ECHO ROOM, a grounded Japanese science-fiction mystery game set in 2039. Interior of a compact underground experimental laboratory in a Japanese advanced research institute, immediately after a containment accident. Utilitarian brutalist architecture, blue-gray concrete, painted steel panels, matte black polymer, reinforced frosted glass, exposed conduits and precise industrial fasteners. A believable mixture of expensive near-future prototype equipment and durable analog controls. Recently occupied and functional, lightly worn but not abandoned. Cinematic realistic digital environment art, highly coherent geometry, restrained detail, readable interactive objects, quiet tension, no characters. Designed as a first-person point-and-click adventure background made from layered 2D images, with clear foreground, midground and background separation.
+ECHO ROOM, a grounded Japanese science-fiction mystery game set in 2039. Interior of a compact underground experimental laboratory in a Japanese advanced research institute, immediately after a containment accident. Utilitarian brutalist architecture, blue-gray concrete, painted steel panels, matte black polymer, reinforced frosted glass, exposed conduits and precise industrial fasteners. A believable mixture of expensive near-future prototype equipment and durable analog controls. Recently occupied and functional, lightly worn but not abandoned. Premium cinematic 2D environment concept art for an intellectual escape adventure, with heavy natural metal surfaces, coherent shadows and restrained reflections. Organize seams, fasteners, interlocks, status lamps and cable paths as meaningful nonverbal information. Highly coherent geometry, readable interactive objects, claustrophobic quiet tension, no characters. Avoid low-poly facets and cheap glossy 3D-render surfaces. Designed as a first-person point-and-click adventure background made from layered 2D images, with clear foreground, midground and background separation.
 ```
 
 ### 4.2 CAMERA_PROMPT_WIDE
@@ -190,7 +192,7 @@ Main power is off. Sparse deep-red emergency lights create pools of light and lo
 ### 4.6 NEGATIVE_PROMPT
 
 ```text
-No 3D model render aesthetic, no glossy spaceship corridor, no cyberpunk neon city palette, no fantasy technology, no holograms floating in the room, no steampunk, no military bunker, no hospital, no abandoned ruin, no heavy rust, no vegetation, no cobwebs, no blood, no gore, no body, no monster, no visible person, no protagonist hands, no weapons, no windows, no adjacent-room doorway, no fisheye lens, no Dutch angle, no extreme depth of field, no motion blur, no illegible decorative text, no logos, no watermarks, no UI overlay, no subtitles, no baked-in labels or numbers.
+No low-poly facets, no triangulated surface patchwork, no cheap 3D model render aesthetic, no plastic materials, no glossy spaceship corridor, no cyberpunk neon city palette, no fantasy technology, no holograms floating in the room, no steampunk, no military bunker, no hospital, no abandoned ruin, no heavy rust, no vegetation, no cobwebs, no blood, no gore, no body, no monster, no visible person, no protagonist hands, no weapons, no windows, no adjacent-room doorway, no fisheye lens, no Dutch angle, no extreme depth of field, no motion blur, no illegible decorative text, no logos, no watermarks, no UI overlay, no subtitles, no baked-in labels or numbers.
 ```
 
 ### 4.7 生成依頼の組み立て
