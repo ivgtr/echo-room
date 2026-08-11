@@ -153,6 +153,38 @@
 
 フロア図もこの配置と矛盾させない。
 
+### 3.7 探索密度と環境ドレッシング
+
+通常探索画面は、必須対象だけを孤立させた「操作対象一覧」にしない。一方、難易度をpixel huntingへ依存させず、論理パズルの手掛かりと操作対象は支援技術を含めて確実に到達可能にする。環境ドレッシングは、探索する余地、施設の用途、事故直後の時間性を補うために使い、主要パズルの数や答えは増やさない。
+
+#### 3.7.1 情報階層
+
+| 階層 | 1視点の目安 | 役割 | 視覚・操作規則 |
+|---|---:|---|---|
+| 必須対象 | 1〜3 | 進行、手掛かり、状態変化 | silhouette、配置、配線の収束、局所contrastで判別する。過剰発光させず、keyboardとaccessibility overlayから必ず到達可能にする |
+| 雰囲気調査対象 | 1〜2 | 主人公の短い反応、施設理解、事故の痕跡 | 中contrastで置き、進行flagや所持品を持たせない。選択時は必ず短い反応を返す |
+| 非操作ドレッシング | 3〜5 | 密度、scale、用途、視差、生活感 | 低contrastで背景へ統合し、hotspotを設けない。必須対象と同じ発光、反復、入力部を持たせない |
+
+- 1画面の独立したsupporting objectは合計4〜7点を目安とし、自由に動かせる大型家具は1点以下にする。
+- 必須対象を隠すのではなく、周囲に機能的な文脈を作る。1280×720相当でも必須対象の輪郭を識別できること。
+- 下部24%の字幕領域と外周5%の安全領域へ、必須の数字、紙、lever、buttonを置かない。
+- 非操作物はfocus、hover、発光、cursor変化を持たない。雰囲気調査対象は必須対象より弱いfocus表現を使う。
+- 4本の反復lever、4桁入力、時計文字盤、裸のscrewdriver、access card、音声波形、赤い送信buttonなど、既存パズル固有の視覚文法をdecoyへ転用しない。
+- state差分で動かないドレッシングは全状態・接写で同じ位置を保つ。事故痕跡は「最近まで稼働していた施設」の範囲に留め、廃墟やhorrorへ寄せない。
+
+#### 3.7.2 壁別配置
+
+| 視点 | 非操作ドレッシング | 雰囲気調査対象 | 保護する必須対象 |
+|---|---|---|---|
+| 北壁 | 左下の空調service unit、天井cable tray、扉前の細い排水溝、壁際の低い密閉utility canister、配管support | 扉枠の新しい擦過痕、battery筐体下の結露跡 | 扉、時計、intercom、空表示筐体 |
+| 東壁 | 低い整備stool、床置きcable reel、壁面cooling manifold、蓋付きparts tray、配管support | cradleに戻されていないcalibration probe、端末下の新しい焦げ跡 | blank terminal、閉じた解析panel |
+| 南壁 | desk lamp、工具case、rolling side cart、低いwaste bin、束ねたdata cable、椅子 | 閉じた工具case、事故で少しずれた椅子 | desk上のblank paper |
+| 西壁 | 壁掛けhose reel、折り畳みstep、低いutility dolly、保護glove、床drain | locker前の短い擦過跡、breakerの破れたinspection seal | lockerと空4桁窓、4-lever breaker |
+
+- free-standing objectは通路中央を塞がず、視点回転時に隣接壁のedge cueと矛盾させない。
+- utility canister、parts tray、tool case、dollyには錠、数字、強い状態灯を付けず、所持品が入っていると誤認させない。
+- 雰囲気調査対象の台詞は後工程でcontent dataへ追加し、現在の真相、時刻、packet、主要人物設定を先出ししない。
+
 ---
 
 ## 4. 共通生成プロンプト

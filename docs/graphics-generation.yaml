@@ -273,7 +273,10 @@ assets:
       Produce the final gameplay-wide north-wall view from the approved canonical
       image. Keep the closed iron door centered, blank emergency display above,
       intercom on the right and analog clock toward the upper-left. Add restrained
-      foreground conduit for parallax without obscuring any object.
+      foreground conduit for parallax without obscuring any object. Add the
+      approved low-contrast dressing: an air-service unit, ceiling cable tray,
+      narrow floor drain, sealed utility canister and pipe supports. Suggest fresh
+      door-frame scuffs and condensation without creating new puzzle controls.
     states_derived: [powered, emergency]
     deliverables:
       - background_layer
@@ -301,7 +304,10 @@ assets:
       Face the east wall from the same room and eye level. Show a rugged wall-mounted
       ECHO BUFFER terminal with a blank dark display, plus a bolted service panel
       immediately beside it that can later be opened with a screwdriver. Preserve
-      the north door edge on the correct side to prove spatial continuity.
+      the north door edge on the correct side to prove spatial continuity. Add a
+      low maintenance stool, cable reel, cooling manifold, closed parts tray and
+      pipe supports. A calibration probe may sit outside its cradle, but no dressing
+      may resemble an input device, key item or additional terminal.
     states_derived: [power_off, powered, panel_open]
     deliverables:
       - standard_wide_layers
@@ -322,7 +328,10 @@ assets:
       Face the south wall. Show a functional metal research desk with one blank
       off-white emergency-test sheet, a restrained chair and a small number of
       believable lab objects. Keep the surface uncluttered so the paper is a clear
-      investigation target. Preserve east and west wall edge cues.
+      investigation target. Preserve east and west wall edge cues. Add the approved
+      noninteractive desk lamp, closed tool case, rolling side cart, low waste bin
+      and bundled data cable. Keep the slightly displaced chair and closed tool case
+      readable as optional atmosphere inspection targets, not puzzle containers.
     states_derived: [paper_present, paper_taken]
     deliverables:
       - standard_wide_layers
@@ -343,7 +352,10 @@ assets:
       Face the west wall. Place a four-lever industrial breaker panel toward the
       north side and a tall single-person steel locker toward the south side. The
       locker has a compact blank four-digit electronic lock. Keep both objects
-      visually separate and selectable. No doorway or window between them.
+      visually separate and selectable. No doorway or window between them. Add the
+      approved low-contrast hose reel, folded step, utility dolly, protective glove
+      and floor drain. Suggest short locker scuffs and a broken breaker inspection
+      seal without adding digits, extra levers, tools or another lock.
     states_derived: [locker_closed, locker_open, power_off, power_on]
     deliverables:
       - standard_wide_layers
