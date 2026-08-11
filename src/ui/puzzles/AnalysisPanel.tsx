@@ -1,9 +1,13 @@
 import { useState } from 'react';
 
+import type { ItemId } from '../../game/machine/gameMachine';
+
 export function AnalysisPanel({
+  items,
   onComplete,
   onClose,
 }: {
+  items: readonly ItemId[];
   onComplete: () => void;
   onClose: () => void;
 }) {
@@ -26,9 +30,17 @@ export function AnalysisPanel({
       <p className="eyebrow">VOICE ANALYSIS / gfx-close-009</p>
       <h2 id="analysis-title">端末横解析パネル</h2>
       {!opened ? (
-        <button type="button" onClick={() => setOpened(true)}>
-          ドライバーを使用して開く
-        </button>
+        <div className="context-item-use">
+          <p>パネルに使用する所持品を選ぶ。</p>
+          <button
+            type="button"
+            className="inventory-card item-use-card"
+            disabled={!items.includes('item_screwdriver')}
+            onClick={() => setOpened(true)}
+          >
+            <span>DRIVER</span> ドライバーを選択
+          </button>
+        </div>
       ) : rate < 100 ? (
         <button type="button" onClick={analyze}>
           VOICE ANALYSISをONにする

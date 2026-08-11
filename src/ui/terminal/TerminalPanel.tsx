@@ -181,8 +181,12 @@ export function TerminalPanel(props: Props) {
             <p>
               E-01の左右は巨大な機械設備とコンクリート壁。隣室は存在しない。
             </p>
-            <button type="button" onClick={props.onMapInspected}>
-              職員用カードを使用して図面を確認
+            <button
+              type="button"
+              className="inventory-card item-use-card"
+              onClick={props.onMapInspected}
+            >
+              <span>ACCESS CARD</span> 職員用カードを選択して図面を確認
             </button>
           </>
         )}

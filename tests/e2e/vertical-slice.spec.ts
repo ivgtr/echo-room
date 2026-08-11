@@ -82,15 +82,24 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(
     system.getByText('非常電源を復旧する。室内を観察し、電源設備を探す。'),
   ).toBeVisible();
-  const audioSetting = system.getByRole('button', { name: /AUDIO \/ 音声 ON/ });
-  await expect(audioSetting).toBeFocused();
+  const archiveEntry = system.getByRole('button', {
+    name: 'ARCHIVE / 会話履歴・資料再読',
+  });
+  await expect(archiveEntry).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(
     system.getByRole('button', { name: 'RETURN TO TITLE / タイトルへ戻る' }),
   ).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(audioSetting).toBeFocused();
-  await audioSetting.click();
+  await expect(archiveEntry).toBeFocused();
+  await system
+    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .click();
+  await expect(
+    system.getByRole('button', { name: '小', exact: true }),
+  ).toBeFocused();
+  await system.getByRole('button', { name: /MASTER \/ 音声 ON/ }).click();
+  await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
   await expect(doorHotspot).toBeFocused();
   await page.keyboard.press('ArrowLeft');
@@ -299,6 +308,64 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
   await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
   await expect(world).toHaveCSS('transform', 'none');
   await expect(page.getByText('非常ロックが作動している。')).toBeVisible();
+});
+
+test('system archive and subtitle/audio settings preserve the exploration view', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'echo-room:progress',
+      JSON.stringify({
+        schemaVersion: 1,
+        contentVersion: '0.1.0',
+        savedAt: new Date().toISOString(),
+        progress: {
+          checkpointId: 'checkpoint_power_restored',
+          powerRestored: true,
+          locationId: 'location_east_wall',
+        },
+      }),
+    );
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: '続きから' }).click();
+  const stage = page.locator('.logical-stage');
+  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  const system = page.getByRole('dialog', { name: 'SYSTEM' });
+  await system
+    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
+    .click();
+  await expect(system.getByText('……聞こえるか？')).toBeVisible();
+  await expect(system.getByText('EMERGENCY POWER TEST')).toBeVisible();
+  await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
+  await system
+    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .click();
+  await system.getByRole('button', { name: '大', exact: true }).click();
+  await system.getByRole('button', { name: '高コントラスト' }).click();
+  await system.getByRole('button', { name: '速い' }).click();
+  await system.getByLabel(/EFFECTS \/ 効果音/).fill('35');
+  await system.getByRole('button', { name: /MASTER \/ 音声 ON/ }).click();
+  await expect(
+    system.getByRole('button', { name: /MASTER \/ 音声 OFF/ }),
+  ).toBeVisible();
+  await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
+  await expect(page.getByRole('button', { name: 'SYSTEM' })).toBeFocused();
+  await expect(stage).toHaveAttribute('data-subtitle-size', 'large');
+  await expect(stage).toHaveAttribute('data-subtitle-background', 'solid');
+  await expect(stage).toHaveAttribute('data-text-speed', 'fast');
+
+  await page.keyboard.press('ArrowLeft');
+  await page.getByRole('button', { name: 'インターホンを調べる' }).click();
+  const narrative = page.getByRole('dialog', { name: 'メッセージ' });
+  await expect(narrative).toHaveAttribute('data-narrative-kind', 'discovery');
+  await expect(narrative).toHaveCSS('animation-duration', '0.08s');
+  const narrativeText = narrative.locator('.narrative-text');
+  await expect(narrativeText).toHaveCSS('font-size', /(?:2[0-9]|3[0-9])px/);
+  await narrative.getByRole('button', { name: '閉じる' }).click();
+  await expect(narrative).toBeHidden();
+  await expect(page.getByTestId('world-canvas')).toBeVisible();
 });
 
 test.describe('touch input', () => {

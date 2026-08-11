@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { playBreakerTone, unlockAudio } from '../audio/tonePlayer';
 import type { BreakerId, HotspotId, LocationId } from '../game/domain/ids';
-import { gameMachine } from '../game/machine/gameMachine';
+import { gameMachine, type ItemId } from '../game/machine/gameMachine';
 import { loadProgress, saveProgress } from '../game/save/saveManager';
 import {
   selectBreakerFailures,
@@ -11,6 +11,7 @@ import {
   selectEndingLineIndex,
   selectFinalOrderReady,
   selectHintLevel,
+  selectInspectedMaps,
   selectInventory,
   selectIntroLineIndex,
   selectIsBreakerPuzzle,
@@ -26,6 +27,22 @@ import {
   selectTerminalMenu,
 } from '../game/selectors/gameSelectors';
 import { GameScreen } from '../ui/GameScreen';
+import {
+  discoveryEntry,
+  getArchiveDocuments,
+  identityEntries,
+  introEntries,
+  noAdjacentRoomEntries,
+  packetEntries,
+  powerRestoredEntry,
+  type NarrativeEntry,
+} from '../ui/narrative/narrativeArchive';
+import {
+  defaultAudioLevels,
+  defaultSubtitleSettings,
+  type AudioLevels,
+  type SubtitleSettings,
+} from '../ui/system/uiSettings';
 import { TitleScreen } from '../ui/TitleScreen';
 import { UnsupportedScreen } from '../ui/UnsupportedScreen';
 import { supportsRequiredEnvironment } from './environment';
@@ -37,7 +54,16 @@ export function App() {
   const [loadResult] = useState(() => loadProgress());
   const [visualAssist, setVisualAssist] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioLevels, setAudioLevels] =
+    useState<AudioLevels>(defaultAudioLevels);
+  const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(
+    defaultSubtitleSettings,
+  );
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [narrativeHistory, setNarrativeHistory] = useState<NarrativeEntry[]>(
+    [],
+  );
+  const [acquiredItems, setAcquiredItems] = useState<ItemId[]>([]);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const [systemMenuOpen, setSystemMenuOpen] = useState(false);
@@ -55,12 +81,21 @@ export function App() {
   const terminalMenuId = useSelector(actorRef, selectTerminalMenu);
   const storyStage = useSelector(actorRef, selectStoryStage);
   const inventory = useSelector(actorRef, selectInventory);
+  const inspectedMaps = useSelector(actorRef, selectInspectedMaps);
   const lockerFailures = useSelector(actorRef, selectLockerFailures);
   const finalReady = useSelector(actorRef, selectFinalOrderReady);
   const endingLineIndex = useSelector(actorRef, selectEndingLineIndex);
   const hintLevel = useSelector(actorRef, selectHintLevel);
   const objective = useSelector(actorRef, selectObjective);
   const savedPowerRef = useRef(false);
+  const previousInventoryRef = useRef<ItemId[]>([]);
+
+  const appendHistory = useCallback((entries: readonly NarrativeEntry[]) => {
+    setNarrativeHistory((current) => {
+      const ids = new Set(current.map(({ id }) => id));
+      return [...current, ...entries.filter(({ id }) => !ids.has(id))];
+    });
+  }, []);
 
   useEffect(() => {
     if (!powerRestored || savedPowerRef.current) return;
@@ -73,7 +108,21 @@ export function App() {
         setSaveMessage('保存できませんでした。プレイは続行できます'),
       );
     }
-  }, [powerRestored]);
+    queueMicrotask(() => appendHistory([powerRestoredEntry]));
+  }, [appendHistory, powerRestored]);
+
+  useEffect(() => {
+    if (!subtitle) return;
+    queueMicrotask(() => appendHistory([discoveryEntry(subtitle)]));
+  }, [appendHistory, subtitle]);
+
+  useEffect(() => {
+    const newItems = inventory.filter(
+      (item) => !previousInventoryRef.current.includes(item),
+    );
+    previousInventoryRef.current = inventory;
+    if (newItems.length > 0) setAcquiredItems(newItems);
+  }, [inventory]);
 
   useEffect(() => {
     if (!saveMessage) return;
@@ -86,7 +135,10 @@ export function App() {
 
   const handleStart = useCallback(() => {
     savedPowerRef.current = false;
+    previousInventoryRef.current = [];
     setSaveMessage(null);
+    setNarrativeHistory([]);
+    setAcquiredItems([]);
     void unlockAudio().catch(() => setAudioEnabled(false));
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef]);
@@ -102,10 +154,16 @@ export function App() {
   );
   const handleBreaker = useCallback(
     (breakerId: BreakerId) => {
-      playBreakerTone(breakerId, audioEnabled);
+      playBreakerTone(breakerId, audioEnabled, audioLevels.effects);
       actorRef.send({ type: 'BREAKER_TOGGLED', breakerId });
     },
-    [actorRef, audioEnabled],
+    [actorRef, audioEnabled, audioLevels.effects],
+  );
+
+  const archiveDocuments = getArchiveDocuments(
+    powerRestored,
+    storyStage,
+    inventory,
   );
 
   if (!environmentSupported) return <UnsupportedScreen />;
@@ -117,6 +175,7 @@ export function App() {
           ? {
               onContinue: () => {
                 savedPowerRef.current = true;
+                setNarrativeHistory([...introEntries, powerRestoredEntry]);
                 actorRef.send({ type: 'PROGRESS_RESTORED' });
               },
             }
@@ -139,7 +198,12 @@ export function App() {
       breakerFailures={breakerFailures}
       visualAssist={visualAssist}
       audioEnabled={audioEnabled}
+      audioLevels={audioLevels}
+      subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
+      narrativeHistory={narrativeHistory}
+      archiveDocuments={archiveDocuments}
+      acquiredItems={acquiredItems}
       terminalMenuId={terminalMenuId}
       storyStage={storyStage}
       inventory={inventory}
@@ -150,13 +214,23 @@ export function App() {
       hintLevel={hintLevel}
       hintOpen={hintOpen}
       systemMenuOpen={systemMenuOpen}
-      onDialogueAdvance={() => actorRef.send({ type: 'DIALOGUE_ADVANCED' })}
+      onDialogueAdvance={() => {
+        const entry = introEntries[introLineIndex];
+        if (entry) appendHistory([entry]);
+        actorRef.send({ type: 'DIALOGUE_ADVANCED' });
+      }}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}
       onBreakerToggle={handleBreaker}
       onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleAudio={() => setAudioEnabled((value) => !value)}
+      onAudioLevelChange={(channel, value) =>
+        setAudioLevels((current) => ({ ...current, [channel]: value }))
+      }
+      onSubtitleSettingChange={(key, value) =>
+        setSubtitleSettings((current) => ({ ...current, [key]: value }))
+      }
       onExit={() => {
         setSystemMenuOpen(false);
         actorRef.send({ type: 'RETURNED_TO_TITLE' });
@@ -172,15 +246,19 @@ export function App() {
         setSystemMenuOpen(false);
         setInventoryOpen((value) => !value);
       }}
-      onMapInspected={(source) =>
-        actorRef.send({ type: 'FLOOR_MAP_INSPECTED', source })
-      }
-      onPacketPlayed={(packetId) =>
-        actorRef.send({ type: 'PACKET_PLAYED', packetId })
-      }
-      onAnalysisComplete={() =>
-        actorRef.send({ type: 'VOICE_ANALYSIS_STARTED' })
-      }
+      onMapInspected={(source) => {
+        if (!inspectedMaps.includes(source) && inspectedMaps.length === 1)
+          appendHistory(noAdjacentRoomEntries);
+        actorRef.send({ type: 'FLOOR_MAP_INSPECTED', source });
+      }}
+      onPacketPlayed={(packetId) => {
+        appendHistory([packetEntries[packetId]]);
+        actorRef.send({ type: 'PACKET_PLAYED', packetId });
+      }}
+      onAnalysisComplete={() => {
+        appendHistory(identityEntries);
+        actorRef.send({ type: 'VOICE_ANALYSIS_STARTED' });
+      }}
       onFinalSubmit={(packetIds) =>
         actorRef.send({ type: 'FINAL_ORDER_SUBMITTED', packetIds })
       }
@@ -196,6 +274,7 @@ export function App() {
         setHintOpen(false);
         setSystemMenuOpen((value) => !value);
       }}
+      onDismissAcquisition={() => setAcquiredItems([])}
     />
   );
 }

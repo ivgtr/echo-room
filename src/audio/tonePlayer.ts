@@ -14,13 +14,17 @@ export const unlockAudio = async () => {
   if (audioContext.state === 'suspended') await audioContext.resume();
 };
 
-export const playBreakerTone = (breakerId: BreakerId, enabled: boolean) => {
+export const playBreakerTone = (
+  breakerId: BreakerId,
+  enabled: boolean,
+  volume = 100,
+) => {
   if (!enabled || !audioContext || audioContext.state !== 'running') return;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
   oscillator.frequency.value = frequencies[breakerId];
   oscillator.type = 'sine';
-  gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+  gain.gain.setValueAtTime(0.08 * (volume / 100), audioContext.currentTime);
   gain.gain.exponentialRampToValueAtTime(
     0.001,
     audioContext.currentTime + 0.24,

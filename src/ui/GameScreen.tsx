@@ -31,11 +31,22 @@ import { ModalFocusScope } from './accessibility/ModalFocusScope';
 import { IntroDialogue } from './dialogue/IntroDialogue';
 import { EndingPanel } from './ending/EndingPanel';
 import { HintPanel } from './hints/HintPanel';
+import { ItemAcquisitionNotice } from './inventory/ItemAcquisitionNotice';
 import { InventoryPanel } from './inventory/InventoryPanel';
+import { NarrativePanel } from './narrative/NarrativePanel';
+import type {
+  ArchiveDocument,
+  NarrativeEntry,
+} from './narrative/narrativeArchive';
 import { AnalysisPanel } from './puzzles/AnalysisPanel';
 import { BreakerPuzzle } from './puzzles/BreakerPuzzle';
 import { LockerPanel } from './puzzles/LockerPanel';
 import { SystemMenu } from './system/SystemMenu';
+import type {
+  AudioLevels,
+  SubtitleSettingChange,
+  SubtitleSettings,
+} from './system/uiSettings';
 import { TerminalPanel } from './terminal/TerminalPanel';
 
 const viewOrder: LocationId[] = [
@@ -58,7 +69,12 @@ type Props = {
   breakerFailures: number;
   visualAssist: boolean;
   audioEnabled: boolean;
+  audioLevels: AudioLevels;
+  subtitleSettings: SubtitleSettings;
   saveMessage: string | null;
+  narrativeHistory: readonly NarrativeEntry[];
+  archiveDocuments: readonly ArchiveDocument[];
+  acquiredItems: readonly ItemId[];
   terminalMenuId: TerminalMenuId;
   storyStage: StoryStage;
   inventory: ItemId[];
@@ -76,6 +92,8 @@ type Props = {
   onClose: () => void;
   onToggleAssist: () => void;
   onToggleAudio: () => void;
+  onAudioLevelChange: (channel: keyof AudioLevels, value: number) => void;
+  onSubtitleSettingChange: SubtitleSettingChange;
   onExit: () => void;
   onTerminalMenu: (id: TerminalMenuId) => void;
   onLogsConfirmed: () => void;
@@ -90,6 +108,7 @@ type Props = {
   onHintToggle: () => void;
   onHintReveal: () => void;
   onSystemToggle: () => void;
+  onDismissAcquisition: () => void;
 };
 
 export function GameScreen(props: Props) {
@@ -121,6 +140,7 @@ export function GameScreen(props: Props) {
   const overlayOpen =
     props.intro ||
     props.breakerPuzzle ||
+    props.acquiredItems.length > 0 ||
     props.inventoryOpen ||
     props.hintOpen ||
     props.systemMenuOpen ||
@@ -229,6 +249,16 @@ export function GameScreen(props: Props) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (props.acquiredItems.length > 0) {
+          event.preventDefault();
+          props.onDismissAcquisition();
+          return;
+        }
+        if (props.subtitle) {
+          event.preventDefault();
+          closeInspection();
+          return;
+        }
         if (!ending) {
           event.preventDefault();
           toggleSystemMenu();
@@ -305,6 +335,7 @@ export function GameScreen(props: Props) {
   ) : props.selectedHotspotId === 'hotspot_analysis_panel' &&
     props.storyStage === 'analyze_voice' ? (
     <AnalysisPanel
+      items={props.inventory}
       onComplete={props.onAnalysisComplete}
       onClose={closeInspection}
     />
@@ -316,6 +347,9 @@ export function GameScreen(props: Props) {
         className={`logical-stage${overlayOpen ? ' world-input-locked' : ''}${inspectionPhase !== 'idle' ? ` is-inspection-${inspectionPhase}` : ''}`}
         data-inspection-phase={inspectionPhase}
         data-inspection-motion="zoom-or-crossfade"
+        data-subtitle-size={props.subtitleSettings.size}
+        data-subtitle-background={props.subtitleSettings.background}
+        data-text-speed={props.subtitleSettings.speed}
         style={inspectionStageStyle(inspectionTarget)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
@@ -418,16 +452,18 @@ export function GameScreen(props: Props) {
           </div>
         )}
         {!ending && props.subtitle && (
-          <section
-            className="subtitle-panel"
-            aria-live="polite"
-            aria-atomic="true"
+          <ModalFocusScope
+            focusKey={`message-${props.subtitle}`}
+            returnFocusRef={inspectionReturnFocusRef}
+            fallbackFocusRef={systemButtonRef}
           >
-            <p>{props.subtitle}</p>
-            <button type="button" onClick={closeInspection}>
-              閉じる
-            </button>
-          </section>
+            <NarrativePanel
+              kind="discovery"
+              text={props.subtitle}
+              actionLabel="閉じる"
+              onAdvance={closeInspection}
+            />
+          </ModalFocusScope>
         )}
         {props.intro && (
           <IntroDialogue
@@ -446,6 +482,18 @@ export function GameScreen(props: Props) {
             fallbackFocusRef={systemButtonRef}
           >
             {inspectionDialog}
+          </ModalFocusScope>
+        )}
+        {props.acquiredItems.length > 0 && (
+          <ModalFocusScope
+            focusKey="item-acquisition"
+            returnFocusRef={inspectionReturnFocusRef}
+            fallbackFocusRef={systemButtonRef}
+          >
+            <ItemAcquisitionNotice
+              items={props.acquiredItems}
+              onDismiss={props.onDismissAcquisition}
+            />
           </ModalFocusScope>
         )}
         {props.inventoryOpen && (
@@ -479,13 +527,19 @@ export function GameScreen(props: Props) {
           <SystemMenu
             objective={props.objective}
             audioEnabled={props.audioEnabled}
+            audioLevels={props.audioLevels}
+            subtitleSettings={props.subtitleSettings}
             visualAssist={props.visualAssist}
             inventoryAvailable={props.inventory.length > 0}
             hintAvailable={props.powerRestored}
             hintUnlocked={props.breakerFailures + props.lockerFailures > 0}
+            narrativeHistory={props.narrativeHistory}
+            documents={props.archiveDocuments}
             returnFocusRef={systemReturnFocusRef}
             onClose={toggleSystemMenu}
             onToggleAudio={props.onToggleAudio}
+            onAudioLevelChange={props.onAudioLevelChange}
+            onSubtitleSettingChange={props.onSubtitleSettingChange}
             onToggleAssist={props.onToggleAssist}
             onInventory={props.onInventoryToggle}
             onHint={props.onHintToggle}

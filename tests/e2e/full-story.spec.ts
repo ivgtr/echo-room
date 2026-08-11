@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ hasTouch: true });
+
 test('safe checkpoint reaches transmission complete through every remaining puzzle', async ({
   page,
 }) => {
@@ -45,6 +47,14 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await expect(locker.getByRole('alert')).toBeVisible();
   await locker.getByLabel('解錠コード').fill('0237');
   await locker.getByRole('button', { name: '入力する' }).click();
+  const acquisition = page.getByRole('dialog', {
+    name: '所持品を入手した',
+  });
+  await expect(acquisition.getByText('職員用カード')).toBeVisible();
+  await expect(
+    acquisition.getByRole('button', { name: '所持品に追加' }),
+  ).toBeFocused();
+  await acquisition.getByRole('button', { name: '所持品に追加' }).tap();
 
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   await page
@@ -52,8 +62,13 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     .getByRole('button', { name: 'INVENTORY / 所持品' })
     .click();
   const inventory = page.getByRole('dialog', { name: '所持品' });
-  await inventory.getByRole('button', { name: '展開して確認' }).click();
-  await inventory.getByRole('button', { name: '閉じる' }).click();
+  const floorMap = inventory.getByRole('button', {
+    name: /FACILITY MAP 簡易フロア図/,
+  });
+  await floorMap.focus();
+  await page.keyboard.press('Enter');
+  await inventory.getByRole('button', { name: 'フロア図を展開する' }).click();
+  await inventory.getByRole('button', { name: '所持品を閉じる' }).click();
   await page.getByRole('button', { name: /右を向く（北壁/ }).click();
   await page.getByRole('button', { name: /右を向く（東壁/ }).click();
   await page
@@ -62,14 +77,25 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     .click();
   await terminal.getByRole('button', { name: 'SECURITY' }).click();
   await terminal
-    .getByRole('button', { name: '職員用カードを使用して図面を確認' })
+    .getByRole('button', {
+      name: /ACCESS CARD 職員用カードを選択して図面を確認/,
+    })
     .click();
   await terminal.getByRole('button', { name: '字幕付きで再生' }).nth(3).click();
+
+  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  const system = page.getByRole('dialog', { name: 'SYSTEM' });
+  await system
+    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
+    .click();
+  await expect(system.getByText('隣の部屋なんてないぞ。')).toBeVisible();
+  await expect(system.getByText('最後に、赤いボタンを押せ。')).toBeVisible();
+  await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
 
   await page.getByRole('button', { name: '解析パネルを調べる' }).click();
   const analysis = page.getByRole('dialog', { name: '端末横解析パネル' });
   await analysis
-    .getByRole('button', { name: 'ドライバーを使用して開く' })
+    .getByRole('button', { name: /DRIVER ドライバーを選択/ })
     .click();
   await analysis
     .getByRole('button', { name: 'VOICE ANALYSISをONにする' })
