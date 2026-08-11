@@ -105,3 +105,19 @@ REF-002は1672×941のgeometry承認用preview。REF-003 / 004は2048×2048。ge
 - 修正: WIDE-003の北壁表示に似た不要筐体を通常task lightへ置換。WIDE-004左端の誤ったcyan端末cueを南壁desk端へ置換。
 - rejected: toolの無関係出力と配置drift稿は`artwork/rejected/`にローカル保持し、通常Gitには含めない。
 - 現解像度: 全4面1672×941のcross-view承認用preview。承認後に同一構図の高解像度制作、layer分離、state差分へ進む。
+
+### 探索密度・環境ドレッシング改訂 v2
+
+- 設計正本: `docs/graphics-production.md` 3.7、設計commit `302f732`
+- provider / mode: OpenAI built-in `image_gen`、各WIDE初稿を単一参照とした`precise-object-edit`
+- 共通方針: 必須対象の位置、画角、隣接壁cue、赤／青緑の照明を固定し、低contrastの保守設備・家具と最近の作業痕跡を追加する。既存パズルの視覚文法、追加UI、文字、窓、別開口を禁止する。
+
+| ID           | 改訂出力                                                               | 追加内容                                                                      | 目視検収                                                                                    |
+| ------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| GFX-WIDE-001 | `wide/gfx-wide-001/gfx-wide-001__powered__dressed-v2-preview-flat.png` | 密閉utility canister、床drain、cable tray、配管support、扉枠の擦過痕          | 扉、時計、intercom、空表示筐体を維持。容器に錠・数字・状態灯なし                            |
+| GFX-WIDE-002 | `wide/gfx-wide-002/gfx-wide-002__powered__dressed-v2-preview-flat.png` | 整備stool、cable reel、cooling manifold、parts tray、端末下の焦げ跡           | blank terminalと解析panelを維持。追加screen・入力部・工具なし                               |
+| GFX-WIDE-003 | `wide/gfx-wide-003/gfx-wide-003__powered__dressed-v2-preview-flat.png` | rolling cart、waste bin、desk lamp、工具case、ずれた椅子                      | blank paperと東西edge cueを維持。追加monitor・開いた容器なし                                |
+| GFX-WIDE-004 | `wide/gfx-wide-004/gfx-wide-004__powered__dressed-v2-preview-flat.png` | hose reel、折り畳みstep、utility dolly、glove、床drain、破れたinspection seal | lockerの空4桁窓と正確に4本のlever、中央余白、南北edge cueを維持。追加switch・数字・発光なし |
+
+- 横断preview: `wide/gfx-wide-stage2__dressed-v2-contact-sheet-preview.jpg`（1920×1080、北東南西の2×2比較）
+- 現解像度: 全4面1672×941。探索密度とcross-view continuityの利用者承認を得るまで、接写・state差分・高解像度制作へ進まない。
