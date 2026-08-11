@@ -17,6 +17,7 @@
 | 原案・台詞 | `docs/base.md` |
 | ゲーム要件 | `docs/requirements.md` |
 | 技術構成 | `docs/technical-design.md` |
+| UI品質 | `docs/quality-up-plan.md` |
 | グラフィック制作 | `docs/graphics-production.md` |
 | 画像生成ジョブ | `docs/graphics-generation.yaml` |
 | 実装順序・完了判定 | 本書 |
@@ -177,8 +178,9 @@ docs(plan): Phase 2の検証結果を記録
 2. `docs/requirements.md`の体験・受け入れ条件
 3. `docs/technical-design.md`の技術上の制約
 4. `docs/graphics-production.md`と`docs/graphics-generation.yaml`の素材制約
-5. 本書の工程と実行方法
-6. `docs/base.md`の細部
+5. `docs/quality-up-plan.md`のUI品質方針
+6. 本書の工程と実行方法
+7. `docs/base.md`の細部
 
 ただし、原案の真相と結末は要件書と同等の固定事項として扱い、技術上の都合で変更しない。
 

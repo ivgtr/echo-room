@@ -28,8 +28,9 @@
 1. [原案・シナリオ](./base.md)
 2. [要件書](./requirements.md)
 3. [技術設計書](./technical-design.md)
-4. [グラフィック制作・生成仕様書](./graphics-production.md)
-5. [実装計画・実行契約書](./implementation-plan.md)
+4. [UIクオリティアップ企画書](./quality-up-plan.md)
+5. [グラフィック制作・生成仕様書](./graphics-production.md)
+6. [実装計画・実行契約書](./implementation-plan.md)
 
 `graphics-generation.yaml`は画像生成ジョブの機械可読な正本である。人が世界観と制作方針を把握する場合は、先に`graphics-production.md`を読む。
 
@@ -42,6 +43,7 @@
 | [base.md](./base.md) | 原案、ストーリー、台詞、謎の流れ | 企画、シナリオ、演出 | 原案そのものを変更するとき |
 | [requirements.md](./requirements.md) | プレイヤー体験、機能、受け入れ条件 | 全担当 | 作品要件や完成条件を変更するとき |
 | [technical-design.md](./technical-design.md) | 技術選定、状態、描画、音声、保存、テスト | 実装、レビュー | 技術構成や実装境界を変更するとき |
+| [quality-up-plan.md](./quality-up-plan.md) | 探索HUD、操作演出、作中UI、UI品質の受け入れ条件 | UI、実装、レビュー | UI体験や表示・操作方法を変更するとき |
 | [graphics-production.md](./graphics-production.md) | 美術方向、寸法、素材一覧、制作・検収方法 | 美術、画像生成、実装 | 画風、素材、納品形式を変更するとき |
 | [graphics-generation.yaml](./graphics-generation.yaml) | 画像ID、prompt、参照関係、生成順 | 画像生成、自動検証 | 個別生成jobを変更するとき |
 | [implementation-plan.md](./implementation-plan.md) | 工程、実行契約、Gate、DoD、commit契約 | 実装、進行管理 | 工程や実装上の契約を変更するとき |
@@ -113,7 +115,8 @@
 
 1. `requirements.md`の9章〜13章
 2. `technical-design.md`の7章、10章、15章
-3. `implementation-plan.md`のP2、P5、10章
+3. `quality-up-plan.md`
+4. `implementation-plan.md`のP2、P5、10章
 
 固定事項:
 
@@ -162,8 +165,9 @@
 2. `requirements.md`の体験・受け入れ条件
 3. `technical-design.md`の技術制約
 4. `graphics-production.md`と`graphics-generation.yaml`の素材制約
-5. `implementation-plan.md`の工程と実行方法
-6. `base.md`の細部
+5. `quality-up-plan.md`のUI品質方針
+6. `implementation-plan.md`の工程と実行方法
+7. `base.md`の細部
 
 原案の真相と結末は、技術上の都合で変更しない。重大な矛盾は独断で解消せず、`implementation-plan.md`の停止条件に従う。
 
