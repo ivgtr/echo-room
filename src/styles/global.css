@@ -117,6 +117,21 @@ button:focus-visible {
   cursor: pointer;
 }
 
+.save-delete-confirm {
+  display: grid;
+  padding: 0.8rem;
+  border: 1px solid rgb(201 213 213 / 35%);
+  background: rgb(9 14 16 / 86%);
+  gap: 0.6rem;
+}
+
+.save-delete-confirm p {
+  margin: 0;
+  color: #c6d0cf;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
 .primary-action:hover,
 .system-screen button:hover {
   background: rgb(44 91 88 / 80%);

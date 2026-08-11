@@ -2,13 +2,13 @@ import { createActor } from 'xstate';
 import { describe, expect, it } from 'vitest';
 
 import { gameMachine } from '../../src/game/machine/gameMachine';
+import { createPowerRestoredProgress } from '../../src/game/save/saveManager';
 
 const poweredActor = () => {
   const actor = createActor(gameMachine).start();
   actor.send({
     type: 'PROGRESS_RESTORED',
-    activeElapsedMs: 0,
-    reservePower: false,
+    progress: createPowerRestoredProgress(),
   });
   return actor;
 };

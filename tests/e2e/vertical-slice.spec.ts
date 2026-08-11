@@ -366,6 +366,29 @@ test('system archive and subtitle/audio settings preserve the exploration view',
   await narrative.getByRole('button', { name: '閉じる' }).click();
   await expect(narrative).toBeHidden();
   await expect(page.getByTestId('world-canvas')).toBeVisible();
+
+  await page.reload();
+  await page.getByRole('button', { name: '続きから' }).click();
+  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  const restoredSystem = page.getByRole('dialog', { name: 'SYSTEM' });
+  await restoredSystem
+    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .click();
+  await expect(
+    restoredSystem.getByRole('button', { name: '大', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    restoredSystem.getByRole('button', { name: '高コントラスト' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    restoredSystem.getByRole('button', { name: '速い' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(restoredSystem.getByLabel(/EFFECTS \/ 効果音/)).toHaveValue(
+    '35',
+  );
+  await expect(
+    restoredSystem.getByRole('button', { name: /MASTER \/ 音声 OFF/ }),
+  ).toBeVisible();
 });
 
 test.describe('touch input', () => {

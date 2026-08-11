@@ -1,5 +1,6 @@
 import type { ItemId, StoryStage } from '../../game/machine/gameMachine';
 import type { PacketId } from '../../game/puzzles/storyPuzzles';
+import type { SavedProgress } from '../../game/save/saveManager';
 
 export type NarrativeKind =
   'monologue' | 'communication' | 'discovery' | 'system';
@@ -153,4 +154,19 @@ export function getArchiveDocuments(
     documents.push(emergencyNote);
   if (inventory.includes('item_floor_map')) documents.push(floorMap);
   return documents;
+}
+
+export function getRestoredNarrativeHistory(progress: SavedProgress) {
+  const history: NarrativeEntry[] = [...introEntries, powerRestoredEntry];
+  const noRoomRevealed =
+    stageOrder.indexOf(progress.storyStage) >=
+    stageOrder.indexOf('inspect_audio');
+  if (noRoomRevealed) history.push(...noAdjacentRoomEntries);
+  for (const packetId of progress.heardPackets)
+    history.push(packetEntries[packetId]);
+  const identityRevealed =
+    stageOrder.indexOf(progress.storyStage) >=
+    stageOrder.indexOf('transmit_packets');
+  if (identityRevealed) history.push(...identityEntries);
+  return history;
 }

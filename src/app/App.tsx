@@ -4,7 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { playBreakerTone, unlockAudio } from '../audio/tonePlayer';
 import type { BreakerId, HotspotId, LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
-import { loadProgress, saveProgress } from '../game/save/saveManager';
+import {
+  clearProgress,
+  getCheckpointId,
+  loadProgress,
+  loadSettings,
+  saveProgress,
+  saveSettings,
+  type SavedProgress,
+} from '../game/save/saveManager';
 import {
   selectBreakerFailures,
   selectBreakerSequence,
@@ -12,6 +20,7 @@ import {
   selectEndingLineIndex,
   selectFinalOrderReady,
   selectHintLevel,
+  selectHeardPackets,
   selectInspectedMaps,
   selectInventory,
   selectIntroLineIndex,
@@ -32,6 +41,7 @@ import { GameScreen } from '../ui/GameScreen';
 import {
   discoveryEntry,
   getArchiveDocuments,
+  getRestoredNarrativeHistory,
   identityEntries,
   introEntries,
   noAdjacentRoomEntries,
@@ -39,12 +49,7 @@ import {
   powerRestoredEntry,
   type NarrativeEntry,
 } from '../ui/narrative/narrativeArchive';
-import {
-  defaultAudioLevels,
-  defaultSubtitleSettings,
-  type AudioLevels,
-  type SubtitleSettings,
-} from '../ui/system/uiSettings';
+import type { AudioLevels, SubtitleSettings } from '../ui/system/uiSettings';
 import { TitleScreen } from '../ui/TitleScreen';
 import { UnsupportedScreen } from '../ui/UnsupportedScreen';
 import { supportsRequiredEnvironment } from './environment';
@@ -53,13 +58,19 @@ const SAVE_MESSAGE_DURATION_MS = 2400;
 
 export function App() {
   const [environmentSupported] = useState(() => supportsRequiredEnvironment());
-  const [loadResult] = useState(() => loadProgress());
-  const [visualAssist, setVisualAssist] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [audioLevels, setAudioLevels] =
-    useState<AudioLevels>(defaultAudioLevels);
+  const [loadResult, setLoadResult] = useState(() => loadProgress());
+  const [initialSettings] = useState(() => loadSettings());
+  const [visualAssist, setVisualAssist] = useState(
+    initialSettings.visualAssist,
+  );
+  const [audioEnabled, setAudioEnabled] = useState(
+    initialSettings.audioEnabled,
+  );
+  const [audioLevels, setAudioLevels] = useState<AudioLevels>(
+    initialSettings.audioLevels,
+  );
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(
-    defaultSubtitleSettings,
+    initialSettings.subtitleSettings,
   );
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [narrativeHistory, setNarrativeHistory] = useState<NarrativeEntry[]>(
@@ -87,6 +98,7 @@ export function App() {
   const storyStage = useSelector(actorRef, selectStoryStage);
   const inventory = useSelector(actorRef, selectInventory);
   const inspectedMaps = useSelector(actorRef, selectInspectedMaps);
+  const heardPackets = useSelector(actorRef, selectHeardPackets);
   const lockerFailures = useSelector(actorRef, selectLockerFailures);
   const finalReady = useSelector(actorRef, selectFinalOrderReady);
   const endingLineIndex = useSelector(actorRef, selectEndingLineIndex);
@@ -94,18 +106,49 @@ export function App() {
   const objective = useSelector(actorRef, selectObjective);
   const activeElapsedMs = useSelector(actorRef, selectActiveElapsedMs);
   const reservePower = useSelector(actorRef, selectReservePower);
-  const savedPowerRef = useRef(false);
+  const savedProgressRef = useRef(false);
+  const progressWritableRef = useRef(loadResult.status !== 'corrupt');
+  const latestProgressRef = useRef<SavedProgress | null>(null);
+  const lastSavedFingerprintRef = useRef<string | null>(null);
+  const lastSavedCheckpointRef = useRef<SavedProgress['checkpointId'] | null>(
+    null,
+  );
   const previousInventoryRef = useRef<ItemId[]>([]);
   const activeElapsedRef = useRef(activeElapsedMs);
   const reservePowerRef = useRef(reservePower);
 
-  const persistPowerCheckpoint = useCallback(
+  latestProgressRef.current = {
+    checkpointId: getCheckpointId(storyStage, finalReady),
+    powerRestored: true,
+    locationId,
+    storyStage,
+    inventory: [...inventory],
+    inspectedMaps: [...inspectedMaps],
+    heardPackets: [...heardPackets],
+    finalOrderReady: finalReady,
+    endingLineIndex: storyStage === 'completed' ? 6 : 0,
+    hintLevel,
+    breakerFailures,
+    lockerFailures,
+    activeElapsedMs,
+    reservePower,
+  };
+
+  const persistCurrentProgress = useCallback(
     (
       elapsedMs = activeElapsedRef.current,
       onReservePower = reservePowerRef.current,
     ) => {
+      if (!progressWritableRef.current || !latestProgressRef.current)
+        return false;
       try {
-        saveProgress(window.localStorage, elapsedMs, onReservePower);
+        const progress = {
+          ...latestProgressRef.current,
+          activeElapsedMs: elapsedMs,
+          reservePower: onReservePower,
+        };
+        saveProgress(progress, window.localStorage);
+        lastSavedFingerprintRef.current = progressFingerprint(progress);
         return true;
       } catch {
         return false;
@@ -118,6 +161,23 @@ export function App() {
     activeElapsedRef.current = activeElapsedMs;
     reservePowerRef.current = reservePower;
   }, [activeElapsedMs, reservePower]);
+
+  useEffect(() => {
+    try {
+      saveSettings(
+        {
+          schemaVersion: 1,
+          audioEnabled,
+          visualAssist,
+          audioLevels,
+          subtitleSettings,
+        },
+        window.localStorage,
+      );
+    } catch {
+      // Settings storage failure must not interrupt play.
+    }
+  }, [audioEnabled, audioLevels, subtitleSettings, visualAssist]);
 
   useEffect(() => {
     const handleVisibilityChange = () =>
@@ -151,43 +211,66 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!powerRestored || savedPowerRef.current) return;
-    savedPowerRef.current = true;
-    if (persistPowerCheckpoint()) {
-      queueMicrotask(() => setSaveMessage('電源復旧地点を自動保存しました'));
+    const progress = latestProgressRef.current;
+    if (!powerRestored || !progress) return;
+    const fingerprint = progressFingerprint(progress);
+    if (lastSavedFingerprintRef.current === fingerprint) return;
+
+    const firstSave = !savedProgressRef.current;
+    const previousCheckpoint = lastSavedCheckpointRef.current;
+    savedProgressRef.current = true;
+    if (persistCurrentProgress()) {
+      lastSavedCheckpointRef.current = progress.checkpointId;
+      if (firstSave)
+        queueMicrotask(() => setSaveMessage('電源復旧地点を自動保存しました'));
+      else if (previousCheckpoint !== progress.checkpointId)
+        queueMicrotask(() => setSaveMessage('進行地点を自動保存しました'));
     } else {
       queueMicrotask(() =>
         setSaveMessage('保存できませんでした。プレイは続行できます'),
       );
     }
-    queueMicrotask(() => appendHistory([powerRestoredEntry]));
-  }, [appendHistory, persistPowerCheckpoint, powerRestored]);
+    if (firstSave) queueMicrotask(() => appendHistory([powerRestoredEntry]));
+  }, [
+    appendHistory,
+    breakerFailures,
+    finalReady,
+    heardPackets,
+    hintLevel,
+    inspectedMaps,
+    inventory,
+    lockerFailures,
+    persistCurrentProgress,
+    powerRestored,
+    reservePower,
+    storyStage,
+  ]);
 
   useEffect(() => {
     if (!powerRestored || (!systemMenuOpen && pageVisible)) return;
-    persistPowerCheckpoint(activeElapsedMs, reservePower);
+    persistCurrentProgress(activeElapsedMs, reservePower);
   }, [
     activeElapsedMs,
     pageVisible,
     powerRestored,
     reservePower,
     systemMenuOpen,
-    persistPowerCheckpoint,
+    persistCurrentProgress,
   ]);
 
   useEffect(() => {
     if (!powerRestored || !reservePower) return;
-    persistPowerCheckpoint(activeElapsedRef.current, true);
-  }, [persistPowerCheckpoint, powerRestored, reservePower]);
+    persistCurrentProgress(activeElapsedRef.current, true);
+  }, [persistCurrentProgress, powerRestored, reservePower]);
 
   useEffect(() => {
     const persistActiveTime = () => {
-      if (!savedPowerRef.current) return;
-      persistPowerCheckpoint();
+      if (!savedProgressRef.current) return;
+      persistCurrentProgress();
     };
     window.addEventListener('pagehide', persistActiveTime);
     return () => window.removeEventListener('pagehide', persistActiveTime);
-  }, [persistPowerCheckpoint]);
+  }, [persistCurrentProgress]);
 
   useEffect(() => {
     if (!subtitle) return;
@@ -212,7 +295,9 @@ export function App() {
   }, [saveMessage]);
 
   const handleStart = useCallback(() => {
-    savedPowerRef.current = false;
+    savedProgressRef.current = false;
+    lastSavedFingerprintRef.current = null;
+    lastSavedCheckpointRef.current = null;
     previousInventoryRef.current = [];
     setSaveMessage(null);
     setNarrativeHistory([]);
@@ -261,17 +346,35 @@ export function App() {
         {...(loadResult.status === 'valid'
           ? {
               onContinue: () => {
-                savedPowerRef.current = true;
-                setNarrativeHistory([...introEntries, powerRestoredEntry]);
+                const progress = loadResult.data.progress;
+                savedProgressRef.current = true;
+                progressWritableRef.current = true;
+                lastSavedFingerprintRef.current = progressFingerprint(progress);
+                lastSavedCheckpointRef.current = progress.checkpointId;
+                previousInventoryRef.current = [...progress.inventory];
+                setAcquiredItems([]);
+                setNarrativeHistory(getRestoredNarrativeHistory(progress));
                 actorRef.send({
                   type: 'PROGRESS_RESTORED',
-                  activeElapsedMs: loadResult.data.progress.activeElapsedMs,
-                  reservePower: loadResult.data.progress.reservePower,
+                  progress,
                 });
               },
             }
           : {})}
-        saveCorrupt={loadResult.status === 'corrupt'}
+        saveStatus={loadResult.status}
+        onDeleteSave={() => {
+          try {
+            clearProgress(window.localStorage);
+            progressWritableRef.current = true;
+            savedProgressRef.current = false;
+            lastSavedFingerprintRef.current = null;
+            lastSavedCheckpointRef.current = null;
+            setLoadResult({ status: 'empty' });
+            return true;
+          } catch {
+            return false;
+          }
+        }}
       />
     );
 
@@ -325,7 +428,7 @@ export function App() {
         setSubtitleSettings((current) => ({ ...current, [key]: value }))
       }
       onExit={() => {
-        if (powerRestored) persistPowerCheckpoint();
+        if (powerRestored) persistCurrentProgress();
         setSystemMenuOpen(false);
         actorRef.send({ type: 'RETURNED_TO_TITLE' });
       }}
@@ -371,4 +474,8 @@ export function App() {
       onDismissAcquisition={() => setAcquiredItems([])}
     />
   );
+}
+
+function progressFingerprint(progress: SavedProgress) {
+  return JSON.stringify({ ...progress, activeElapsedMs: 0 });
 }

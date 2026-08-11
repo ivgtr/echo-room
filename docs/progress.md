@@ -13,7 +13,8 @@
 - UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。2026-08-11に代表画面の利用者承認を得た。
 - P4-03は完了。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード、主人公写真、4 PACKET・送信先・4枠を正確なHTML/CSSと本番rasterで統合した。
 - 主人公は32歳前後の日本人男性、短い黒髪、設備保守・運用担当、濃灰の作業着に確定した。氏名や不要な経歴は設定せず、同一写真原本を職員証とVOICE ANALYSISへ使用する。
-- 次の着手点はP5-01。全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
+- P5-01は完了。全主要checkpointを進行schema v2へ自動保存し、旧v1の非破壊移行、設定の別枠保存、破損進行の保護と確認付き消去を実装した。
+- 次の着手点はP5-02。全編のARIA・keyboard監査と、残るアクセシビリティ受け入れ条件を完了する。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
@@ -40,10 +41,10 @@
 | P4-03 | completed | 時計接写へ正確な02:17のHTML/CSS時計盤、デスク接写へ非常電源テスト用紙を合成。端末SYSTEMへ-00:20:00・02:17・02:37と緊急時メモ、SECURITYと所持品へE-01の左右に隣室がない施設図、職員カードへE-01・SECURITY権限と同一原本の主人公写真を表示。VOICE ANALYSISへ本人写真を統合し、最終送信を4つの明示slot、4 PACKET、送信先-00:20:00、赤い送信buttonへ整理 | Node 24で`npm run check`成功（14 files/33 tests、4 bundle/27画像）、Chromium E2E 10件（本人写真、時計・用紙接写、カード・図面、全端末時刻、予備電源状態から全編、keyboard・touch・focus復帰、4 slot送信）、1280×720の代表8画面を目視確認 | なし |
 | P4-04 | pending |  |  | 本番音声 |
 | P4-05 | in_progress | UIQ-02の380ms調査接近と動き軽減代替、UIQ-03の通信Narrative・所持品取得演出、UIQ-04の10分・5分・00:00段階表示、5分以下の電圧低下と静的な動き軽減代替を実装 | 通常・reduced-motion E2E、1280×720の通信・SYSTEM・critical・reserve画面を目視確認 | 通信ノイズ・声紋解析・送信・ドア解錠・endingの本番演出はP4-02〜04で継続 |
-| P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
+| P5-01 | completed | 電源復旧、20分差確認、ロッカー解錠、隣室不存在、PACKET 04、本人照合、最終順序、送信開始、ending完了の9つを安全checkpointとしてschema v2へ保存。所持品、確認済み図面・PACKET、ヒント・誤答、active time、予備電源をdomain dataで復元し、旧v1を原本へ書き戻さず移行。字幕・音量・視覚補助は別keyへ即時保存し、進行消去後も保持。破損・未対応versionは上書きせず、タイトルで確認後に進行だけ消去可能 | Node 24で`npm run check`成功（14 files/39 tests）。Chromium E2E 11件で全9 checkpointの実保存、v1再開、late-game復元、設定reload、破損保護・消去、keyboard・touch・focus復帰、予備電源からendingを検証 | なし |
 | P5-02 | in_progress | UIQ-02のfocus・modal基盤、UIQ-03の意味を持つNarrative・Inventory・System HTMLと字幕・系統別音量、UIQ-04の文字併記による低残量・critical・reserve通知と動き軽減を実装 | keyboard focus/trap/復帰、無音・字幕拡大・高contrast・reduced-motion E2E、component test | 全編ARIA監査はP6で継続 |
-| P5-03 | in_progress | UIQ-01・02の操作基盤に加え、UIQ-03で会話履歴・資料再読・表示速度、必要時だけ開く所持品トレイ、対象調査中のカード・ドライバー使用を実装。自動保存通知は2.4秒で操作を塞がず消去 | Node 24で`npm run check`（11 files/23 tests）、Chromium E2E 8件、Inventoryのmouse・touch・keyboard通し操作 | 全主要checkpointへの履歴永続化と既読会話skipはP5-01・P6で継続 |
-| P5-04 | completed | `performance.now()`差分によるアクティブプレイ時間をXStateへ保持。SYSTEMとbrowser非表示中は停止し、00:00で予備電源へ不可逆遷移して進行を継続。経過時間と予備電源状態をversion 1保存へ後方互換で追加 | timer境界・machine・保存移行unit、固定時計E2E（SYSTEM・visibility・復元・reduced-motion）、予備電源開始状態から全編E2E | なし |
+| P5-03 | in_progress | UIQ-01・02の操作基盤に加え、UIQ-03で会話履歴・資料再読・表示速度、必要時だけ開く所持品トレイ、対象調査中のカード・ドライバー使用を実装。自動保存通知は2.4秒で操作を塞がず消去。P5-01で主要checkpointから会話・資料・所持品を再構築 | Node 24で`npm run check`（14 files/39 tests）、Chromium E2E 11件、Inventoryのmouse・touch・keyboard通し操作、設定・履歴reload | 既読会話skipはP6で継続 |
+| P5-04 | completed | `performance.now()`差分によるアクティブプレイ時間をXStateへ保持。SYSTEMとbrowser非表示中は停止し、00:00で予備電源へ不可逆遷移して進行を継続。経過時間と予備電源状態をschema v2へ保存し、v1から移行 | timer境界・machine・保存移行unit、固定時計E2E（SYSTEM・visibility・復元・reduced-motion）、予備電源開始状態から全編E2E | なし |
 | UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
 | UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
 | UIQ-03 | completed | 独白・通信・発見を用途別の共通Narrative UIへ整理し、SIGNAL・話者・通信表示を統一。所持品取得演出、必要時トレイ、対象へのカード・ドライバー使用、SYSTEMのARCHIVE・字幕・系統別音量設定を実装 | Node 24で`npm run check`成功（11 files/23 tests）、`npm run test:e2e`成功（Chromium 8件: 無音、字幕拡大・背景・速度、背景復帰、archive、mouse・touch・keyboard所持品、全編）、1280×720通信・ARCHIVE・設定を目視確認 | アクティブ時間と非常演出はUIQ-04、履歴のcheckpoint永続化はP5-01で継続 |
@@ -65,7 +66,8 @@
 
 ## 次作業者への引き継ぎ
 
-1. `docs/README.md`の保存ルーティングに従い、`requirements.md` 14章、`technical-design.md` 11〜13章、`implementation-plan.md`のP5-01を読む。
-2. P5-01として全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
-3. `tmp/p4-03-protagonist-card.png`と`tmp/p4-03-protagonist-analysis.png`は主人公写真の実画面確認用。正式素材は`artwork/items/gfx-item-003/`と`public/assets/images/items/`にある。
-4. P4-02の正式高解像度原本・layer分離とP4-04の本番音声は独立した残作業であり、P5-01を止めない。
+1. `docs/README.md`のUI・テストルーティングに従い、`requirements.md` 12・13・15・16章、`technical-design.md` 15・18章、`implementation-plan.md`のP5-02とP6を読む。
+2. P5-02として全画面の名前・役割・focus順、keyboardのみの全編、字幕・視覚通知、色以外の正誤、動き軽減をARIA treeと実画面で監査し、残件を完了する。
+3. P5-01の現行進行schemaはv2。v1 fixtureは移行経路の回帰用なので、単純にv2へ書き換えず両方を維持する。
+4. `tmp/p4-03-protagonist-card.png`と`tmp/p4-03-protagonist-analysis.png`は主人公写真の実画面確認用。正式素材は`artwork/items/gfx-item-003/`と`public/assets/images/items/`にある。
+5. P4-02の正式高解像度原本・layer分離とP4-04の本番音声は独立した残作業であり、P5-02を止めない。

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test.use({ hasTouch: true });
 
@@ -36,6 +36,7 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await terminal.getByRole('button', { name: 'LOG' }).click();
   await expect(terminal.getByText('02:37:18')).toBeVisible();
   await terminal.getByRole('button', { name: '20分の差を確認した' }).click();
+  await expectSavedCheckpoint(page, 'checkpoint_time_offset_confirmed');
   await expect(
     page.getByRole('button', { name: '壁面端末を調べる' }),
   ).toBeFocused();
@@ -52,6 +53,7 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await expect(locker.getByRole('alert')).toBeVisible();
   await locker.getByLabel('解錠コード').fill('0237');
   await locker.getByRole('button', { name: '入力する' }).click();
+  await expectSavedCheckpoint(page, 'checkpoint_locker_opened');
   const acquisition = page.getByRole('dialog', {
     name: '所持品を入手した',
   });
@@ -97,7 +99,9 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
       name: /ACCESS CARD 職員用カードを選択して図面を確認/,
     })
     .click();
+  await expectSavedCheckpoint(page, 'checkpoint_no_adjacent_room');
   await terminal.getByRole('button', { name: '字幕付きで再生' }).nth(3).click();
+  await expectSavedCheckpoint(page, 'checkpoint_audio_packets');
 
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   const system = page.getByRole('dialog', { name: 'SYSTEM' });
@@ -126,6 +130,7 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     '/assets/images/items/gfx-item-003__approved__voice-analysis-crop__512x640.webp',
   );
   await analysis.getByRole('button', { name: '結果を確認する' }).click();
+  await expectSavedCheckpoint(page, 'checkpoint_voice_identity');
 
   const finalTerminal = page.getByRole('dialog', { name: '壁面端末' });
   await expect(
@@ -161,11 +166,27 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     await finalTerminal.getByRole('button', { name }).click();
   }
   await finalTerminal.getByRole('button', { name: '4枠を設定' }).click();
+  await expectSavedCheckpoint(page, 'checkpoint_final_order_ready');
   await finalTerminal
     .getByRole('button', { name: '赤い送信ボタンを押す' })
     .click();
+  await expectSavedCheckpoint(page, 'checkpoint_transmission_started');
   for (let index = 0; index < 5; index += 1)
     await page.getByRole('button', { name: '続ける' }).click();
   await page.getByRole('button', { name: 'ドアを開ける' }).click();
   await expect(page.getByText('TRANSMISSION COMPLETE')).toBeVisible();
+  await expectSavedCheckpoint(page, 'checkpoint_completed');
 });
+
+async function expectSavedCheckpoint(page: Page, checkpointId: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('echo-room:progress');
+        if (!raw) return null;
+        return (JSON.parse(raw) as { progress?: { checkpointId?: string } })
+          .progress?.checkpointId;
+      }),
+    )
+    .toBe(checkpointId);
+}

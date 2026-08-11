@@ -577,17 +577,33 @@ master
 ### 12.2 保存形式
 
 ```ts
-type SaveDataV1 = {
-  schemaVersion: 1;
+type SaveDataV2 = {
+  schemaVersion: 2;
   contentVersion: string;
   savedAt: string;
-  progress: GameProgress;
+  progress: {
+    checkpointId: CheckpointId;
+    powerRestored: true;
+    storyStage: StoryStage;
+    locationId: LocationId;
+    inventory: ItemId[];
+    inspectedMaps: MapSource[];
+    heardPackets: PacketId[];
+    finalOrderReady: boolean;
+    endingLineIndex: number;
+    hintLevel: number;
+    breakerFailures: number;
+    lockerFailures: number;
+    activeElapsedMs: number;
+    reservePower: boolean;
+  };
 };
 ```
 
 - XState内部snapshotをそのまま保存せず、明示したドメインデータだけを保存する。
 - 読込時はZodで検証する。
 - `schemaVersion`ごとの移行関数を用意する。
+- schema version 1の電源復旧checkpointは、読込時にversion 2の`inspect_logs`へ非破壊で移行する。移行結果は次の安全な自動保存まで原本へ書き戻さない。
 - 移行不能または破損時は、破損データを上書きせず、新規開始と消去を選べるようにする。
 - 設定データは進行データと分け、最初からやり直しても保持する。
 

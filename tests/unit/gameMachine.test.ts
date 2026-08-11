@@ -2,6 +2,7 @@ import { createActor } from 'xstate';
 import { describe, expect, it } from 'vitest';
 
 import { gameMachine } from '../../src/game/machine/gameMachine';
+import { createPowerRestoredProgress } from '../../src/game/save/saveManager';
 import { EMERGENCY_POWER_DURATION_MS } from '../../src/game/time/emergencyPower';
 
 const enterPuzzle = () => {
@@ -51,19 +52,44 @@ describe('gameMachine vertical slice', () => {
     const actor = createActor(gameMachine).start();
     actor.send({
       type: 'PROGRESS_RESTORED',
-      activeElapsedMs: 0,
-      reservePower: false,
+      progress: createPowerRestoredProgress(),
     });
     expect(actor.getSnapshot().matches({ playing: 'powered' })).toBe(true);
     expect(actor.getSnapshot().context.powerRestored).toBe(true);
+  });
+
+  it('restores late-game domain progress without replaying item acquisition', () => {
+    const actor = createActor(gameMachine).start();
+    actor.send({
+      type: 'PROGRESS_RESTORED',
+      progress: createPowerRestoredProgress({
+        checkpointId: 'checkpoint_audio_packets',
+        storyStage: 'analyze_voice',
+        inventory: ['item_screwdriver', 'item_staff_card', 'item_floor_map'],
+        inspectedMaps: ['inventory', 'security'],
+        heardPackets: [
+          'audio_packet_01',
+          'audio_packet_02',
+          'audio_packet_03',
+          'audio_packet_04',
+        ],
+      }),
+    });
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.matches({ playing: 'powered' })).toBe(true);
+    expect(snapshot.context.storyStage).toBe('analyze_voice');
+    expect(snapshot.context.inventory).toHaveLength(3);
+    expect(snapshot.context.heardPackets).toHaveLength(4);
+    expect(snapshot.context.selectedHotspotId).toBeNull();
   });
 
   it('enters reserve power at zero without blocking game progression', () => {
     const actor = createActor(gameMachine).start();
     actor.send({
       type: 'PROGRESS_RESTORED',
-      activeElapsedMs: EMERGENCY_POWER_DURATION_MS - 10,
-      reservePower: false,
+      progress: createPowerRestoredProgress({
+        activeElapsedMs: EMERGENCY_POWER_DURATION_MS - 10,
+      }),
     });
     actor.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs: 10 });
     expect(actor.getSnapshot().context.reservePower).toBe(true);

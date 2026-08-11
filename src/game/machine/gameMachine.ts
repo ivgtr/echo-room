@@ -11,6 +11,7 @@ import {
   isLockerCodeCorrect,
   type PacketId,
 } from '../puzzles/storyPuzzles';
+import type { SavedProgress } from '../save/saveManager';
 import { EMERGENCY_POWER_DURATION_MS } from '../time/emergencyPower';
 
 export type TerminalMenuId = 'system' | 'log' | 'audio' | 'security';
@@ -29,8 +30,7 @@ export type GameEvent =
   | { type: 'GAME_STARTED' }
   | {
       type: 'PROGRESS_RESTORED';
-      activeElapsedMs: number;
-      reservePower: boolean;
+      progress: SavedProgress;
     }
   | { type: 'ACTIVE_TIME_ELAPSED'; deltaMs: number }
   | { type: 'DIALOGUE_ADVANCED' }
@@ -156,13 +156,43 @@ export const gameMachine = setup({
       breakerSequence: () => [...BREAKER_ORDER],
       powerRestored: true,
       selectedHotspotId: null,
-      locationId: 'location_east_wall',
+      locationId: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED'
+          ? event.progress.locationId
+          : 'location_east_wall',
+      storyStage: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED'
+          ? event.progress.storyStage
+          : 'inspect_logs',
+      inventory: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.inventory : [],
+      inspectedMaps: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.inspectedMaps : [],
+      heardPackets: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.heardPackets : [],
+      finalOrderReady: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED'
+          ? event.progress.finalOrderReady
+          : false,
+      endingLineIndex: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.endingLineIndex : 0,
+      hintLevel: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.hintLevel : 0,
+      breakerFailures: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.breakerFailures : 0,
+      lockerFailures: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' ? event.progress.lockerFailures : 0,
+      terminalMenuId: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED' &&
+        event.progress.storyStage === 'inspect_audio'
+          ? 'audio'
+          : 'system',
       activeElapsedMs: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED' ? event.activeElapsedMs : 0,
+        event.type === 'PROGRESS_RESTORED' ? event.progress.activeElapsedMs : 0,
       reservePower: ({ event }) =>
         event.type === 'PROGRESS_RESTORED'
-          ? event.reservePower ||
-            event.activeElapsedMs >= EMERGENCY_POWER_DURATION_MS
+          ? event.progress.reservePower ||
+            event.progress.activeElapsedMs >= EMERGENCY_POWER_DURATION_MS
           : false,
     }),
     advanceActiveTime: assign({
