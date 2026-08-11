@@ -34,7 +34,7 @@ import type {
   ArchiveDocument,
   NarrativeEntry,
 } from './narrative/narrativeArchive';
-import { PuzzleWorkbench } from './puzzles/PuzzleWorkbench';
+import { PuzzleDevice } from './puzzles/PuzzleDevice';
 import { SystemMenu } from './system/SystemMenu';
 import type {
   SoundLevels,
@@ -257,6 +257,11 @@ export function GameScreen(props: Props) {
           props.onEventNarrativeAdvance();
           return;
         }
+        if (props.powerPuzzle || inspectionModalOpen) {
+          event.preventDefault();
+          closeInspection();
+          return;
+        }
         if (!ending) {
           event.preventDefault();
           toggleSystemMenu();
@@ -299,7 +304,7 @@ export function GameScreen(props: Props) {
   }
 
   const inspectionDialog = props.powerPuzzle ? (
-    <PuzzleWorkbench
+    <PuzzleDevice
       puzzleId="puzzle_power_route"
       failures={props.puzzleFailures.puzzle_power_route}
       onSubmit={handlePuzzleSubmit}
@@ -329,7 +334,7 @@ export function GameScreen(props: Props) {
     />
   ) : props.selectedHotspotId === 'hotspot_locker' &&
     props.storyStage === 'puzzle_maintenance_lock' ? (
-    <PuzzleWorkbench
+    <PuzzleDevice
       puzzleId="puzzle_maintenance_lock"
       failures={props.puzzleFailures.puzzle_maintenance_lock}
       onSubmit={handlePuzzleSubmit}
@@ -337,7 +342,7 @@ export function GameScreen(props: Props) {
     />
   ) : props.selectedHotspotId === 'hotspot_analysis_panel' &&
     props.storyStage === 'puzzle_voiceprint_calibration' ? (
-    <PuzzleWorkbench
+    <PuzzleDevice
       puzzleId="puzzle_voiceprint_calibration"
       failures={props.puzzleFailures.puzzle_voiceprint_calibration}
       onSubmit={handlePuzzleSubmit}

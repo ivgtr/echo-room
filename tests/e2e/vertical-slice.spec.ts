@@ -175,30 +175,27 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   const powerPuzzle = page.locator(
     '[data-puzzle-id="puzzle_power_route"]:visible',
   );
-  for (const [groupName, optionName] of [
-    ['切り離す線', 'TERMINAL / 2 UNIT'],
-    ['最初に起動', 'TERMINAL'],
-    ['次に起動', 'INTERCOM'],
-    ['最後に起動', 'ECHO BUFFER'],
-  ] as const) {
-    await powerPuzzle
-      .getByRole('group', { name: groupName })
-      .getByRole('button', { name: optionName })
-      .press('Enter');
-  }
   await powerPuzzle
-    .getByRole('button', { name: 'この答えで確認する' })
+    .getByRole('button', { name: 'TERMINALケーブルを切り離す' })
     .press('Enter');
+  for (const name of [
+    'TERMINALブレーカー',
+    'INTERCOMブレーカー',
+    'ECHO BUFFERブレーカー',
+  ])
+    await powerPuzzle.getByRole('button', { name }).press('Enter');
   await expect(
-    page.getByText('保護回路が切れた。負荷か起動順が合っていない。'),
+    page.getByText('保護回路が作動。隔離線か投入順を点検。'),
   ).toBeVisible();
   await powerPuzzle
-    .getByRole('group', { name: '切り離す線' })
-    .getByRole('button', { name: /DOOR \/ 4 UNIT/ })
+    .getByRole('button', { name: 'DOORケーブルを切り離す' })
     .press('Enter');
-  await powerPuzzle
-    .getByRole('button', { name: 'この答えで確認する' })
-    .press('Enter');
+  for (const name of [
+    'TERMINALブレーカー',
+    'INTERCOMブレーカー',
+    'ECHO BUFFERブレーカー',
+  ])
+    await powerPuzzle.getByRole('button', { name }).press('Enter');
 
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(world).toHaveAttribute('data-transition-state', 'idle');
@@ -211,9 +208,9 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await dismissEventNarrative(page);
   await page.getByRole('button', { name: '壁面端末を調べる' }).press('Enter');
   const terminal = page.getByRole('dialog', { name: '壁面端末' });
-  await expect(terminal.getByText('回線同期')).toBeVisible();
+  await expect(terminal.getByText('搬送波同期器')).toBeVisible();
   await expect(saveToast).toBeHidden({ timeout: 5000 });
-  await terminal.getByRole('button', { name: '端末を閉じる' }).press('Enter');
+  await terminal.getByRole('button', { name: '装置から離れる' }).press('Enter');
   await page.reload();
   await page.getByRole('button', { name: '続きから' }).press('Enter');
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
@@ -358,11 +355,11 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   await expect(firstControl).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(
-    terminal.getByRole('button', { name: '端末を閉じる' }),
+    terminal.getByRole('button', { name: '装置から離れる' }),
   ).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(firstControl).toBeFocused();
-  await terminal.getByRole('button', { name: '端末を閉じる' }).click();
+  await terminal.getByRole('button', { name: '装置から離れる' }).click();
   await expect(terminalHotspot).toBeFocused();
   await expect(stage).toHaveAttribute('data-inspection-phase', 'idle');
 });

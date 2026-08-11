@@ -5,7 +5,7 @@ import type {
 import { stagePuzzle } from '../../game/machine/gameMachine';
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import { FacilityMap } from '../evidence/FacilityMap';
-import { PuzzleWorkbench } from '../puzzles/PuzzleWorkbench';
+import { PuzzleDevice } from '../puzzles/PuzzleDevice';
 
 const menuLabels: Record<TerminalMenuId, string> = {
   system: 'SYSTEM',
@@ -59,6 +59,9 @@ export function TerminalPanel(props: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="terminal-title"
+      style={{
+        backgroundImage: `url("${import.meta.env.BASE_URL}assets/images/close/gfx-close-010__on__preview-flat.webp")`,
+      }}
     >
       <header>
         <p className="eyebrow">ECHO BUFFER / gfx-close-010</p>
@@ -79,7 +82,7 @@ export function TerminalPanel(props: Props) {
 
       <div className="terminal-content">
         {puzzleVisible && currentPuzzleId ? (
-          <PuzzleWorkbench
+          <PuzzleDevice
             embedded
             puzzleId={currentPuzzleId}
             failures={props.puzzleFailures[currentPuzzleId]}
@@ -96,8 +99,13 @@ export function TerminalPanel(props: Props) {
           />
         )}
       </div>
-      <button type="button" onClick={props.onClose}>
-        端末を閉じる
+      <button
+        type="button"
+        className="terminal-back"
+        aria-label="装置から離れる"
+        onClick={props.onClose}
+      >
+        &lt; BACK
       </button>
     </section>
   );

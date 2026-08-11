@@ -19,7 +19,7 @@ const baseProps = {
 };
 
 describe('TerminalPanel', () => {
-  it('presents carrier synchronization as a multi-decision visual puzzle', () => {
+  it('presents carrier synchronization as a directly adjustable device', () => {
     render(
       <TerminalPanel
         {...baseProps}
@@ -27,13 +27,13 @@ describe('TerminalPanel', () => {
         stage="puzzle_carrier_sync"
       />,
     );
-    expect(screen.getByText('回線同期')).toBeVisible();
-    expect(screen.getByLabelText('波形の比較')).toBeVisible();
-    expect(screen.getByText('SERVICE PROCEDURE / DESK COPY')).toBeVisible();
+    expect(screen.getByText('搬送波同期器')).toBeVisible();
+    expect(screen.getByRole('slider', { name: 'CHANNEL A' })).toHaveValue('-2');
+    expect(screen.getByRole('slider', { name: 'CHANNEL C' })).toHaveValue('1');
+    expect(screen.getByText('位置数値：A -2 / B 0 / C +1')).toBeVisible();
     expect(screen.queryByText(/早い波は右/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'この答えで確認する' }),
-    ).toBeDisabled();
+    expect(screen.queryByText('この答えで確認する')).not.toBeInTheDocument();
+    expect(screen.queryByText(/選択済み/)).not.toBeInTheDocument();
   });
 
   it('keeps the facility map meaningful as a conduit layer', () => {
@@ -44,7 +44,7 @@ describe('TerminalPanel', () => {
         stage="puzzle_signal_route"
       />,
     );
-    expect(screen.getByText('通信配線')).toBeVisible();
+    expect(screen.getByText('通信配線トレーサー')).toBeVisible();
     expect(screen.getByText('ECHO BUFFER RETURN ○')).toBeVisible();
   });
 

@@ -14,21 +14,12 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   await page.getByRole('button', { name: '続きから' }).press('Enter');
 
   await openHotspot(page, '壁面端末を調べる');
-  await solve(page, [
-    ['Aを動かす方向', '右へ2'],
-    ['Bを動かす方向', 'そのまま'],
-    ['Cを動かす方向', '左へ1'],
-  ]);
+  await solveCarrier(page);
 
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await openHotspot(page, 'ロッカーを調べる');
-  await solve(page, [
-    ['1番目の記号', '二重線 ║'],
-    ['2番目の記号', '丸 ○'],
-    ['3番目の記号', '三角 △'],
-    ['4番目の記号', 'ひし形 ◆'],
-  ]);
+  await solveLocker(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_03');
   const acquisition = page.getByRole('dialog', { name: '所持品を入手した' });
   await expect(acquisition.getByText('設備・配線図')).toBeVisible();
@@ -40,61 +31,29 @@ test('keyboard-only route solves all ten deductions before transmission', async 
   await page.keyboard.press('ArrowRight');
   await openHotspot(page, '壁面端末を調べる');
   await page.getByRole('button', { name: 'LOG' }).press('Enter');
-  await solve(page, [
-    ['R1 と同じ波のSOURCE', 'S-B'],
-    ['R2 と同じ波のSOURCE', 'S-C'],
-    ['R3 と同じ波のSOURCE', 'S-A'],
-  ]);
+  await solveLogPatch(page);
 
   await openHotspot(page, '壁面端末を調べる');
   await page.getByRole('button', { name: 'SECURITY' }).press('Enter');
-  await solve(page, [
-    ['たどる線', '実線 / 通信'],
-    ['壁の中で通る場所', 'J-2 / 丸端子'],
-    ['線のつなぎ先', 'ECHO BUFFER RETURN'],
-  ]);
+  await solveSignalTrace(page);
 
   await openHotspot(page, '壁面端末を調べる');
   await page.getByRole('button', { name: 'SIGNAL' }).press('Enter');
-  await solve(page, [
-    ['1番目の断片', '断片C'],
-    ['2番目の断片', '断片D'],
-    ['3番目の断片', '断片A'],
-    ['4番目の断片', '断片B'],
-  ]);
+  await solvePacketRail(page);
 
   await openHotspot(page, '壁面端末を調べる');
   await page.getByRole('button', { name: 'SIGNAL' }).press('Enter');
-  await solve(page, [
-    ['異常があるPACKET', /PACKET 04/],
-    ['そう判断できる理由', 'まだしていない操作を知っている'],
-  ]);
+  await solveEventScanner(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_07');
 
   await openHotspot(page, '解析パネルを調べる');
-  await solve(page, [
-    ['波の間隔', '半分にする'],
-    ['波の上下', '上下反転'],
-    ['波の開始位置', '左へ2'],
-  ]);
+  await solveVoiceprint(page);
 
   await openHotspot(page, '壁面端末を調べる');
-  await solve(page, [
-    ['1番目の発言', '……聞こえるか？'],
-    ['2番目の発言', 'まず電源を戻せ。'],
-    ['3番目の発言', 'ログは気にするな。'],
-    ['4番目の発言', '最後に、赤いボタンを押せ。'],
-  ]);
+  await solveScriptRail(page);
 
   await openHotspot(page, '壁面端末を調べる');
-  await solve(page, [
-    ['受信タイミング W1', '……聞こえるか？'],
-    ['受信タイミング W2', 'まず電源を戻せ。'],
-    ['受信タイミング W3', 'ログは気にするな。'],
-    ['受信タイミング W4', '最後に、赤いボタンを押せ。'],
-    ['送る時刻', '-00:20:00'],
-    ['送り先', 'ECHO BUFFER RETURN'],
-  ]);
+  await solveTransmissionPatch(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_10');
 
   await openHotspot(page, '壁面端末を調べる');
@@ -128,20 +87,124 @@ async function openHotspot(page: Page, name: string) {
   await expect(page.getByRole('dialog')).toBeVisible();
 }
 
-async function solve(
-  page: Page,
-  choices: readonly (readonly [string, string | RegExp])[],
-) {
+async function puzzle(page: Page) {
+  return page.locator('[data-puzzle-id]:visible');
+}
+
+async function finishAutomaticPuzzle(page: Page) {
   const puzzle = page.locator('[data-puzzle-id]:visible');
-  for (const [groupName, optionName] of choices) {
-    const group = puzzle.getByRole('group', { name: groupName });
-    await group.getByRole('button', { name: optionName }).press('Enter');
-  }
-  await puzzle
-    .getByRole('button', { name: 'この答えで確認する' })
-    .press('Enter');
   await expect(puzzle).toBeHidden();
   await dismissEventNarrative(page);
+}
+
+async function solveCarrier(page: Page) {
+  const device = await puzzle(page);
+  await device.getByRole('slider', { name: 'CHANNEL A' }).press('ArrowRight');
+  await device.getByRole('slider', { name: 'CHANNEL A' }).press('ArrowRight');
+  await device.getByRole('slider', { name: 'CHANNEL C' }).press('ArrowLeft');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveLocker(page: Page) {
+  const device = await puzzle(page);
+  for (let index = 1; index <= 4; index += 1)
+    await device
+      .getByRole('spinbutton', { name: `ダイヤル${index}` })
+      .press('ArrowUp');
+  await device.getByRole('button', { name: 'LOCK HANDLE' }).press('Enter');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveLogPatch(page: Page) {
+  const device = await puzzle(page);
+  for (const [receive, source] of [
+    ['R1', 'S-B'],
+    ['R2', 'S-C'],
+    ['R3', 'S-A'],
+  ] as const) {
+    await device
+      .getByRole('button', { name: `${receive}受信端子` })
+      .press('Enter');
+    await device
+      .getByRole('button', { name: `${source}送信端子` })
+      .press('Enter');
+  }
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveSignalTrace(page: Page) {
+  const device = await puzzle(page);
+  await device.getByRole('button', { name: '通信実線' }).press('Enter');
+  await device.getByRole('button', { name: 'J-2 丸端子' }).press('Enter');
+  await device
+    .getByRole('button', { name: 'ECHO BUFFER RETURN' })
+    .press('Enter');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solvePacketRail(page: Page) {
+  const device = await puzzle(page);
+  for (const label of ['断片C', '断片D', '断片A', '断片B'])
+    await device
+      .getByRole('button', { name: `${label}をレールへ入れる` })
+      .press('Enter');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveEventScanner(page: Page) {
+  const device = await puzzle(page);
+  await device.getByRole('button', { name: /PACKET 04/ }).press('Enter');
+  await device.getByRole('button', { name: '未発生の操作' }).press('Enter');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveVoiceprint(page: Page) {
+  const device = await puzzle(page);
+  await device
+    .getByRole('spinbutton', { name: '波の間隔ダイヤル' })
+    .press('Enter');
+  await device.getByRole('switch').press('Enter');
+  await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
+  await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveScriptRail(page: Page) {
+  const device = await puzzle(page);
+  for (const text of [
+    '……聞こえるか？',
+    'まず電源を戻せ。',
+    'ログは気にするな。',
+    '最後に、赤いボタンを押せ。',
+  ])
+    await device.getByRole('button', { name: text }).press('Enter');
+  await finishAutomaticPuzzle(page);
+}
+
+async function solveTransmissionPatch(page: Page) {
+  const device = await puzzle(page);
+  const windows = [
+    '返事をする前',
+    '電源を調べる前',
+    'LOGを開いた直後',
+    '最後の操作の前',
+  ];
+  for (let index = 0; index < 4; index += 1) {
+    await device.getByRole('button', { name: `P${index + 1}` }).press('Enter');
+    await device
+      .getByRole('button', {
+        name: new RegExp(`W${index + 1} ${windows[index]}`),
+      })
+      .press('Enter');
+  }
+  await device
+    .getByRole('spinbutton', { name: '送信遅延ダイヤル' })
+    .press('Enter');
+  await device
+    .getByRole('spinbutton', { name: '送信終端ダイヤル' })
+    .press('Enter');
+  await device.getByRole('button', { name: 'TEST PULSE' }).press('Enter');
+  await finishAutomaticPuzzle(page);
 }
 
 async function dismissEventNarrative(page: Page) {
