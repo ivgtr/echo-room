@@ -4,13 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SystemMenu } from '../../src/ui/system/SystemMenu';
 import {
-  defaultAudioLevels,
+  defaultSoundLevels,
   defaultSubtitleSettings,
 } from '../../src/ui/system/uiSettings';
 
 describe('SystemMenu', () => {
   it('opens only discovered archive data and updates accessibility settings', () => {
-    const onAudioLevelChange = vi.fn();
+    const onSoundLevelChange = vi.fn();
     const onSubtitleSettingChange = vi.fn();
     const onToggleMotion = vi.fn();
     render(
@@ -19,8 +19,8 @@ describe('SystemMenu', () => {
         activeElapsedMs={0}
         powerRestored
         reservePower={false}
-        audioEnabled={false}
-        audioLevels={defaultAudioLevels}
+        soundEnabled={false}
+        soundLevels={defaultSoundLevels}
         subtitleSettings={defaultSubtitleSettings}
         visualAssist={false}
         motionReduced={false}
@@ -44,8 +44,8 @@ describe('SystemMenu', () => {
         ]}
         returnFocusRef={createRef<HTMLElement>()}
         onClose={vi.fn()}
-        onToggleAudio={vi.fn()}
-        onAudioLevelChange={onAudioLevelChange}
+        onToggleSound={vi.fn()}
+        onSoundLevelChange={onSoundLevelChange}
         onSubtitleSettingChange={onSubtitleSettingChange}
         onToggleAssist={vi.fn()}
         onToggleMotion={onToggleMotion}
@@ -67,15 +67,19 @@ describe('SystemMenu', () => {
     );
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'TEXT & AUDIO / 字幕・音量設定',
+        name: 'TEXT & SOUND / 字幕・サウンド設定',
       }),
     );
+    expect(screen.queryByText(/VOICE \/ 会話/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'MASTER / サウンド OFF' }),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /^大$/ }));
     expect(onSubtitleSettingChange).toHaveBeenCalledWith('size', 'large');
     fireEvent.change(screen.getByLabelText(/EFFECTS \/ 効果音/), {
       target: { value: '35' },
     });
-    expect(onAudioLevelChange).toHaveBeenCalledWith('effects', 35);
+    expect(onSoundLevelChange).toHaveBeenCalledWith('effects', 35);
     fireEvent.click(
       screen.getByRole('button', {
         name: 'REDUCE MOTION / 動き軽減 OFF',

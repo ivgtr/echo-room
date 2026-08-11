@@ -67,19 +67,18 @@ const saveSchemaV2 = z.object({
   progress: progressSchema,
 });
 
-const audioLevelsSchema = z.object({
-  voice: z.number().min(0).max(100),
+const soundLevelsSchema = z.object({
   effects: z.number().min(0).max(100),
   environment: z.number().min(0).max(100),
 });
 
 const settingsSchema = z.object({
-  schemaVersion: z.literal(3),
-  audioEnabled: z.boolean(),
+  schemaVersion: z.literal(4),
+  soundEnabled: z.boolean(),
   visualAssist: z.boolean(),
   motionReduced: z.boolean(),
   introSeen: z.boolean(),
-  audioLevels: audioLevelsSchema,
+  soundLevels: soundLevelsSchema,
   subtitleSettings: z.object({
     size: z.enum(['small', 'medium', 'large']),
     background: z.enum(['soft', 'solid']),
@@ -97,12 +96,12 @@ export type LoadResult =
   | { status: 'corrupt' };
 
 export const defaultSettings: SettingsData = {
-  schemaVersion: 3,
-  audioEnabled: true,
+  schemaVersion: 4,
+  soundEnabled: true,
   visualAssist: false,
   motionReduced: false,
   introSeen: false,
-  audioLevels: { voice: 100, effects: 100, environment: 70 },
+  soundLevels: { effects: 100, environment: 70 },
   subtitleSettings: {
     size: 'medium',
     background: 'soft',

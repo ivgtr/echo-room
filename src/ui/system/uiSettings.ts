@@ -8,8 +8,7 @@ export type SubtitleSettings = {
   speed: TextSpeed;
 };
 
-export type AudioLevels = {
-  voice: number;
+export type SoundLevels = {
   effects: number;
   environment: number;
 };
@@ -25,8 +24,7 @@ export const defaultSubtitleSettings: SubtitleSettings = {
   speed: 'normal',
 };
 
-export const defaultAudioLevels: AudioLevels = {
-  voice: 100,
+export const defaultSoundLevels: SoundLevels = {
   effects: 100,
   environment: 70,
 };

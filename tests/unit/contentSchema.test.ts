@@ -26,4 +26,12 @@ describe('game content schema', () => {
       'dialogue ID is duplicated',
     );
   });
+
+  it('rejects spoken-audio references in dialogue data', () => {
+    const invalid = storySource.replace(
+      "text: '……聞こえるか？',",
+      "text: '……聞こえるか？', audioId: audio_packet_01,",
+    );
+    expect(() => parseGameContent(invalid)).toThrow();
+  });
 });

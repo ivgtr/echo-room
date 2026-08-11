@@ -11,7 +11,7 @@ type Props = {
   sequence: readonly BreakerId[];
   failures: number;
   visualAssist: boolean;
-  audioEnabled: boolean;
+  soundEnabled: boolean;
   onToggleAssist: () => void;
   onToggle: (breakerId: BreakerId) => void;
   onClose: () => void;
@@ -21,7 +21,7 @@ export function BreakerPuzzle({
   sequence,
   failures,
   visualAssist,
-  audioEnabled,
+  soundEnabled,
   onToggleAssist,
   onToggle,
   onClose,
@@ -63,7 +63,7 @@ export function BreakerPuzzle({
       <p className="puzzle-feedback" aria-live="assertive">
         {failures > 0 && sequence.length === 0
           ? '接続順が違う。全レバーが戻った。もう一度試せる。'
-          : `接続済み ${sequence.length} / 4${audioEnabled ? '' : '（音声なし）'}`}
+          : `接続済み ${sequence.length} / 4${soundEnabled ? '' : '（サウンドなし）'}`}
       </p>
       <footer>
         <button

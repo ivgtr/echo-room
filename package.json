@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@xstate/react": "6.1.0",
-    "howler": "2.2.4",
     "pixi.js": "8.19.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -35,7 +34,6 @@
     "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
-    "@types/howler": "2.2.12",
     "@types/node": "24.10.13",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",

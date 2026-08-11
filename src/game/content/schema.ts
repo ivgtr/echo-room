@@ -51,12 +51,13 @@ export const gameContentSchema = z.object({
     .min(3),
   dialogues: z
     .array(
-      z.object({
-        id: id('dialogue'),
-        speaker: z.enum(['protagonist', 'future_protagonist', 'system']),
-        text: z.string().min(1),
-        audioId: id('audio').optional(),
-      }),
+      z
+        .object({
+          id: id('dialogue'),
+          speaker: z.enum(['protagonist', 'future_protagonist', 'system']),
+          text: z.string().min(1),
+        })
+        .strict(),
     )
     .min(8),
   puzzles: z

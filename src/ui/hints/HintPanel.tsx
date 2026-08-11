@@ -17,9 +17,9 @@ const hints: Partial<Record<StoryStage, [string, string, string]>> = {
     '隣室は存在しない。',
   ],
   inspect_audio: [
-    'AUDIOの全PACKETを確認する。',
-    'まだ聞いていない台詞を探す。',
-    'PACKET 04を再生する。',
+    'SIGNALの全PACKETを確認する。',
+    '冒頭になかった文章を探す。',
+    'PACKET 04の字幕と信号を確認する。',
   ],
   analyze_voice: [
     '端末横のパネルを調べる。',
@@ -29,7 +29,7 @@ const hints: Partial<Record<StoryStage, [string, string, string]>> = {
   transmit_packets: [
     '冒頭の会話を思い出す。',
     'PACKET 01〜04の内容を再現する。',
-    '聞こえるか、電源、ログ、赤いボタンの順。',
+    '聞こえるか、電源、ログ、赤いボタンの文章順。',
   ],
 };
 

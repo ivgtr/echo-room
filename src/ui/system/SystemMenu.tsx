@@ -11,7 +11,7 @@ import type {
   NarrativeEntry,
 } from '../narrative/narrativeArchive';
 import type {
-  AudioLevels,
+  SoundLevels,
   SubtitleBackground,
   SubtitleSettingChange,
   SubtitleSettings,
@@ -27,8 +27,8 @@ type Props = {
   activeElapsedMs: number;
   powerRestored: boolean;
   reservePower: boolean;
-  audioEnabled: boolean;
-  audioLevels: AudioLevels;
+  soundEnabled: boolean;
+  soundLevels: SoundLevels;
   subtitleSettings: SubtitleSettings;
   visualAssist: boolean;
   motionReduced: boolean;
@@ -39,8 +39,8 @@ type Props = {
   documents: readonly ArchiveDocument[];
   returnFocusRef: RefObject<HTMLElement | null>;
   onClose: () => void;
-  onToggleAudio: () => void;
-  onAudioLevelChange: (channel: keyof AudioLevels, value: number) => void;
+  onToggleSound: () => void;
+  onSoundLevelChange: (channel: keyof SoundLevels, value: number) => void;
   onSubtitleSettingChange: SubtitleSettingChange;
   onToggleAssist: () => void;
   onToggleMotion: () => void;
@@ -105,7 +105,7 @@ export function SystemMenu(props: Props) {
             ? 'SYSTEM'
             : view === 'archive'
               ? 'ARCHIVE'
-              : 'TEXT / AUDIO'}
+              : 'TEXT / SOUND'}
         </h2>
       </header>
 
@@ -133,7 +133,7 @@ export function SystemMenu(props: Props) {
               ARCHIVE / 会話履歴・資料再読
             </button>
             <button type="button" onClick={() => setView('settings')}>
-              TEXT &amp; AUDIO / 字幕・音量設定
+              TEXT &amp; SOUND / 字幕・サウンド設定
             </button>
             {props.inventoryAvailable && (
               <button type="button" onClick={props.onInventory}>
@@ -158,13 +158,13 @@ export function SystemMenu(props: Props) {
 
       {view === 'settings' && (
         <SettingsView
-          audioEnabled={props.audioEnabled}
-          audioLevels={props.audioLevels}
+          soundEnabled={props.soundEnabled}
+          soundLevels={props.soundLevels}
           subtitleSettings={props.subtitleSettings}
           visualAssist={props.visualAssist}
           motionReduced={props.motionReduced}
-          onToggleAudio={props.onToggleAudio}
-          onAudioLevelChange={props.onAudioLevelChange}
+          onToggleSound={props.onToggleSound}
+          onSoundLevelChange={props.onSoundLevelChange}
           onSubtitleSettingChange={props.onSubtitleSettingChange}
           onToggleAssist={props.onToggleAssist}
           onToggleMotion={props.onToggleMotion}
@@ -236,13 +236,13 @@ function ArchiveView({
 function SettingsView(
   props: Pick<
     Props,
-    | 'audioEnabled'
-    | 'audioLevels'
+    | 'soundEnabled'
+    | 'soundLevels'
     | 'subtitleSettings'
     | 'visualAssist'
     | 'motionReduced'
-    | 'onToggleAudio'
-    | 'onAudioLevelChange'
+    | 'onToggleSound'
+    | 'onSoundLevelChange'
     | 'onSubtitleSettingChange'
     | 'onToggleAssist'
     | 'onToggleMotion'
@@ -285,33 +285,32 @@ function SettingsView(
         />
       </fieldset>
       <fieldset>
-        <legend>AUDIO / 音量</legend>
+        <legend>SOUND / サウンド</legend>
         <button
           type="button"
-          aria-pressed={props.audioEnabled}
-          onClick={props.onToggleAudio}
+          aria-pressed={props.soundEnabled}
+          onClick={props.onToggleSound}
         >
-          MASTER / 音声 {props.audioEnabled ? 'ON' : 'OFF'}
+          MASTER / サウンド {props.soundEnabled ? 'ON' : 'OFF'}
         </button>
         {(
           [
-            ['voice', 'VOICE / 会話'],
             ['effects', 'EFFECTS / 効果音'],
             ['environment', 'ENVIRONMENT / 環境音'],
           ] as const
         ).map(([channel, label]) => (
           <label className="volume-setting" key={channel}>
             <span>
-              {label} {props.audioLevels[channel]}
+              {label} {props.soundLevels[channel]}
             </span>
             <input
               type="range"
               min="0"
               max="100"
               step="5"
-              value={props.audioLevels[channel]}
+              value={props.soundLevels[channel]}
               onChange={(event) =>
-                props.onAudioLevelChange(channel, Number(event.target.value))
+                props.onSoundLevelChange(channel, Number(event.target.value))
               }
             />
           </label>

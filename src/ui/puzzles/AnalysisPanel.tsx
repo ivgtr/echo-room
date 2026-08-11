@@ -42,9 +42,12 @@ export function AnalysisPanel({
           </button>
         </div>
       ) : rate < 100 ? (
-        <button type="button" onClick={analyze}>
-          VOICE ANALYSISをONにする
-        </button>
+        <>
+          <p>PACKETに保存された声紋特徴量を職員記録と照合する。</p>
+          <button type="button" onClick={analyze}>
+            VOICE ANALYSISをONにする
+          </button>
+        </>
       ) : (
         <div className="analysis-result">
           <strong>VOICEPRINT MATCH 100%</strong>

@@ -8,11 +8,11 @@ test('corrupt progress is protected until confirmed deletion and settings remain
   await page.addInitScript(
     installSettingsSave,
     createSettingsSave({
-      audioEnabled: false,
+      soundEnabled: false,
       visualAssist: true,
       motionReduced: true,
       introSeen: true,
-      audioLevels: { voice: 80, effects: 35, environment: 55 },
+      soundLevels: { effects: 35, environment: 55 },
       subtitleSettings: {
         size: 'large',
         background: 'solid',

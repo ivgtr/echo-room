@@ -17,6 +17,13 @@ const packetText: Record<PacketId, string> = {
   audio_packet_04: '最後に、赤いボタンを押せ。',
 };
 
+const menuLabels: Record<TerminalMenuId, string> = {
+  system: 'SYSTEM',
+  log: 'LOG',
+  audio: 'SIGNAL',
+  security: 'SECURITY',
+};
+
 type Props = {
   menuId: TerminalMenuId;
   stage: StoryStage;
@@ -33,7 +40,7 @@ type Props = {
 export function TerminalPanel(props: Props) {
   const [order, setOrder] = useState<string[]>([]);
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
-  const audioUnlocked = [
+  const signalUnlocked = [
     'inspect_audio',
     'analyze_voice',
     'transmit_packets',
@@ -72,7 +79,7 @@ export function TerminalPanel(props: Props) {
         <nav aria-label="端末メニュー">
           {(['system', 'log', 'audio', 'security'] as const).map((id) => {
             const locked =
-              (id === 'audio' && !audioUnlocked) ||
+              (id === 'audio' && !signalUnlocked) ||
               (id === 'security' && !securityUnlocked);
             return (
               <button
@@ -82,7 +89,7 @@ export function TerminalPanel(props: Props) {
                 aria-current={props.menuId === id ? 'page' : undefined}
                 onClick={() => props.onSelect(id)}
               >
-                {id.toUpperCase()} {locked && '— LOCKED'}
+                {menuLabels[id]} {locked && '— LOCKED'}
               </button>
             );
           })}
@@ -92,7 +99,7 @@ export function TerminalPanel(props: Props) {
         {final && (
           <div className="final-transmission-screen">
             <header>
-              <p>ECHO BUFFER / AUDIO TRANSFER WINDOW</p>
+              <p>ECHO BUFFER / SIGNAL TRANSFER WINDOW</p>
               <h3>FINAL TRANSMISSION</h3>
             </header>
             <dl className="transmission-destination">
@@ -232,12 +239,13 @@ export function TerminalPanel(props: Props) {
         )}
         {!final && props.menuId === 'audio' && (
           <>
-            <h3>ECHO AUDIO BUFFER</h3>
+            <h3>ECHO SIGNAL BUFFER</h3>
+            <p>発話音声は再生せず、受信文と声紋データだけを展開する。</p>
             {FINAL_PACKET_ORDER.map((id) => (
               <div className="packet-row" key={id}>
                 <span>{id.replace('audio_', '').toUpperCase()}</span>
                 <button type="button" onClick={() => props.onPacketPlayed(id)}>
-                  字幕付きで再生
+                  字幕と信号を確認
                 </button>
                 <p>{packetText[id]}</p>
               </div>

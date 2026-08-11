@@ -48,12 +48,12 @@ export function createSettingsSave(
   overrides: Partial<SettingsData> = {},
 ): SettingsData {
   return {
-    schemaVersion: 3,
-    audioEnabled: true,
+    schemaVersion: 4,
+    soundEnabled: true,
     visualAssist: false,
     motionReduced: false,
     introSeen: false,
-    audioLevels: { voice: 100, effects: 100, environment: 70 },
+    soundLevels: { effects: 100, environment: 70 },
     subtitleSettings: {
       size: 'medium',
       background: 'soft',

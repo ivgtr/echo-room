@@ -49,7 +49,7 @@ import {
   powerRestoredEntry,
   type NarrativeEntry,
 } from '../ui/narrative/narrativeArchive';
-import type { AudioLevels, SubtitleSettings } from '../ui/system/uiSettings';
+import type { SoundLevels, SubtitleSettings } from '../ui/system/uiSettings';
 import { TitleScreen } from '../ui/TitleScreen';
 import { UnsupportedScreen } from '../ui/UnsupportedScreen';
 import { supportsRequiredEnvironment } from './environment';
@@ -68,11 +68,11 @@ export function App() {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
   const [introSeen, setIntroSeen] = useState(initialSettings.introSeen);
-  const [audioEnabled, setAudioEnabled] = useState(
-    initialSettings.audioEnabled,
+  const [soundEnabled, setSoundEnabled] = useState(
+    initialSettings.soundEnabled,
   );
-  const [audioLevels, setAudioLevels] = useState<AudioLevels>(
-    initialSettings.audioLevels,
+  const [soundLevels, setSoundLevels] = useState<SoundLevels>(
+    initialSettings.soundLevels,
   );
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(
     initialSettings.subtitleSettings,
@@ -171,12 +171,12 @@ export function App() {
     try {
       saveSettings(
         {
-          schemaVersion: 3,
-          audioEnabled,
+          schemaVersion: 4,
+          soundEnabled,
           visualAssist,
           motionReduced,
           introSeen,
-          audioLevels,
+          soundLevels,
           subtitleSettings,
         },
         window.localStorage,
@@ -185,8 +185,8 @@ export function App() {
       // Settings storage failure must not interrupt play.
     }
   }, [
-    audioEnabled,
-    audioLevels,
+    soundEnabled,
+    soundLevels,
     introSeen,
     motionReduced,
     subtitleSettings,
@@ -323,7 +323,7 @@ export function App() {
     setSaveMessage(null);
     setNarrativeHistory([]);
     setAcquiredItems([]);
-    void unlockAudio().catch(() => setAudioEnabled(false));
+    void unlockAudio().catch(() => setSoundEnabled(false));
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef]);
   const handleHotspot = useCallback(
@@ -347,10 +347,10 @@ export function App() {
   );
   const handleBreaker = useCallback(
     (breakerId: BreakerId) => {
-      playBreakerTone(breakerId, audioEnabled, audioLevels.effects);
+      playBreakerTone(breakerId, soundEnabled, soundLevels.effects);
       actorRef.send({ type: 'BREAKER_TOGGLED', breakerId });
     },
-    [actorRef, audioEnabled, audioLevels.effects],
+    [actorRef, soundEnabled, soundLevels.effects],
   );
 
   const archiveDocuments = getArchiveDocuments(
@@ -414,8 +414,8 @@ export function App() {
       breakerFailures={breakerFailures}
       visualAssist={visualAssist}
       motionReduced={motionReduced}
-      audioEnabled={audioEnabled}
-      audioLevels={audioLevels}
+      soundEnabled={soundEnabled}
+      soundLevels={soundLevels}
       subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
       narrativeHistory={narrativeHistory}
@@ -450,9 +450,9 @@ export function App() {
       onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleMotion={() => setMotionReduced((value) => !value)}
-      onToggleAudio={() => setAudioEnabled((value) => !value)}
-      onAudioLevelChange={(channel, value) =>
-        setAudioLevels((current) => ({ ...current, [channel]: value }))
+      onToggleSound={() => setSoundEnabled((value) => !value)}
+      onSoundLevelChange={(channel, value) =>
+        setSoundLevels((current) => ({ ...current, [channel]: value }))
       }
       onSubtitleSettingChange={(key, value) =>
         setSubtitleSettings((current) => ({ ...current, [key]: value }))

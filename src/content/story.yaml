@@ -6,8 +6,8 @@ chapters:
   - { id: chapter_inspect_logs, label: 20分のずれ }
   - { id: chapter_unlock_locker, label: ロッカー }
   - { id: chapter_no_adjacent_room, label: 隣室の否定 }
-  - { id: chapter_audio_packets, label: 未来の音声 }
-  - { id: chapter_voice_identity, label: 声の正体 }
+  - { id: chapter_audio_packets, label: 未来の通信PACKET }
+  - { id: chapter_voice_identity, label: 声紋の正体 }
   - { id: chapter_final_transmission, label: 時間の輪 }
   - { id: chapter_ending, label: 脱出 }
 locations:
@@ -89,25 +89,21 @@ dialogues:
       id: dialogue_packet_01,
       speaker: future_protagonist,
       text: '……聞こえるか？',
-      audioId: audio_packet_01,
     }
   - {
       id: dialogue_packet_02,
       speaker: future_protagonist,
       text: まず電源を戻せ。,
-      audioId: audio_packet_02,
     }
   - {
       id: dialogue_packet_03,
       speaker: future_protagonist,
       text: ログは気にするな。,
-      audioId: audio_packet_03,
     }
   - {
       id: dialogue_packet_04,
       speaker: future_protagonist,
       text: 最後に、赤いボタンを押せ。,
-      audioId: audio_packet_04,
     }
   - {
       id: dialogue_no_room_question,
@@ -266,13 +262,13 @@ hints:
       id: hint_audio_1,
       puzzleId: puzzle_audio_packets,
       level: 1,
-      text: AUDIOを最後まで確認する。,
+      text: SIGNALを最後まで確認する。,
     }
   - {
       id: hint_audio_2,
       puzzleId: puzzle_audio_packets,
       level: 2,
-      text: 聞き覚えのない音声を探す。,
+      text: 冒頭になかった未確認のPACKETを探す。,
     }
   - {
       id: hint_audio_3,

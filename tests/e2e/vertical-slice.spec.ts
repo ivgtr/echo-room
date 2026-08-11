@@ -120,13 +120,15 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await page.keyboard.press('Tab');
   await expect(archiveEntry).toBeFocused();
   await system
-    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .getByRole('button', {
+      name: 'TEXT & SOUND / 字幕・サウンド設定',
+    })
     .press('Enter');
   await expect(
     system.getByRole('button', { name: '小', exact: true }),
   ).toBeFocused();
   await system
-    .getByRole('button', { name: /MASTER \/ 音声 ON/ })
+    .getByRole('button', { name: /MASTER \/ サウンド ON/ })
     .press('Enter');
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
@@ -352,7 +354,7 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
   await expect(page.getByText('非常ロックが作動している。')).toBeVisible();
 });
 
-test('system archive and subtitle/audio settings preserve the exploration view', async ({
+test('system archive and subtitle/sound settings preserve the exploration view', async ({
   page,
 }) => {
   await page.addInitScript(installProgressSave, createProgressSave());
@@ -368,15 +370,17 @@ test('system archive and subtitle/audio settings preserve the exploration view',
   await expect(system.getByText('EMERGENCY POWER TEST')).toBeVisible();
   await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
   await system
-    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .getByRole('button', {
+      name: 'TEXT & SOUND / 字幕・サウンド設定',
+    })
     .click();
   await system.getByRole('button', { name: '大', exact: true }).click();
   await system.getByRole('button', { name: '高コントラスト' }).click();
   await system.getByRole('button', { name: '速い' }).click();
   await system.getByLabel(/EFFECTS \/ 効果音/).fill('35');
-  await system.getByRole('button', { name: /MASTER \/ 音声 ON/ }).click();
+  await system.getByRole('button', { name: /MASTER \/ サウンド ON/ }).click();
   await expect(
-    system.getByRole('button', { name: /MASTER \/ 音声 OFF/ }),
+    system.getByRole('button', { name: /MASTER \/ サウンド OFF/ }),
   ).toBeVisible();
   await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
   await expect(page.getByRole('button', { name: 'SYSTEM' })).toBeFocused();
@@ -398,7 +402,9 @@ test('system archive and subtitle/audio settings preserve the exploration view',
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   const motionSystem = page.getByRole('dialog', { name: 'SYSTEM' });
   await motionSystem
-    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .getByRole('button', {
+      name: 'TEXT & SOUND / 字幕・サウンド設定',
+    })
     .click();
   await motionSystem
     .getByRole('button', { name: 'REDUCE MOTION / 動き軽減 OFF' })
@@ -417,7 +423,9 @@ test('system archive and subtitle/audio settings preserve the exploration view',
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   const restoredSystem = page.getByRole('dialog', { name: 'SYSTEM' });
   await restoredSystem
-    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .getByRole('button', {
+      name: 'TEXT & SOUND / 字幕・サウンド設定',
+    })
     .click();
   await expect(
     restoredSystem.getByRole('button', { name: '大', exact: true }),
@@ -432,7 +440,9 @@ test('system archive and subtitle/audio settings preserve the exploration view',
     '35',
   );
   await expect(
-    restoredSystem.getByRole('button', { name: /MASTER \/ 音声 OFF/ }),
+    restoredSystem.getByRole('button', {
+      name: /MASTER \/ サウンド OFF/,
+    }),
   ).toBeVisible();
   await expect(
     restoredSystem.getByRole('button', {

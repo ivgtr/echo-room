@@ -96,9 +96,9 @@ describe('saveManager', () => {
     const storage = createStorage();
     const settings = {
       ...defaultSettings,
-      audioEnabled: false,
+      soundEnabled: false,
       visualAssist: true,
-      audioLevels: { ...defaultSettings.audioLevels, effects: 35 },
+      soundLevels: { ...defaultSettings.soundLevels, effects: 35 },
       subtitleSettings: {
         size: 'large' as const,
         background: 'solid' as const,

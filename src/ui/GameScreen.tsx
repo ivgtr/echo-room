@@ -44,7 +44,7 @@ import { BreakerPuzzle } from './puzzles/BreakerPuzzle';
 import { LockerPanel } from './puzzles/LockerPanel';
 import { SystemMenu } from './system/SystemMenu';
 import type {
-  AudioLevels,
+  SoundLevels,
   SubtitleSettingChange,
   SubtitleSettings,
 } from './system/uiSettings';
@@ -73,8 +73,8 @@ type Props = {
   breakerFailures: number;
   visualAssist: boolean;
   motionReduced: boolean;
-  audioEnabled: boolean;
-  audioLevels: AudioLevels;
+  soundEnabled: boolean;
+  soundLevels: SoundLevels;
   subtitleSettings: SubtitleSettings;
   saveMessage: string | null;
   narrativeHistory: readonly NarrativeEntry[];
@@ -100,8 +100,8 @@ type Props = {
   onClose: () => void;
   onToggleAssist: () => void;
   onToggleMotion: () => void;
-  onToggleAudio: () => void;
-  onAudioLevelChange: (channel: keyof AudioLevels, value: number) => void;
+  onToggleSound: () => void;
+  onSoundLevelChange: (channel: keyof SoundLevels, value: number) => void;
   onSubtitleSettingChange: SubtitleSettingChange;
   onExit: () => void;
   onTerminalMenu: (id: TerminalMenuId) => void;
@@ -326,7 +326,7 @@ export function GameScreen(props: Props) {
       sequence={props.breakerSequence}
       failures={props.breakerFailures}
       visualAssist={props.visualAssist}
-      audioEnabled={props.audioEnabled}
+      soundEnabled={props.soundEnabled}
       onToggleAssist={props.onToggleAssist}
       onToggle={handleBreakerToggle}
       onClose={closeInspection}
@@ -562,8 +562,8 @@ export function GameScreen(props: Props) {
             activeElapsedMs={props.activeElapsedMs}
             powerRestored={props.powerRestored}
             reservePower={props.reservePower}
-            audioEnabled={props.audioEnabled}
-            audioLevels={props.audioLevels}
+            soundEnabled={props.soundEnabled}
+            soundLevels={props.soundLevels}
             subtitleSettings={props.subtitleSettings}
             visualAssist={props.visualAssist}
             motionReduced={props.motionReduced}
@@ -574,8 +574,8 @@ export function GameScreen(props: Props) {
             documents={props.archiveDocuments}
             returnFocusRef={systemReturnFocusRef}
             onClose={toggleSystemMenu}
-            onToggleAudio={props.onToggleAudio}
-            onAudioLevelChange={props.onAudioLevelChange}
+            onToggleSound={props.onToggleSound}
+            onSoundLevelChange={props.onSoundLevelChange}
             onSubtitleSettingChange={props.onSubtitleSettingChange}
             onToggleAssist={props.onToggleAssist}
             onToggleMotion={props.onToggleMotion}

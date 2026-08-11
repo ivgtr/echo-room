@@ -69,7 +69,7 @@ export function TitleScreen({
         )}
         {deleteFailed && <p role="alert">保存データを消去できませんでした。</p>}
         <p className="start-note">
-          音声が利用できない場合も字幕でプレイできます
+          サウンドが利用できない場合も文字情報でプレイできます
         </p>
       </section>
     </main>

@@ -26,7 +26,7 @@ describe('TerminalPanel', () => {
     expect(
       screen.getByText('緊急時は「送信側の時刻」を使用する。'),
     ).toBeVisible();
-    expect(screen.getByRole('button', { name: /AUDIO/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /SIGNAL/ })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'LOG' }));
     expect(onSelect).toHaveBeenCalledWith('log');
   });

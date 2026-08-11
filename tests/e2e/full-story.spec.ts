@@ -96,7 +96,7 @@ test('keyboard-only checkpoint reaches transmission complete through every remai
     .press('Enter');
   await expectSavedCheckpoint(page, 'checkpoint_no_adjacent_room');
   await terminal
-    .getByRole('button', { name: '字幕付きで再生' })
+    .getByRole('button', { name: '字幕と信号を確認' })
     .nth(3)
     .press('Enter');
   await expectSavedCheckpoint(page, 'checkpoint_audio_packets');

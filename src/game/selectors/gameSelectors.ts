@@ -52,9 +52,9 @@ export const selectObjective = (snapshot: GameSnapshot) => {
       inspect_logs: '端末のLOGで受信時刻と送信元時刻を確認しよう。',
       unlock_locker: '送信側の時刻を使って西壁のロッカーを開けよう。',
       reveal_no_adjacent_room: '所持品とSECURITY、2つのフロア図を確認しよう。',
-      inspect_audio: '端末のAUDIOでPACKET 01〜04を確認しよう。',
+      inspect_audio: '端末のSIGNALでPACKET 01〜04を確認しよう。',
       analyze_voice: '端末横の解析パネルをドライバーで開けよう。',
-      transmit_packets: '冒頭で聞いた4つの音声を正しい順に並べよう。',
+      transmit_packets: '冒頭で受け取った4つの文章を正しい順に並べよう。',
     };
     return objectives[snapshot.context.storyStage] ?? 'よし。次は端末だ。';
   }
