@@ -144,10 +144,20 @@ async function solveSignalTrace(page: Page) {
 
 async function solvePacketRail(page: Page) {
   const device = await puzzle(page);
-  for (const label of ['断片C', '断片D', '断片A', '断片B'])
+  for (const [fragment, rail] of [
+    ['D', 2],
+    ['A', 3],
+    ['B', 4],
+  ] as const) {
     await device
-      .getByRole('button', { name: `${label}をレールへ入れる` })
+      .getByRole('button', { name: `断片${fragment}を持つ` })
       .press('Enter');
+    await device
+      .getByRole('button', {
+        name: `レール${rail}へ断片${fragment}を置く`,
+      })
+      .press('Enter');
+  }
   await finishAutomaticPuzzle(page);
 }
 

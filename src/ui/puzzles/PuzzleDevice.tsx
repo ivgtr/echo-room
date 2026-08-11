@@ -4,6 +4,8 @@ import {
   useState,
   type ComponentType,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 
@@ -45,7 +47,11 @@ export function PuzzleDevice({
       onClose={onClose}
     >
       <Device
-        key={`${puzzleId}-${failures}`}
+        key={
+          puzzleId === 'puzzle_packet_repair'
+            ? puzzleId
+            : `${puzzleId}-${failures}`
+        }
         failures={failures}
         submit={submit}
       />
@@ -91,6 +97,11 @@ function DeviceFrame({
   const copy = PUZZLE_DEVICE_COPY[puzzleId];
   const titleId = `${puzzleId}-title`;
   const closeupImage = closeupImages[puzzleId];
+  const errorCode: Partial<Record<PuzzleId, string>> = {
+    puzzle_power_route: 'PROTECTION / TRIPPED',
+    puzzle_maintenance_lock: 'LOCK / JAMMED',
+    puzzle_packet_repair: 'CONTINUITY / BROKEN',
+  };
   const closeupStyle = closeupImage
     ? ({
         backgroundImage: `url("${import.meta.env.BASE_URL}${closeupImage}")`,
@@ -124,13 +135,15 @@ function DeviceFrame({
         className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
         aria-live="assertive"
       >
-        {failures > 0 ? copy.incorrectFeedback : 'STATUS / STANDBY'}
+        {failures > 0
+          ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
+          : 'STATUS / STANDBY'}
       </p>
     </section>
   );
 }
 
-function PowerRouteDevice({ submit }: DeviceProps) {
+function PowerRouteDevice({ failures, submit }: DeviceProps) {
   const [isolated, setIsolated] = useState<string | null>(null);
   const [sequence, setSequence] = useState<string[]>([]);
   useAutoAnswer(
@@ -143,32 +156,62 @@ function PowerRouteDevice({ submit }: DeviceProps) {
     ['intercom', 'INTERCOM', '1 UNIT', 'STANDBY'],
     ['buffer', 'ECHO BUFFER', '3 UNIT', 'STANDBY'],
   ] as const;
+  const loadUsed = sequence.reduce((total, id) => {
+    const line = lines.find(([lineId]) => lineId === id);
+    return total + Number(line?.[2].split(' ')[0] ?? 0);
+  }, 0);
 
   return (
-    <div className="power-device">
-      <div className="power-meter" aria-label="配電状態">
-        <span>CAPACITY</span>
-        <strong>7 UNIT</strong>
-        <span>LINE ERROR</span>
-        <strong>DOOR / SHORT</strong>
+    <div className={`power-device${failures > 0 ? ' is-tripped' : ''}`}>
+      <div
+        className="power-meter"
+        aria-label={`電源容量7 UNIT、使用中${loadUsed} UNIT`}
+      >
+        <span>BATTERY / 7 UNIT</span>
+        <div className="battery-cells" aria-hidden="true">
+          {Array.from({ length: 7 }, (_, index) => (
+            <i className={index < loadUsed ? 'is-used' : ''} key={index} />
+          ))}
+        </div>
+        <strong>LOAD {loadUsed} / 7</strong>
       </div>
-      <div className="cable-bank" aria-label="切り離すケーブル">
+      <div className="power-bus" aria-hidden="true">
+        <span>DC BUS</span>
+        <i />
+      </div>
+      <div className="cable-bank" aria-label="電源配線と切り離しコネクタ">
         {lines.map(([id, label, load, status]) => (
           <button
             type="button"
-            className={`power-cable${isolated === id ? ' is-unplugged' : ''}`}
+            className={`power-cable${isolated === id ? ' is-unplugged' : ''}${sequence.includes(id) ? ' is-energized' : ''}${id === 'door' ? ' is-short' : ''}`}
             aria-pressed={isolated === id}
             aria-label={`${label}ケーブルを切り離す`}
             key={id}
             onClick={() => setIsolated((value) => (value === id ? null : id))}
           >
-            <i aria-hidden="true" />
+            <b className="power-branch" aria-hidden="true" />
+            <i className="cable-plug" aria-hidden="true" />
+            {id === 'door' && isolated !== id && (
+              <em className="short-spark" aria-hidden="true">
+                ⚡
+              </em>
+            )}
             <span>{label}</span>
             <small>
               {load} / {status}
             </small>
           </button>
         ))}
+      </div>
+      <div
+        className="control-flow"
+        aria-label="制御信号は端末から通話器、ECHO BUFFERへ流れる"
+      >
+        <span>TERMINAL</span>
+        <i aria-hidden="true">▶</i>
+        <span>INTERCOM</span>
+        <i aria-hidden="true">▶</i>
+        <span>ECHO BUFFER</span>
       </div>
       <div className="breaker-bank" aria-label="起動ブレーカー">
         {lines.slice(1).map(([id, label]) => {
@@ -187,7 +230,7 @@ function PowerRouteDevice({ submit }: DeviceProps) {
             >
               <i aria-hidden="true" />
               <span>{label}</span>
-              <output aria-label={`${label}の投入順`}>{order || '—'}</output>
+              <output>{order ? 'ON' : 'OFF'}</output>
             </button>
           );
         })}
@@ -229,10 +272,6 @@ function CarrierSyncDevice({ submit }: DeviceProps) {
           />
         ),
       )}
-      <p className="device-equivalent">
-        位置数値：A {signed(positions[0] ?? 0)} / B {signed(positions[1] ?? 0)}{' '}
-        / C {signed(positions[2] ?? 0)}
-      </p>
     </div>
   );
 }
@@ -248,28 +287,66 @@ function WaveRail({
   reference?: boolean;
   onChange?: (value: number) => void;
 }) {
+  const overlap = Math.max(42, 100 - Math.abs(position) * 29);
+
+  function setFromPointer(event: ReactPointerEvent<HTMLDivElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const ratio = (event.clientX - bounds.left) / bounds.width;
+    onChange?.(Math.max(-2, Math.min(2, Math.round((ratio - 0.5) * 4))));
+  }
+
   return (
-    <label className={`wave-rail${position === 0 ? ' is-locked' : ''}`}>
+    <div className={`wave-rail${position === 0 ? ' is-locked' : ''}`}>
       <span>{label}</span>
-      <div className="wave-track" aria-hidden="true">
-        <i style={{ transform: `translateX(${position * 12}%)` }} />
+      <div
+        className={`wave-track${reference ? ' is-reference' : ' is-draggable'}`}
+        {...(!reference && {
+          role: 'slider',
+          tabIndex: 0,
+          'aria-label': label,
+          'aria-valuemin': -2,
+          'aria-valuemax': 2,
+          'aria-valuenow': position,
+          'aria-valuetext': `${overlap}%一致、${position === 0 ? '位相固定' : '未同期'}`,
+          onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setFromPointer(event);
+          },
+          onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              setFromPointer(event);
+          },
+          onPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId);
+          },
+          onKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            onChange?.(
+              Math.max(
+                -2,
+                Math.min(2, position + (event.key === 'ArrowRight' ? 1 : -1)),
+              ),
+            );
+          },
+        })}
+      >
+        {!reference && <em aria-hidden="true" />}
+        <i
+          aria-hidden="true"
+          style={{ transform: `translateX(${position * 12}%)` }}
+        />
         <b />
       </div>
       {reference ? (
-        <output>0 / LOCKED</output>
+        <output>REFERENCE</output>
       ) : (
-        <input
-          type="range"
-          min={-2}
-          max={2}
-          step={1}
-          value={position}
-          aria-label={label}
-          aria-valuetext={`${signed(position)}、${position === 0 ? '同期' : '未同期'}`}
-          onChange={(event) => onChange?.(Number(event.currentTarget.value))}
-        />
+        <output>
+          {position === 0 ? '● PHASE LOCK' : `OVERLAP ${overlap}%`}
+        </output>
       )}
-    </label>
+    </div>
   );
 }
 
@@ -280,11 +357,11 @@ const symbols = [
   ['node', '◆'],
 ] as const;
 
-function MaintenanceLockDevice({ submit }: DeviceProps) {
+function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
   const [dials, setDials] = useState(['ring', 'triangle', 'node', 'double']);
   return (
     <div className="locker-device">
-      <div className="lock-plate">
+      <div className={`lock-plate${failures > 0 ? ' is-jammed' : ''}`}>
         <span>LAST INSPECTION</span>
         <strong>4 STEP</strong>
         <div className="symbol-dials" aria-label="四連記号錠">
@@ -508,60 +585,166 @@ function SignalTraceDevice({ submit }: DeviceProps) {
 }
 
 const fragments = [
-  ['a', 'A', '◇ → 三本線'],
-  ['b', 'B', '三本線 → ■'],
-  ['c', 'C', '｜ → 波形△'],
-  ['d', 'D', '波形△ → ◇'],
+  { id: 'a', label: 'A', left: 'diamond', right: 'voice' },
+  { id: 'b', label: 'B', left: 'voice', right: 'check' },
+  { id: 'c', label: 'C', left: 'header', right: 'triangle' },
+  { id: 'd', label: 'D', left: 'triangle', right: 'diamond' },
 ] as const;
 
 function PacketRailDevice({ submit }: DeviceProps) {
-  const [rail, setRail] = useState<string[]>([]);
-  useAutoAnswer(rail.length === 4 ? rail : null, submit);
+  const [rail, setRail] = useState<(string | null)[]>([null, null, null]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const complete = rail.every(isString);
+  useAutoAnswer(complete ? ['c', ...rail.filter(isString)] : null, submit);
+
+  const placedFragments = [
+    fragments.find(({ id }) => id === 'c')!,
+    ...rail.map((id) => fragments.find((fragment) => fragment.id === id)),
+  ];
+  const joints = placedFragments.slice(0, -1).map((fragment, index) => {
+    const next = placedFragments[index + 1];
+    return Boolean(fragment && next && fragment.right === next.left);
+  });
+
+  function placeFragment(slot: number, fragmentId: string) {
+    setRail((current) =>
+      current.map((value, index) => {
+        if (index === slot) return fragmentId;
+        return value === fragmentId ? null : value;
+      }),
+    );
+    setSelected(null);
+  }
+
   return (
     <div className="frame-device">
-      <div className="frame-format">
-        <span>HEADER</span>
-        <i />
-        <span>BODY</span>
-        <i />
-        <span>VOICEPRINT</span>
-        <i />
-        <span>CHECK</span>
-      </div>
       <div className="frame-rail" aria-label="PACKET断片レール">
         {[0, 1, 2, 3].map((slot) => {
-          const fragment = fragments.find(([id]) => id === rail[slot]);
+          const fixed = slot === 0;
+          const fragment = fixed
+            ? fragments.find(({ id }) => id === 'c')
+            : fragments.find(({ id }) => id === rail[slot - 1]);
           return (
-            <div key={slot}>
-              <small>{slot + 1}</small>
-              <strong>{fragment ? `断片${fragment[1]}` : 'EMPTY'}</strong>
-              <span>{fragment?.[2]}</span>
+            <div
+              className={`data-fragment-slot${fixed ? ' is-fixed' : ''}`}
+              key={slot}
+            >
+              <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
+              <button
+                type="button"
+                data-frame-slot={fixed ? undefined : slot - 1}
+                disabled={fixed}
+                aria-label={
+                  fixed
+                    ? '固定されたHEADER断片C'
+                    : fragment
+                      ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
+                      : `レール${slot + 1}へ${selected ? `断片${selected.toUpperCase()}を` : ''}置く`
+                }
+                onClick={() => {
+                  if (fixed) return;
+                  if (selected) placeFragment(slot - 1, selected);
+                  else if (fragment) {
+                    setSelected(fragment.id);
+                    setRail((current) =>
+                      current.map((value, index) =>
+                        index === slot - 1 ? null : value,
+                      ),
+                    );
+                  }
+                }}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const fragmentId = event.dataTransfer.getData('text/plain');
+                  if (fragmentId) placeFragment(slot - 1, fragmentId);
+                }}
+              >
+                {fragment ? (
+                  <DataFragmentGraphic fragment={fragment} />
+                ) : (
+                  <span className="empty-fragment" aria-hidden="true" />
+                )}
+              </button>
+              {slot < 3 && (
+                <i
+                  className={`fragment-joint${joints[slot] ? ' is-connected' : complete ? ' is-broken' : ''}`}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           );
         })}
       </div>
-      <div className="fragment-tray">
-        {fragments.map(([id, label, edges]) => (
-          <button
-            type="button"
-            key={id}
-            disabled={rail.includes(id)}
-            aria-label={`断片${label}をレールへ入れる`}
-            onClick={() => setRail((current) => [...current, id])}
-          >
-            <strong>断片{label}</strong>
-            <small>{edges}</small>
-          </button>
-        ))}
+      <div className="fragment-tray" aria-label="壊れたデータ片">
+        {fragments
+          .filter(({ id }) => id !== 'c')
+          .map((fragment) => (
+            <button
+              type="button"
+              key={fragment.id}
+              draggable
+              disabled={rail.includes(fragment.id)}
+              aria-pressed={selected === fragment.id}
+              aria-label={`断片${fragment.label}を持つ`}
+              onClick={() => setSelected(fragment.id)}
+              onDragStart={(event) => {
+                setSelected(fragment.id);
+                event.dataTransfer.setData('text/plain', fragment.id);
+              }}
+            >
+              <DataFragmentGraphic fragment={fragment} />
+            </button>
+          ))}
         <button
           type="button"
           className="device-eject"
-          onClick={() => setRail([])}
+          onClick={() => {
+            setRail([null, null, null]);
+            setSelected(null);
+          }}
         >
           EJECT / 取り出す
         </button>
       </div>
+      <div className="frame-continuity" aria-live="polite">
+        {joints.map((connected, index) => (
+          <span
+            className={connected ? 'is-connected' : complete ? 'is-broken' : ''}
+            key={index}
+          >
+            {connected ? '●' : complete ? '×' : '○'}
+          </span>
+        ))}
+        <small>
+          {complete && joints.some((joint) => !joint)
+            ? 'SIGNAL BREAK'
+            : 'CONTINUITY'}
+        </small>
+      </div>
     </div>
+  );
+}
+
+type FragmentDefinition = (typeof fragments)[number];
+
+function DataFragmentGraphic({ fragment }: { fragment: FragmentDefinition }) {
+  return (
+    <span className="data-fragment" data-fragment-id={fragment.id}>
+      <i className={`fragment-edge edge-${fragment.left}`} aria-hidden="true" />
+      <b aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </b>
+      <i
+        className={`fragment-edge edge-${fragment.right}`}
+        aria-hidden="true"
+      />
+      <strong>DATA {fragment.label}</strong>
+    </span>
   );
 }
 
@@ -882,11 +1065,11 @@ function useAutoAnswer(
   answer: string[] | null,
   submit: (answer: string[]) => void,
 ) {
-  const submitted = useRef(false);
+  const submittedSignature = useRef('');
   const signature = answer?.join('|') ?? '';
   useEffect(() => {
-    if (!answer || submitted.current) return;
-    submitted.current = true;
+    if (!answer || submittedSignature.current === signature) return;
+    submittedSignature.current = signature;
     submit(answer);
   }, [answer, signature, submit]);
 }

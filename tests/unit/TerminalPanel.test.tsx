@@ -28,9 +28,16 @@ describe('TerminalPanel', () => {
       />,
     );
     expect(screen.getByText('搬送波同期器')).toBeVisible();
-    expect(screen.getByRole('slider', { name: 'CHANNEL A' })).toHaveValue('-2');
-    expect(screen.getByRole('slider', { name: 'CHANNEL C' })).toHaveValue('1');
-    expect(screen.getByText('位置数値：A -2 / B 0 / C +1')).toBeVisible();
+    expect(screen.getByRole('slider', { name: 'CHANNEL A' })).toHaveAttribute(
+      'aria-valuenow',
+      '-2',
+    );
+    expect(screen.getByRole('slider', { name: 'CHANNEL C' })).toHaveAttribute(
+      'aria-valuenow',
+      '1',
+    );
+    expect(screen.getByText('OVERLAP 42%')).toBeVisible();
+    expect(screen.getByText('OVERLAP 71%')).toBeVisible();
     expect(screen.queryByText(/早い波は右/)).not.toBeInTheDocument();
     expect(screen.queryByText('この答えで確認する')).not.toBeInTheDocument();
     expect(screen.queryByText(/選択済み/)).not.toBeInTheDocument();

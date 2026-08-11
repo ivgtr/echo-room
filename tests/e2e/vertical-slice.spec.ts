@@ -184,9 +184,7 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     'ECHO BUFFERブレーカー',
   ])
     await powerPuzzle.getByRole('button', { name }).press('Enter');
-  await expect(
-    page.getByText('保護回路が作動。隔離線か投入順を点検。'),
-  ).toBeVisible();
+  await expect(page.getByText('PROTECTION / TRIPPED')).toBeVisible();
   await powerPuzzle
     .getByRole('button', { name: 'DOORケーブルを切り離す' })
     .press('Enter');
@@ -533,5 +531,18 @@ test.describe('touch input', () => {
     await expect(
       page.getByRole('heading', { name: '非常電源切替' }),
     ).toBeVisible();
+  });
+
+  test('touch moves the carrier waveforms themselves', async ({ page }) => {
+    await page.addInitScript(installProgressSave, createProgressSave());
+    await page.goto('/');
+    await page.getByRole('button', { name: '続きから' }).tap();
+    await page.getByRole('button', { name: '壁面端末を調べる' }).tap();
+
+    const device = page.locator('[data-puzzle-id="puzzle_carrier_sync"]');
+    await device.getByRole('slider', { name: 'CHANNEL A' }).tap();
+    await device.getByRole('slider', { name: 'CHANNEL C' }).tap();
+
+    await expect(device).toBeHidden();
   });
 });

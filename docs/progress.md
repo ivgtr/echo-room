@@ -9,6 +9,7 @@
 - P3R-02は完了。謎の情報量と正解を維持したまま、10問の名称・説明・手掛かり・設問・誤答、30ヒント、目的、端末、探索文、資料、所持品、通知を短く自然な日本語へ統一した。抽象的な技術語は固有名に必要な範囲へ絞り、具体的な見る場所と操作へ言い換えた。
 - P3R-03は完了。共通Puzzle UIから解法要約と`PUZZLE 01`表示を削除し、装置の生データと入力部だけへ縮小した。規則は進行で変わる机上資料、4設備の銘板、会話履歴、端末の別項目へ分散し、全10問の正解後に設備変化や新記録を示すNarrative導線を追加した。
 - P3R-04は完了。共通Workbench、選択数、共通確認ボタンを削除し、10問をケーブル・ブレーカー・波形レール・四連ダイヤル・パッチ盤・配線トレーサー・断片レール・検査器・校正器・送信窓盤の直接操作へ単一移行した。正しい連続状態は自動検出し、明示検証はロッカーハンドルと試験レバーだけに限定した。
+- P3R-05は完了。非常電源の通電・短絡・負荷・制御順、搬送波本体の直接dragと重なり、固定HEADERと端形状によるPACKET連続性を装置グラフィックへ統合した。既存の探索証拠と重なるロッカーの経路図・室内記号は追加せず、記号は対象調査時のテキスト、点検順はデスクの紙で再確認する構造を維持した。
 - 搬送波、PACKET指紋、声紋特徴量を同じ視覚文法へ統一し、線高と数列を併記した。すべての主要パズルは発話音声・音の聞き分けなしで解ける。
 - P4は本素材統合の途中。P4-02の現行画面は利用者から肯定評価を受け、UI工程へ進む指示があったため、実機確認待ちのblockerは2026-08-11に解除された。
 - P4-02には正式高解像度原本、独立parallax layer、hit mask、残状態差分が残る。これらはP4-02内で継続するが、P5およびUI品質向上の着手を止めない。
@@ -50,6 +51,7 @@
 | P3R-02 | completed | ゲーム内日本語の基準を正本化。パズル、ヒント、目的、端末、独白、資料、所持品、保存通知を平易化し、同じ対象の呼称を統一。正解配列、判定、進行、PACKET本文は変更なし | `npm run check`成功（17 files/56 tests、content・asset validation、build 589.49kB）。Chromiumの全編10問・keyboard・touch・focus・reduced-motionを含む対象9件成功（7件初回＋文言期待値更新後2件再実行） | 初見時の読みやすさはP7-01で利用者確認 |
 | P3R-03 | completed | 解法を同一画面へ列挙する`evidence`構造を削除。装置readout、進行別の机上資料、端末・通話器・BUFFER・ドア銘板、SYSTEM異常表示、全問後のNarrative queueへ単一移行。端末は問終了・再開時にSYSTEMへ戻し、プレイヤーがLOG・SIGNAL・SECURITYを選ぶ | `npm run check`成功（17 files/59 tests、content・asset validation、production build）。Chromiumで10問keyboard全編1件、電源復旧・再開keyboardとtouchの代表2件成功 | 初見時の発見順、説明感、迷い方はP7-01で利用者確認 |
 | P3R-04 | completed | 共通フォーム型`PuzzleWorkbench`とtask/options表示を削除。10問固有の`PuzzleDevice`へ移行し、直接操作、自動作動、世界内ハンドル・試験レバー、接写BACK・Escape・focus復帰を統合 | `npm run check`成功（18 files/62 tests、content・asset validation、production build）。PuzzleDevice component 3件、Chromiumの10問keyboard全編・電源誤答再試行・touch到達・focus復帰、1280×720の搬送波・ロッカーを目視確認 | 初見時の装置理解と操作発見性はP7-01で利用者確認 |
+| P3R-05 | completed | 非常電源を盤面全幅の通電図へ変更。搬送波の別置きslider・答え位置数値を削除し波形本体へpointer/touch/keyboard入力を統合。PACKETはCのHEADERを固定し、D/A/Bの端形状、接続・断線、誤答配置保持へ変更。ロッカーのヒント追加案は既存デスク資料との重複として不採用 | `npm run check`成功（18 files/64 tests、content・asset validation、production build 603.28kB）。Chromiumでkeyboardのみ10問通し1件（2.9分）、電源誤答再試行・保存・focus・reduced-motion・touchを含む縦切り8件（4.0分）、搬送波本体touch 1件成功。1280×720の非常電源・搬送波・PACKETを目視確認 | 初見時の操作理解と難易度はP7-01で利用者playtest |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
 | P4-02 | in_progress | 3 bundle・25画像、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。UIQ-02でReact・Pixi共通の6〜10点polygon hotspotへ更新。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit、同一Canvas維持・全4面fade・電源復旧・全編・touch・輪郭外click拒否E2E | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-04の着手は阻害しない |
 | P4-03 | completed | 時計接写へ02:17、デスク接写へ容量・負荷・短絡情報を合成。SYSTEMへ-00:20:00、SECURITYと所持品へ室内・通信配線の二層図、職員カードと声紋校正へ同一人物写真、最終送信へ4受信窓・固定遅延・回線終端・赤いbuttonを統合 | `npm run check`、Chromiumの時計・用紙・二層図・波形・全編keyboard・touch・focus復帰E2E | なし |

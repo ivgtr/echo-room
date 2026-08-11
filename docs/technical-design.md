@@ -489,12 +489,12 @@ type PuzzleResult =
 
 | パズル | 種別 | 主なUI | 判定 |
 |---|---|---|---|
-| 非常電源経路 | routing | ケーブル・物理ブレーカー | 隔離対象と3設備の給電順 |
-| 搬送波同期 | calibration | 直接スライドする波形レール | 3回線の位相補正 |
+| 非常電源経路 | routing | 通電表示付き配線・コネクタ・物理ブレーカー | 隔離対象と3設備の給電順 |
+| 搬送波同期 | calibration | 基準へ直接dragする波形レール | 3回線の位相補正 |
 | 保守ロッカー | correlation | 四連記号ダイヤル・ハンドル | 点検順から変換した4記号 |
 | 通信ログ照合 | correlation | RECEIVE/SOURCEパッチ盤 | RECEIVEとSOURCEの3対応 |
 | 通信経路追跡 | routing | 二層図上の配線トレーサー | 線種、中継端子、終端 |
-| PACKET復元 | reconstruction | 断片カセット・フレームレール | 4断片の連続順 |
+| PACKET復元 | reconstruction | 固定HEADER・端形状付きデータ片・連続性レール | 4断片の連続順 |
 | 時系列矛盾 | correlation | PACKETカセット・出来事検査器 | 未発生PACKETと根拠 |
 | 声紋校正 | calibration | 波形画面・ダイヤル・スライダー | 3特徴の逆変換 |
 | 因果会話 | reconstruction | 送信文ストリップ・時系列レール | 設備状態に基づく4文順 |
@@ -507,7 +507,8 @@ type PuzzleResult =
 - XStateへ送るeventは`PUZZLE_SUBMITTED { puzzleId, answer[] }`へ統一する。
 - 正解表はUI componentに持たせず、`isPuzzleAnswerCorrect`純粋関数だけが参照する。
 - 波形同期など正しい連続状態を装置が検出できる問は自動送信し、ロッカーと送信試験は世界内のハンドル・レバーで送信する。
-- 誤答時はfailure更新で装置の操作状態を安全に初期化し、進行状態は変更しない。
+- 誤答時は進行状態を変更せず、装置固有の安全な反応を返す。PACKET復元のように誤り箇所を直す問は配置を保持し、保護回路が戻す装置だけ一時操作を初期化する。
+- 正誤の主要feedbackは発光、断線、レバー復帰、ハンドル停止と短い状態codeを併用し、長い説明文で機械に解法を喋らせない。
 - 正解時は完了IDと次の`StoryStage`だけをXState contextへ反映する。
 - 装置ごとの専用machineは作らず、共通進行machineと純粋判定を単一境界として維持する。
 
