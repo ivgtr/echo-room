@@ -10,7 +10,10 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await page.getByRole('button', { name: '探索を始める' }).click();
   await page.getByRole('button', { name: '音声 ON' }).click();
   await page.getByRole('button', { name: '西壁を見る' }).click();
-  await page.getByRole('button', { name: 'ブレーカーを調べる' }).click();
+  await page
+    .getByLabel('調査対象')
+    .getByRole('button', { name: 'ブレーカーを調べる' })
+    .click();
 
   await page.getByRole('button', { name: '回路 1' }).focus();
   await page.keyboard.press('Enter');
@@ -33,7 +36,9 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await page.reload();
   await page.getByRole('button', { name: '続きから' }).click();
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
-  await expect(page.getByText('よし。次は端末だ。')).toBeVisible();
+  await expect(
+    page.getByText('端末のLOGで受信時刻と送信元時刻を確認しよう。'),
+  ).toBeVisible();
 });
 
 test.describe('touch input', () => {
@@ -47,7 +52,10 @@ test.describe('touch input', () => {
     }
     await page.getByRole('button', { name: '探索を始める' }).tap();
     await page.getByRole('button', { name: '西壁を見る' }).tap();
-    await page.getByRole('button', { name: 'ブレーカーを調べる' }).tap();
+    await page
+      .getByLabel('調査対象')
+      .getByRole('button', { name: 'ブレーカーを調べる' })
+      .tap();
     await expect(
       page.getByRole('heading', { name: '非常電源ブレーカー' }),
     ).toBeVisible();

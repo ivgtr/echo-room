@@ -16,11 +16,11 @@
 | P2-05 | completed | 電源復旧直後のversion付きlocalStorage自動保存、安全checkpoint復元、破損・書込失敗表示を実装 | round-trip・破損unit、reload復元E2E | なし |
 | P3-01 | completed | scene関連ID、dialogue、item、document、7 puzzle、21 hint、許可condition/effectのZod schemaとYAMLを実装 | `npm run check`、schema・重複ID・20分差unit、PACKET/参照validation | なし |
 | P3-02 | completed | SYSTEM・LOG・AUDIO・SECURITYを持つ端末UI、進行lock、英語見出しと日本語補助、重要時刻の再確認を実装 | `npm run check`、端末component test | AUDIO・SECURITY解放はP3-04 |
-| P3-03 | pending |  |  | P2 Gate |
-| P3-04 | pending |  |  | P2 Gate |
-| P3-05 | pending |  |  | P2 Gate |
-| P3-06 | pending |  |  | P2 Gate |
-| P3-07 | pending |  |  | P2 Gate |
+| P3-03 | completed | 20分差確認、壁時計情報、0237ロッカー、誤答再試行、ドライバー・カード・フロア図取得を実装 | locker正誤unit、全編E2E | なし |
+| P3-04 | completed | カードによるSECURITY図面、所持品図面、隣室不存在、AUDIO PACKET 01〜04と未発言PACKET 04を実装 | story transition unit、全編E2E、PACKET validation | 本番音声待ち |
+| P3-05 | completed | ドライバー使用、VOICE ANALYSIS、98〜100%演出、E-01 OCCUPANTと仮人物写真、正体判明導線を実装 | story transition unit、全編E2E | `protagonist_unknown`代替写真 |
+| P3-06 | completed | 4台詞選択・並べ替え、誤順拒否、-00:20:00送信、冒頭会話再現、ドア解錠、白い光、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
+| P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P4-01 | pending |  |  | 本番素材承認 |
 | P4-02 | pending |  |  | P4-01 |
 | P4-03 | pending |  |  | P4-01 |

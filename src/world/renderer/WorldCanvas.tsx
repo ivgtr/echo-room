@@ -1,10 +1,4 @@
-import {
-  AccessibilitySystem,
-  Application,
-  Container,
-  Graphics,
-  Text,
-} from 'pixi.js';
+import { AccessibilitySystem, Application, Container, Graphics } from 'pixi.js';
 import 'pixi.js/accessibility';
 import { useEffect, useRef } from 'react';
 
@@ -70,18 +64,7 @@ export function WorldCanvas({
           color: powerRestored ? '#c9d5d5' : '#9a1f24',
           alpha: powerRestored ? 0.2 : 0.16,
         });
-        const label = new Text({
-          text: `${viewNames[locationId]}\nPLACEHOLDER 1920×1080`,
-          style: {
-            fill: '#9fb0ad',
-            fontFamily: 'monospace',
-            fontSize: 28,
-            align: 'center',
-          },
-        });
-        label.anchor.set(0.5);
-        label.position.set(960, 90);
-        room.addChild(wall, glow, floor, label);
+        room.addChild(wall, glow, floor);
 
         const addProp = (
           id: HotspotId,
@@ -181,6 +164,12 @@ export function WorldCanvas({
       }
       ref={hostRef}
       data-testid="world-canvas"
-    />
+    >
+      <span className="canvas-placeholder-label" aria-hidden="true">
+        {viewNames[locationId]}
+        <br />
+        PLACEHOLDER 1920×1080
+      </span>
+    </div>
   );
 }

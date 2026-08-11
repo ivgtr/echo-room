@@ -164,6 +164,21 @@ button:focus-visible {
   filter: brightness(1.08);
 }
 
+.canvas-placeholder-label {
+  position: absolute;
+  z-index: 2;
+  top: 5%;
+  left: 50%;
+  color: #9fb0ad;
+  font:
+    clamp(0.7rem, 1.4vw, 1.4rem) ui-monospace,
+    monospace;
+  line-height: 1.5;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 .hud-layer,
 .modal-layer,
 .screen-noise {
@@ -347,6 +362,117 @@ button:focus-visible {
 .terminal-display td {
   padding: 0.7rem;
   border-bottom: 1px solid rgb(88 184 176 / 25%);
+}
+
+.compact-modal {
+  top: 14%;
+  right: 18%;
+  bottom: 14%;
+  left: 18%;
+}
+
+.compact-modal label {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.compact-modal input {
+  min-height: 3.2rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #58b8b0;
+  color: #e7efed;
+  background: #071011;
+  font:
+    1.5rem ui-monospace,
+    monospace;
+  letter-spacing: 0.5em;
+}
+
+.compact-modal li {
+  margin: 0.6rem 0;
+}
+
+.analysis-result {
+  display: grid;
+  gap: 0.8rem;
+  place-items: center;
+}
+
+.portrait-placeholder {
+  display: grid;
+  width: min(12rem, 40%);
+  aspect-ratio: 4 / 5;
+  border: 1px solid #58b8b0;
+  color: #8ca09d;
+  background: linear-gradient(145deg, #303a3b, #11181c);
+  place-items: center;
+  text-align: center;
+}
+
+.packet-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid rgb(88 184 176 / 25%);
+}
+
+.packet-row p {
+  grid-column: 1 / -1;
+}
+
+.packet-options {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.transmit-button {
+  margin: 1rem;
+  border-color: #d42a32 !important;
+  background: #65151a !important;
+}
+
+.ending-panel {
+  position: absolute;
+  z-index: 20;
+  display: grid;
+  inset: 0;
+  padding: 10%;
+  color: #eef8f6;
+  background: radial-gradient(
+    circle,
+    rgb(201 213 213 / 40%),
+    #11181c 58%,
+    #050809
+  );
+  place-content: center;
+  text-align: center;
+}
+
+.ending-panel p {
+  max-width: 50rem;
+  font-size: clamp(1.1rem, 2.2vw, 2rem);
+  line-height: 1.8;
+}
+
+.ending-panel button {
+  min-height: 3rem;
+  border: 1px solid #c9d5d5;
+  color: inherit;
+  background: rgb(17 24 28 / 80%);
+}
+
+.ending-panel.is-complete {
+  color: #11181c;
+  background: #f4fbfa;
+}
+
+.ending-panel h1 {
+  font-weight: 300;
+  font-size: clamp(3rem, 9vw, 7rem);
+  letter-spacing: 0.14em;
 }
 
 .dialogue-overlay p {

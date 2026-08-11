@@ -7,7 +7,18 @@ describe('TerminalPanel', () => {
   it('shows exact story times and keeps future menus locked', () => {
     const onSelect = vi.fn();
     render(
-      <TerminalPanel menuId="system" onSelect={onSelect} onClose={vi.fn()} />,
+      <TerminalPanel
+        menuId="system"
+        stage="inspect_logs"
+        finalReady={false}
+        onSelect={onSelect}
+        onClose={vi.fn()}
+        onLogsConfirmed={vi.fn()}
+        onMapInspected={vi.fn()}
+        onPacketPlayed={vi.fn()}
+        onFinalSubmit={vi.fn()}
+        onTransmit={vi.fn()}
+      />,
     );
     expect(screen.getByText('-00:20:00')).toBeVisible();
     expect(screen.getByRole('button', { name: /AUDIO/ })).toBeDisabled();

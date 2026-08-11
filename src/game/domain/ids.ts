@@ -1,7 +1,9 @@
 export const hotspotIds = [
   'hotspot_door',
+  'hotspot_clock',
   'hotspot_intercom',
   'hotspot_terminal',
+  'hotspot_analysis_panel',
   'hotspot_desk',
   'hotspot_breaker',
   'hotspot_locker',

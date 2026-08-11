@@ -8,14 +8,20 @@ import { loadProgress, saveProgress } from '../game/save/saveManager';
 import {
   selectBreakerFailures,
   selectBreakerSequence,
+  selectEndingLineIndex,
+  selectFinalOrderReady,
+  selectHintLevel,
+  selectInventory,
   selectIntroLineIndex,
   selectIsBreakerPuzzle,
   selectIsIntro,
   selectIsPlaying,
   selectLocation,
+  selectLockerFailures,
   selectPowerRestored,
   selectSelectedHotspot,
   selectSubtitle,
+  selectStoryStage,
   selectTerminalMenu,
 } from '../game/selectors/gameSelectors';
 import { GameScreen } from '../ui/GameScreen';
@@ -29,6 +35,8 @@ export function App() {
   const [visualAssist, setVisualAssist] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [hintOpen, setHintOpen] = useState(false);
   const actorRef = useActorRef(gameMachine);
   const isPlaying = useSelector(actorRef, selectIsPlaying);
   const intro = useSelector(actorRef, selectIsIntro);
@@ -41,6 +49,12 @@ export function App() {
   const breakerFailures = useSelector(actorRef, selectBreakerFailures);
   const introLineIndex = useSelector(actorRef, selectIntroLineIndex);
   const terminalMenuId = useSelector(actorRef, selectTerminalMenu);
+  const storyStage = useSelector(actorRef, selectStoryStage);
+  const inventory = useSelector(actorRef, selectInventory);
+  const lockerFailures = useSelector(actorRef, selectLockerFailures);
+  const finalReady = useSelector(actorRef, selectFinalOrderReady);
+  const endingLineIndex = useSelector(actorRef, selectEndingLineIndex);
+  const hintLevel = useSelector(actorRef, selectHintLevel);
   const savedPowerRef = useRef(false);
 
   useEffect(() => {
@@ -105,17 +119,46 @@ export function App() {
       audioEnabled={audioEnabled}
       saveMessage={saveMessage}
       terminalMenuId={terminalMenuId}
+      storyStage={storyStage}
+      inventory={inventory}
+      inventoryOpen={inventoryOpen}
+      lockerFailures={lockerFailures}
+      finalReady={finalReady}
+      endingLineIndex={endingLineIndex}
+      hintLevel={hintLevel}
+      hintOpen={hintOpen}
       onDialogueAdvance={() => actorRef.send({ type: 'DIALOGUE_ADVANCED' })}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}
       onBreakerToggle={handleBreaker}
-      onBreakerClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
+      onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleAudio={() => setAudioEnabled((value) => !value)}
       onExit={() => actorRef.send({ type: 'RETURNED_TO_TITLE' })}
       onTerminalMenu={(menuId) =>
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
       }
+      onLogsConfirmed={() => actorRef.send({ type: 'LOGS_CONFIRMED' })}
+      onLockerSubmit={(answer) =>
+        actorRef.send({ type: 'LOCKER_SUBMITTED', answer })
+      }
+      onInventoryToggle={() => setInventoryOpen((value) => !value)}
+      onMapInspected={(source) =>
+        actorRef.send({ type: 'FLOOR_MAP_INSPECTED', source })
+      }
+      onPacketPlayed={(packetId) =>
+        actorRef.send({ type: 'PACKET_PLAYED', packetId })
+      }
+      onAnalysisComplete={() =>
+        actorRef.send({ type: 'VOICE_ANALYSIS_STARTED' })
+      }
+      onFinalSubmit={(packetIds) =>
+        actorRef.send({ type: 'FINAL_ORDER_SUBMITTED', packetIds })
+      }
+      onTransmit={() => actorRef.send({ type: 'TRANSMISSION_CONFIRMED' })}
+      onEndingAdvance={() => actorRef.send({ type: 'ENDING_ADVANCED' })}
+      onHintToggle={() => setHintOpen((value) => !value)}
+      onHintReveal={() => actorRef.send({ type: 'HINT_REQUESTED' })}
     />
   );
 }
