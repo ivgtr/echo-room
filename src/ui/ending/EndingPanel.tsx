@@ -19,7 +19,11 @@ export function EndingPanel({
   return (
     <section
       className={completed ? 'ending-panel is-complete' : 'ending-panel'}
+      role="dialog"
+      aria-modal="true"
+      aria-label={completed ? 'TRANSMISSION COMPLETE' : '最終通信'}
       aria-live="polite"
+      aria-atomic="true"
     >
       {completed ? (
         <>
@@ -29,7 +33,7 @@ export function EndingPanel({
       ) : (
         <>
           <p>{lines[lineIndex]}</p>
-          <button type="button" onClick={onAdvance}>
+          <button type="button" onClick={onAdvance} autoFocus>
             {lineIndex === lines.length - 1 ? 'ドアを開ける' : '続ける'}
           </button>
         </>

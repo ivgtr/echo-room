@@ -23,6 +23,7 @@ const CAMERA_OVERSCAN = 1.012;
 type Props = {
   locationId: LocationId;
   powerRestored: boolean;
+  motionReduced: boolean;
   onHotspotSelected: (hotspotId: HotspotId) => void;
 };
 
@@ -36,6 +37,7 @@ type Scene = {
 export function WorldCanvas({
   locationId,
   powerRestored,
+  motionReduced,
   onHotspotSelected,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ export function WorldCanvas({
   const animationFrameRef = useRef<number | null>(null);
   const sceneRequestRef = useRef(0);
   const hotspotHandlerRef = useRef(onHotspotSelected);
-  const reduceMotionRef = useRef(false);
+  const reduceMotionRef = useRef(motionReduced);
   const [rendererReady, setRendererReady] = useState(false);
   const [assetState, setAssetState] = useState<'loading' | 'ready' | 'error'>(
     'loading',
@@ -57,6 +59,15 @@ export function WorldCanvas({
   useEffect(() => {
     hotspotHandlerRef.current = onHotspotSelected;
   }, [onHotspotSelected]);
+
+  useEffect(() => {
+    reduceMotionRef.current = motionReduced;
+    if (motionReduced) {
+      const baseX = (-LOGICAL_WIDTH * (CAMERA_OVERSCAN - 1)) / 2;
+      const baseY = (-LOGICAL_HEIGHT * (CAMERA_OVERSCAN - 1)) / 2;
+      cameraRef.current?.position.set(baseX, baseY);
+    }
+  }, [motionReduced]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -80,10 +91,6 @@ export function WorldCanvas({
 
         appRef.current = app;
         host.append(app.canvas);
-        reduceMotionRef.current = window.matchMedia(
-          '(prefers-reduced-motion: reduce)',
-        ).matches;
-
         const camera = new Container({ label: 'world-camera' });
         camera.scale.set(CAMERA_OVERSCAN);
         const baseX = (-LOGICAL_WIDTH * (CAMERA_OVERSCAN - 1)) / 2;
@@ -100,17 +107,16 @@ export function WorldCanvas({
         app.stage.addChild(transitionShade);
         transitionShadeRef.current = transitionShade;
 
-        if (!reduceMotionRef.current) {
-          const onPointerMove = (event: PointerEvent) => {
-            const bounds = app.canvas.getBoundingClientRect();
-            const xRatio = (event.clientX - bounds.left) / bounds.width - 0.5;
-            const yRatio = (event.clientY - bounds.top) / bounds.height - 0.5;
-            camera.position.set(baseX - xRatio * 8, baseY - yRatio * 5);
-          };
-          const onPointerLeave = () => camera.position.set(baseX, baseY);
-          app.canvas.addEventListener('pointermove', onPointerMove);
-          app.canvas.addEventListener('pointerleave', onPointerLeave);
-        }
+        const onPointerMove = (event: PointerEvent) => {
+          if (reduceMotionRef.current) return;
+          const bounds = app.canvas.getBoundingClientRect();
+          const xRatio = (event.clientX - bounds.left) / bounds.width - 0.5;
+          const yRatio = (event.clientY - bounds.top) / bounds.height - 0.5;
+          camera.position.set(baseX - xRatio * 8, baseY - yRatio * 5);
+        };
+        const onPointerLeave = () => camera.position.set(baseX, baseY);
+        app.canvas.addEventListener('pointermove', onPointerMove);
+        app.canvas.addEventListener('pointerleave', onPointerLeave);
 
         setRendererReady(true);
         void warmWorldImageCache(() => disposed);

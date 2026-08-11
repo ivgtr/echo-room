@@ -31,6 +31,7 @@ type Props = {
   audioLevels: AudioLevels;
   subtitleSettings: SubtitleSettings;
   visualAssist: boolean;
+  motionReduced: boolean;
   inventoryAvailable: boolean;
   hintAvailable: boolean;
   hintUnlocked: boolean;
@@ -42,6 +43,7 @@ type Props = {
   onAudioLevelChange: (channel: keyof AudioLevels, value: number) => void;
   onSubtitleSettingChange: SubtitleSettingChange;
   onToggleAssist: () => void;
+  onToggleMotion: () => void;
   onInventory: () => void;
   onHint: () => void;
   onExit: () => void;
@@ -160,10 +162,12 @@ export function SystemMenu(props: Props) {
           audioLevels={props.audioLevels}
           subtitleSettings={props.subtitleSettings}
           visualAssist={props.visualAssist}
+          motionReduced={props.motionReduced}
           onToggleAudio={props.onToggleAudio}
           onAudioLevelChange={props.onAudioLevelChange}
           onSubtitleSettingChange={props.onSubtitleSettingChange}
           onToggleAssist={props.onToggleAssist}
+          onToggleMotion={props.onToggleMotion}
         />
       )}
 
@@ -236,10 +240,12 @@ function SettingsView(
     | 'audioLevels'
     | 'subtitleSettings'
     | 'visualAssist'
+    | 'motionReduced'
     | 'onToggleAudio'
     | 'onAudioLevelChange'
     | 'onSubtitleSettingChange'
     | 'onToggleAssist'
+    | 'onToggleMotion'
   >,
 ) {
   return (
@@ -316,6 +322,13 @@ function SettingsView(
           onClick={props.onToggleAssist}
         >
           VISUAL ASSIST / 視覚補助 {props.visualAssist ? 'ON' : 'OFF'}
+        </button>
+        <button
+          type="button"
+          aria-pressed={props.motionReduced}
+          onClick={props.onToggleMotion}
+        >
+          REDUCE MOTION / 動き軽減 {props.motionReduced ? 'ON' : 'OFF'}
         </button>
       </fieldset>
     </div>

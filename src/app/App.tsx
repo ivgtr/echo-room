@@ -63,6 +63,10 @@ export function App() {
   const [visualAssist, setVisualAssist] = useState(
     initialSettings.visualAssist,
   );
+  const [motionReduced, setMotionReduced] = useState(
+    initialSettings.motionReduced ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const [audioEnabled, setAudioEnabled] = useState(
     initialSettings.audioEnabled,
   );
@@ -166,9 +170,10 @@ export function App() {
     try {
       saveSettings(
         {
-          schemaVersion: 1,
+          schemaVersion: 2,
           audioEnabled,
           visualAssist,
+          motionReduced,
           audioLevels,
           subtitleSettings,
         },
@@ -177,7 +182,20 @@ export function App() {
     } catch {
       // Settings storage failure must not interrupt play.
     }
-  }, [audioEnabled, audioLevels, subtitleSettings, visualAssist]);
+  }, [
+    audioEnabled,
+    audioLevels,
+    motionReduced,
+    subtitleSettings,
+    visualAssist,
+  ]);
+
+  useEffect(() => {
+    document.documentElement.dataset.reducedMotion = String(motionReduced);
+    return () => {
+      delete document.documentElement.dataset.reducedMotion;
+    };
+  }, [motionReduced]);
 
   useEffect(() => {
     const handleVisibilityChange = () =>
@@ -391,6 +409,7 @@ export function App() {
       breakerSequence={breakerSequence}
       breakerFailures={breakerFailures}
       visualAssist={visualAssist}
+      motionReduced={motionReduced}
       audioEnabled={audioEnabled}
       audioLevels={audioLevels}
       subtitleSettings={subtitleSettings}
@@ -420,6 +439,7 @@ export function App() {
       onBreakerToggle={handleBreaker}
       onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
+      onToggleMotion={() => setMotionReduced((value) => !value)}
       onToggleAudio={() => setAudioEnabled((value) => !value)}
       onAudioLevelChange={(channel, value) =>
         setAudioLevels((current) => ({ ...current, [channel]: value }))

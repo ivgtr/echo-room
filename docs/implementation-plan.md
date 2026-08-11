@@ -595,7 +595,7 @@ Phase番号は順序を示す。P4の素材制作とP5の機能調整は、依�
 
 - 全主要チェックポイントの自動保存。
 - schemaVersionとcontentVersion。
-- version移行テスト。
+- 非対応versionの保護テスト。
 - 破損時の保護、新規開始、消去。
 - 最初からやり直しても設定を保持。
 
@@ -788,7 +788,7 @@ verification:
 | content YAML | schema、参照、到達性validation |
 | UI | component testまたはE2E、keyboard操作 |
 | Canvas view | hotspot、resize、代表Visual Regression |
-| save | round-trip、破損、version migration |
+| save | round-trip、破損、非対応version保護 |
 | audio | 再生可、再生不可、pause/resume |
 | asset変更 | 寸法、alpha、file存在、Visual Regression |
 | ending | 冒頭からの通しE2E、台詞一致validation |

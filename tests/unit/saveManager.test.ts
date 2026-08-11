@@ -50,7 +50,6 @@ describe('saveManager', () => {
     );
     expect(loadProgress(storage)).toMatchObject({
       status: 'valid',
-      migrated: false,
       data: {
         schemaVersion: 2,
         progress: {
@@ -63,7 +62,7 @@ describe('saveManager', () => {
     });
   });
 
-  it('migrates schema v1 without mutating the stored source', () => {
+  it('rejects an unsupported schema without mutating the stored source', () => {
     const storage = createStorage();
     const legacyRaw = JSON.stringify({
       schemaVersion: 1,
@@ -78,18 +77,7 @@ describe('saveManager', () => {
       },
     });
     storage.setItem(SAVE_KEY, legacyRaw);
-    expect(loadProgress(storage)).toMatchObject({
-      status: 'valid',
-      migrated: true,
-      data: {
-        schemaVersion: 2,
-        progress: {
-          storyStage: 'inspect_logs',
-          inventory: [],
-          activeElapsedMs: 1234,
-        },
-      },
-    });
+    expect(loadProgress(storage)).toEqual({ status: 'corrupt' });
     expect(storage.getItem(SAVE_KEY)).toBe(legacyRaw);
   });
 

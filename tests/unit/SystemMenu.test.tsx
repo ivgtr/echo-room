@@ -12,6 +12,7 @@ describe('SystemMenu', () => {
   it('opens only discovered archive data and updates accessibility settings', () => {
     const onAudioLevelChange = vi.fn();
     const onSubtitleSettingChange = vi.fn();
+    const onToggleMotion = vi.fn();
     render(
       <SystemMenu
         objective="端末を確認する。"
@@ -22,6 +23,7 @@ describe('SystemMenu', () => {
         audioLevels={defaultAudioLevels}
         subtitleSettings={defaultSubtitleSettings}
         visualAssist={false}
+        motionReduced={false}
         inventoryAvailable={false}
         hintAvailable
         hintUnlocked={false}
@@ -46,6 +48,7 @@ describe('SystemMenu', () => {
         onAudioLevelChange={onAudioLevelChange}
         onSubtitleSettingChange={onSubtitleSettingChange}
         onToggleAssist={vi.fn()}
+        onToggleMotion={onToggleMotion}
         onInventory={vi.fn()}
         onHint={vi.fn()}
         onExit={vi.fn()}
@@ -73,5 +76,11 @@ describe('SystemMenu', () => {
       target: { value: '35' },
     });
     expect(onAudioLevelChange).toHaveBeenCalledWith('effects', 35);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'REDUCE MOTION / 動き軽減 OFF',
+      }),
+    );
+    expect(onToggleMotion).toHaveBeenCalledOnce();
   });
 });

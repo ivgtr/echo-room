@@ -71,6 +71,7 @@ type Props = {
   breakerSequence: readonly BreakerId[];
   breakerFailures: number;
   visualAssist: boolean;
+  motionReduced: boolean;
   audioEnabled: boolean;
   audioLevels: AudioLevels;
   subtitleSettings: SubtitleSettings;
@@ -96,6 +97,7 @@ type Props = {
   onBreakerToggle: (id: BreakerId) => void;
   onClose: () => void;
   onToggleAssist: () => void;
+  onToggleMotion: () => void;
   onToggleAudio: () => void;
   onAudioLevelChange: (channel: keyof AudioLevels, value: number) => void;
   onSubtitleSettingChange: SubtitleSettingChange;
@@ -360,7 +362,9 @@ export function GameScreen(props: Props) {
       <div
         className={`logical-stage${overlayOpen ? ' world-input-locked' : ''}${inspectionPhase !== 'idle' ? ` is-inspection-${inspectionPhase}` : ''}`}
         data-inspection-phase={inspectionPhase}
-        data-inspection-motion="zoom-or-crossfade"
+        data-inspection-motion={
+          props.motionReduced ? 'crossfade' : 'zoom-or-crossfade'
+        }
         data-subtitle-size={props.subtitleSettings.size}
         data-subtitle-background={props.subtitleSettings.background}
         data-text-speed={props.subtitleSettings.speed}
@@ -375,10 +379,11 @@ export function GameScreen(props: Props) {
         <WorldCanvas
           locationId={props.locationId}
           powerRestored={props.powerRestored}
+          motionReduced={props.motionReduced}
           onHotspotSelected={requestHotspot}
         />
         <div className="hud-layer">
-          <div className="status-cluster" aria-label="現在の状況">
+          <div className="status-cluster" role="group" aria-label="現在の状況">
             <EmergencyPowerStatus
               activeElapsedMs={props.activeElapsedMs}
               powerRestored={props.powerRestored}
@@ -404,6 +409,7 @@ export function GameScreen(props: Props) {
           <div
             className={`exploration-controls${overlayOpen ? ' is-disabled' : ''}`}
             aria-hidden={overlayOpen || undefined}
+            inert={overlayOpen || undefined}
           >
             <button
               type="button"
@@ -413,7 +419,7 @@ export function GameScreen(props: Props) {
             >
               <span aria-hidden="true">〈</span>
             </button>
-            <div className="hotspot-layer" aria-label="調査対象">
+            <div className="hotspot-layer" role="group" aria-label="調査対象">
               {availableHotspots.map((hotspot) => (
                 <div
                   className="hotspot-target"
@@ -549,6 +555,7 @@ export function GameScreen(props: Props) {
             audioLevels={props.audioLevels}
             subtitleSettings={props.subtitleSettings}
             visualAssist={props.visualAssist}
+            motionReduced={props.motionReduced}
             inventoryAvailable={props.inventory.length > 0}
             hintAvailable={props.powerRestored}
             hintUnlocked={props.breakerFailures + props.lockerFailures > 0}
@@ -560,6 +567,7 @@ export function GameScreen(props: Props) {
             onAudioLevelChange={props.onAudioLevelChange}
             onSubtitleSettingChange={props.onSubtitleSettingChange}
             onToggleAssist={props.onToggleAssist}
+            onToggleMotion={props.onToggleMotion}
             onInventory={props.onInventoryToggle}
             onHint={props.onHintToggle}
             onExit={props.onExit}

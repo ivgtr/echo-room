@@ -8,9 +8,10 @@ test('corrupt progress is protected until confirmed deletion and settings remain
     localStorage.setItem(
       'echo-room:settings',
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         audioEnabled: false,
         visualAssist: true,
+        motionReduced: true,
         audioLevels: { voice: 80, effects: 35, environment: 55 },
         subtitleSettings: {
           size: 'large',

@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { createProgressSave, installProgressSave } from './saveFixture';
+
 async function enterRoom(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
@@ -62,10 +64,10 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'ゲーム開始' }).click();
+  await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
   for (let index = 0; index < 6; index += 1)
-    await page.getByRole('button', { name: '次へ' }).click();
-  await page.getByRole('button', { name: '探索を始める' }).click();
+    await page.getByRole('button', { name: '次へ' }).press('Enter');
+  await page.getByRole('button', { name: '探索を始める' }).press('Enter');
   const world = page.getByTestId('world-canvas');
   const canvas = world.locator('canvas');
   await expect(world).toHaveAttribute('data-asset-state', 'ready');
@@ -79,6 +81,14 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await page.keyboard.press('Escape');
   const system = page.getByRole('dialog', { name: 'SYSTEM' });
   await expect(system).toBeVisible();
+  await expect(page.locator('.exploration-controls')).toHaveAttribute(
+    'inert',
+    '',
+  );
+  await expect(page.locator('.exploration-controls')).toHaveAttribute(
+    'aria-hidden',
+    'true',
+  );
   await expect(
     system.getByText('非常電源を復旧する。室内を観察し、電源設備を探す。'),
   ).toBeVisible();
@@ -94,26 +104,34 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(archiveEntry).toBeFocused();
   await system
     .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
-    .click();
+    .press('Enter');
   await expect(
     system.getByRole('button', { name: '小', exact: true }),
   ).toBeFocused();
-  await system.getByRole('button', { name: /MASTER \/ 音声 ON/ }).click();
+  await system
+    .getByRole('button', { name: /MASTER \/ 音声 ON/ })
+    .press('Enter');
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
   await expect(doorHotspot).toBeFocused();
+  await expect(page.locator('.exploration-controls')).not.toHaveAttribute(
+    'inert',
+    '',
+  );
   await page.keyboard.press('ArrowLeft');
   await page
     .getByLabel('調査対象')
     .getByRole('button', { name: 'ブレーカーパネルを調べる' })
-    .click();
+    .press('Enter');
 
   await page.getByRole('button', { name: '回路 1' }).focus();
   await page.keyboard.press('Enter');
   await expect(
     page.getByText('接続順が違う。全レバーが戻った。もう一度試せる。'),
   ).toBeVisible();
-  await page.getByRole('button', { name: '音高の視覚補助：OFF' }).click();
+  await page
+    .getByRole('button', { name: '音高の視覚補助：OFF' })
+    .press('Enter');
   for (const name of [
     /回路 3、音高レベル 1/,
     /回路 1、音高レベル 2/,
@@ -133,20 +151,20 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   const saveToast = page.getByText('電源復旧地点を自動保存しました');
   await expect(saveToast).toBeVisible();
   await expect(saveToast).toHaveCSS('pointer-events', 'none');
-  await page.getByRole('button', { name: '壁面端末を調べる' }).click();
+  await page.getByRole('button', { name: '壁面端末を調べる' }).press('Enter');
   const terminal = page.getByRole('dialog', { name: '壁面端末' });
-  await terminal.getByRole('button', { name: 'LOG' }).click();
+  await terminal.getByRole('button', { name: 'LOG' }).press('Enter');
   await expect(terminal.getByText('02:37:18')).toBeVisible();
   await expect(saveToast).toBeHidden({ timeout: 5000 });
-  await terminal.getByRole('button', { name: '端末を閉じる' }).click();
+  await terminal.getByRole('button', { name: '端末を閉じる' }).press('Enter');
   await page.reload();
-  await page.getByRole('button', { name: '続きから' }).click();
+  await page.getByRole('button', { name: '続きから' }).press('Enter');
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(saveToast).toHaveCount(0);
   await expect(
     page.getByText('端末のLOGで受信時刻と送信元時刻を確認しよう。'),
   ).toBeHidden();
-  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   await expect(
     page
       .getByRole('dialog', { name: 'SYSTEM' })
@@ -230,21 +248,7 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
 test('inspection approach locks duplicate input and restores hotspot focus', async ({
   page,
 }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      'echo-room:progress',
-      JSON.stringify({
-        schemaVersion: 1,
-        contentVersion: '0.1.0',
-        savedAt: new Date().toISOString(),
-        progress: {
-          checkpointId: 'checkpoint_power_restored',
-          powerRestored: true,
-          locationId: 'location_east_wall',
-        },
-      }),
-    );
-  });
+  await page.addInitScript(installProgressSave, createProgressSave());
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
@@ -313,21 +317,7 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
 test('system archive and subtitle/audio settings preserve the exploration view', async ({
   page,
 }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      'echo-room:progress',
-      JSON.stringify({
-        schemaVersion: 1,
-        contentVersion: '0.1.0',
-        savedAt: new Date().toISOString(),
-        progress: {
-          checkpointId: 'checkpoint_power_restored',
-          powerRestored: true,
-          locationId: 'location_east_wall',
-        },
-      }),
-    );
-  });
+  await page.addInitScript(installProgressSave, createProgressSave());
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
@@ -367,6 +357,23 @@ test('system archive and subtitle/audio settings preserve the exploration view',
   await expect(narrative).toBeHidden();
   await expect(page.getByTestId('world-canvas')).toBeVisible();
 
+  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  const motionSystem = page.getByRole('dialog', { name: 'SYSTEM' });
+  await motionSystem
+    .getByRole('button', { name: 'TEXT & AUDIO / 字幕・音量設定' })
+    .click();
+  await motionSystem
+    .getByRole('button', { name: 'REDUCE MOTION / 動き軽減 OFF' })
+    .click();
+  await motionSystem
+    .getByRole('button', { name: 'RESUME / ゲームへ戻る' })
+    .click();
+  await expect(stage).toHaveAttribute('data-inspection-motion', 'crossfade');
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-reduced-motion',
+    'true',
+  );
+
   await page.reload();
   await page.getByRole('button', { name: '続きから' }).click();
   await page.getByRole('button', { name: 'SYSTEM' }).click();
@@ -389,6 +396,11 @@ test('system archive and subtitle/audio settings preserve the exploration view',
   await expect(
     restoredSystem.getByRole('button', { name: /MASTER \/ 音声 OFF/ }),
   ).toBeVisible();
+  await expect(
+    restoredSystem.getByRole('button', {
+      name: 'REDUCE MOTION / 動き軽減 ON',
+    }),
+  ).toHaveAttribute('aria-pressed', 'true');
 });
 
 test.describe('touch input', () => {

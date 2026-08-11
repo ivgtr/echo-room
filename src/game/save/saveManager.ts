@@ -67,19 +67,6 @@ const saveSchemaV2 = z.object({
   progress: progressSchema,
 });
 
-const legacySaveSchemaV1 = z.object({
-  schemaVersion: z.literal(1),
-  contentVersion: z.literal(CONTENT_VERSION),
-  savedAt: z.string(),
-  progress: z.object({
-    checkpointId: z.literal('checkpoint_power_restored'),
-    powerRestored: z.literal(true),
-    locationId: z.literal('location_east_wall'),
-    activeElapsedMs: z.number().nonnegative().default(0),
-    reservePower: z.boolean().default(false),
-  }),
-});
-
 const audioLevelsSchema = z.object({
   voice: z.number().min(0).max(100),
   effects: z.number().min(0).max(100),
@@ -87,9 +74,10 @@ const audioLevelsSchema = z.object({
 });
 
 const settingsSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   audioEnabled: z.boolean(),
   visualAssist: z.boolean(),
+  motionReduced: z.boolean(),
   audioLevels: audioLevelsSchema,
   subtitleSettings: z.object({
     size: z.enum(['small', 'medium', 'large']),
@@ -104,13 +92,14 @@ export type SaveData = z.infer<typeof saveSchemaV2>;
 export type SettingsData = z.infer<typeof settingsSchema>;
 export type LoadResult =
   | { status: 'empty' }
-  | { status: 'valid'; data: SaveData; migrated: boolean }
+  | { status: 'valid'; data: SaveData }
   | { status: 'corrupt' };
 
 export const defaultSettings: SettingsData = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   audioEnabled: true,
   visualAssist: false,
+  motionReduced: false,
   audioLevels: { voice: 100, effects: 100, environment: 70 },
   subtitleSettings: {
     size: 'medium',
@@ -181,21 +170,9 @@ export const loadProgress = (
   try {
     const parsed: unknown = JSON.parse(raw);
     const current = saveSchemaV2.safeParse(parsed);
-    if (current.success)
-      return { status: 'valid', data: current.data, migrated: false };
-
-    const legacy = legacySaveSchemaV1.safeParse(parsed);
-    if (!legacy.success) return { status: 'corrupt' };
-    return {
-      status: 'valid',
-      migrated: true,
-      data: createSave(
-        createPowerRestoredProgress({
-          activeElapsedMs: legacy.data.progress.activeElapsedMs,
-          reservePower: legacy.data.progress.reservePower,
-        }),
-      ),
-    };
+    return current.success
+      ? { status: 'valid', data: current.data }
+      : { status: 'corrupt' };
   } catch {
     return { status: 'corrupt' };
   }

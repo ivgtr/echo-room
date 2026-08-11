@@ -116,7 +116,7 @@ export function TerminalPanel(props: Props) {
                 );
               })}
             </ol>
-            <div className="packet-options" aria-label="文章候補">
+            <div className="packet-options" role="group" aria-label="文章候補">
               {FINAL_PACKET_ORDER.map((id) => (
                 <button
                   type="button"
@@ -147,7 +147,10 @@ export function TerminalPanel(props: Props) {
               SEND TO -00:20:00? / 20分前へ送信
             </p>
             {order.length === 4 && !props.finalReady && (
-              <p>順番を確認してください。</p>
+              <p role="alert">順番を確認してください。</p>
+            )}
+            {props.finalReady && (
+              <p role="status">送信順序を確認しました。送信できます。</p>
             )}
           </div>
         )}

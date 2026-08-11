@@ -1,29 +1,16 @@
 import { expect, test } from '@playwright/test';
 
+import { createProgressSave, installProgressSave } from './saveFixture';
+
 test('active-time warnings pause safely and reserve power survives reload', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
-  await page.addInitScript(() => {
-    const saveKey = 'echo-room:progress';
-    if (localStorage.getItem(saveKey)) return;
-    localStorage.setItem(
-      saveKey,
-      JSON.stringify({
-        schemaVersion: 1,
-        contentVersion: '0.1.0',
-        savedAt: new Date().toISOString(),
-        progress: {
-          checkpointId: 'checkpoint_power_restored',
-          powerRestored: true,
-          locationId: 'location_east_wall',
-          activeElapsedMs: 587_000,
-          reservePower: false,
-        },
-      }),
-    );
-  });
+  await page.addInitScript(
+    installProgressSave,
+    createProgressSave({ activeElapsedMs: 587_000 }),
+  );
 
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).click();

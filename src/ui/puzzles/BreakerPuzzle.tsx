@@ -38,7 +38,7 @@ export function BreakerPuzzle({
         <h2 id="breaker-title">非常電源ブレーカー</h2>
         <p>周波数の低い回路から4本を接続する。</p>
       </header>
-      <div className="breaker-grid" aria-label="4本のブレーカー">
+      <div className="breaker-grid" role="group" aria-label="4本のブレーカー">
         {breakerIds.map((breakerId, index) => {
           const isOn = sequence.includes(breakerId);
           const level = visualLevels[breakerId];
