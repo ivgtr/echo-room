@@ -38,7 +38,7 @@
 | P4-05 | in_progress | UIQ-02として広角から調査対象への380msの寄り、接近中の視覚marker、動き軽減時のcrossfade代替を実装 | 通常・reduced-motion E2E、1280×720北壁の接近表示を目視確認 | 非常灯・通信・声紋解析・送信・ドア解錠・endingの本番演出はP4-02〜04とUIQ-03・04 |
 | P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
 | P5-02 | in_progress | UIQ-02としてpolygon hotspotの名前・role・focus表示、調査・所持品・ヒントmodalのfocus trapと起点復帰、動き軽減時のcrossfadeを実装 | keyboard focus/trap/復帰、reduced-motion、輪郭外click拒否、resize E2E | 字幕設定、重要音の視覚通知、全編ARIAはUIQ-03・04で継続 |
-| P5-03 | in_progress | UIQ-01の単一探索HUDに加え、UIQ-02で380ms接近中の即時input lock、連打防止、modal中World停止、resize・縦横復帰を実装 | Node 24で`npm run check`（9 files/21 tests）、Chromium E2E 7件、1280×720代表画面の目視確認 | 会話履歴・資料再読・既読会話速度はUIQ-03で継続 |
+| P5-03 | in_progress | UIQ-01の単一探索HUDに加え、UIQ-02で380ms接近中の即時input lock、連打防止、modal中World停止、resize・縦横復帰を実装。自動保存通知を2.4秒で消去し、表示中の操作透過と再開時の重複通知防止を追加 | Node 24で`npm run check`（9 files/21 tests）、Chromium E2E 7件、通知表示中の端末・LOG操作と自動消去E2E、1280×720代表画面の目視確認 | 会話履歴・資料再読・既読会話速度はUIQ-03で継続 |
 | P5-04 | pending |  |  | 依存済み。UIQ-04と統合して実装 |
 | UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
 | UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |

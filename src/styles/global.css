@@ -900,6 +900,7 @@ button:focus-visible {
   border: 1px solid #58b8b0;
   background: rgb(5 9 10 / 92%);
   transform: translateX(-50%);
+  pointer-events: none;
 }
 
 .screen-noise {

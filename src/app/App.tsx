@@ -30,6 +30,8 @@ import { TitleScreen } from '../ui/TitleScreen';
 import { UnsupportedScreen } from '../ui/UnsupportedScreen';
 import { supportsRequiredEnvironment } from './environment';
 
+const SAVE_MESSAGE_DURATION_MS = 2400;
+
 export function App() {
   const [environmentSupported] = useState(() => supportsRequiredEnvironment());
   const [loadResult] = useState(() => loadProgress());
@@ -73,7 +75,18 @@ export function App() {
     }
   }, [powerRestored]);
 
+  useEffect(() => {
+    if (!saveMessage) return;
+    const timer = window.setTimeout(
+      () => setSaveMessage(null),
+      SAVE_MESSAGE_DURATION_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [saveMessage]);
+
   const handleStart = useCallback(() => {
+    savedPowerRef.current = false;
+    setSaveMessage(null);
     void unlockAudio().catch(() => setAudioEnabled(false));
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef]);
@@ -101,7 +114,12 @@ export function App() {
       <TitleScreen
         onStart={handleStart}
         {...(loadResult.status === 'valid'
-          ? { onContinue: () => actorRef.send({ type: 'PROGRESS_RESTORED' }) }
+          ? {
+              onContinue: () => {
+                savedPowerRef.current = true;
+                actorRef.send({ type: 'PROGRESS_RESTORED' });
+              },
+            }
           : {})}
         saveCorrupt={loadResult.status === 'corrupt'}
       />

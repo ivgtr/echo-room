@@ -121,10 +121,19 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     'data-persistence-marker',
     'before-power',
   );
-  await expect(page.getByText('電源復旧地点を自動保存しました')).toBeVisible();
+  const saveToast = page.getByText('電源復旧地点を自動保存しました');
+  await expect(saveToast).toBeVisible();
+  await expect(saveToast).toHaveCSS('pointer-events', 'none');
+  await page.getByRole('button', { name: '壁面端末を調べる' }).click();
+  const terminal = page.getByRole('dialog', { name: '壁面端末' });
+  await terminal.getByRole('button', { name: 'LOG' }).click();
+  await expect(terminal.getByText('02:37:18')).toBeVisible();
+  await expect(saveToast).toBeHidden({ timeout: 5000 });
+  await terminal.getByRole('button', { name: '端末を閉じる' }).click();
   await page.reload();
   await page.getByRole('button', { name: '続きから' }).click();
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
+  await expect(saveToast).toHaveCount(0);
   await expect(
     page.getByText('端末のLOGで受信時刻と送信元時刻を確認しよう。'),
   ).toBeHidden();
