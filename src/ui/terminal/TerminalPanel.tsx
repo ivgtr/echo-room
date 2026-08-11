@@ -8,6 +8,7 @@ import {
   FINAL_PACKET_ORDER,
   type PacketId,
 } from '../../game/puzzles/storyPuzzles';
+import { FacilityMap } from '../evidence/FacilityMap';
 
 const packetText: Record<PacketId, string> = {
   audio_packet_01: '……聞こえるか？',
@@ -31,6 +32,7 @@ type Props = {
 
 export function TerminalPanel(props: Props) {
   const [order, setOrder] = useState<string[]>([]);
+  const [securityAuthorized, setSecurityAuthorized] = useState(false);
   const audioUnlocked = [
     'inspect_audio',
     'analyze_voice',
@@ -88,15 +90,33 @@ export function TerminalPanel(props: Props) {
       )}
       <div className="terminal-display">
         {final && (
-          <div>
-            <h3>FINAL TRANSMISSION</h3>
-            <p>送信先 -00:20:00</p>
-            <ol>
-              {order.map((id) => (
-                <li key={id}>{packetText[id as PacketId]}</li>
-              ))}
+          <div className="final-transmission-screen">
+            <header>
+              <p>ECHO BUFFER / AUDIO TRANSFER WINDOW</p>
+              <h3>FINAL TRANSMISSION</h3>
+            </header>
+            <dl className="transmission-destination">
+              <div>
+                <dt>TRANSMISSION DESTINATION</dt>
+                <dd>-00:20:00</dd>
+              </div>
+              <div>
+                <dt>PACKET SLOTS</dt>
+                <dd>04</dd>
+              </div>
+            </dl>
+            <ol className="packet-slots" aria-label="送信パケット4枠">
+              {FINAL_PACKET_ORDER.map((_, index) => {
+                const id = order[index] as PacketId | undefined;
+                return (
+                  <li key={index} data-filled={Boolean(id)}>
+                    <span>PACKET {String(index + 1).padStart(2, '0')}</span>
+                    <p>{id ? packetText[id] : 'EMPTY / 未設定'}</p>
+                  </li>
+                );
+              })}
             </ol>
-            <div className="packet-options">
+            <div className="packet-options" aria-label="文章候補">
               {FINAL_PACKET_ORDER.map((id) => (
                 <button
                   type="button"
@@ -104,6 +124,7 @@ export function TerminalPanel(props: Props) {
                   disabled={order.includes(id)}
                   onClick={() => choosePacket(id)}
                 >
+                  {id.replace('audio_', '').replace('_', ' ').toUpperCase()} /{' '}
                   {packetText[id]}
                 </button>
               ))}
@@ -122,26 +143,35 @@ export function TerminalPanel(props: Props) {
             >
               赤い送信ボタンを押す
             </button>
+            <p className="transmission-confirmation">
+              SEND TO -00:20:00? / 20分前へ送信
+            </p>
             {order.length === 4 && !props.finalReady && (
               <p>順番を確認してください。</p>
             )}
           </div>
         )}
         {!final && props.menuId === 'system' && (
-          <dl>
-            <div>
-              <dt>NEGATIVE DELAY</dt>
-              <dd>-00:20:00</dd>
-            </div>
-            <div>
-              <dt>LAST RECEIVE</dt>
-              <dd>02:17</dd>
-            </div>
-            <div>
-              <dt>SOURCE</dt>
-              <dd>02:37</dd>
-            </div>
-          </dl>
+          <div className="terminal-system-screen">
+            <dl>
+              <div>
+                <dt>NEGATIVE DELAY</dt>
+                <dd>-00:20:00</dd>
+              </div>
+              <div>
+                <dt>LAST RECEIVE</dt>
+                <dd>02:17</dd>
+              </div>
+              <div>
+                <dt>SOURCE</dt>
+                <dd>02:37</dd>
+              </div>
+            </dl>
+            <aside className="terminal-memo" aria-label="緊急時メモ">
+              <span>EMERGENCY NOTE</span>
+              <p>緊急時は「送信側の時刻」を使用する。</p>
+            </aside>
+          </div>
         )}
         {!final && props.menuId === 'log' && (
           <>
@@ -177,17 +207,24 @@ export function TerminalPanel(props: Props) {
         )}
         {!final && props.menuId === 'security' && (
           <>
-            <h3>FACILITY MAP / ROOM E-01</h3>
-            <p>
-              E-01の左右は巨大な機械設備とコンクリート壁。隣室は存在しない。
-            </p>
-            <button
-              type="button"
-              className="inventory-card item-use-card"
-              onClick={props.onMapInspected}
-            >
-              <span>ACCESS CARD</span> 職員用カードを選択して図面を確認
-            </button>
+            {!securityAuthorized ? (
+              <div className="security-authentication">
+                <h3>SECURITY / ACCESS REQUIRED</h3>
+                <p>施設図面の閲覧には職員用カードが必要です。</p>
+                <button
+                  type="button"
+                  className="inventory-card item-use-card"
+                  onClick={() => {
+                    setSecurityAuthorized(true);
+                    props.onMapInspected();
+                  }}
+                >
+                  <span>ACCESS CARD</span> 職員用カードを選択して図面を確認
+                </button>
+              </div>
+            ) : (
+              <FacilityMap />
+            )}
           </>
         )}
         {!final && props.menuId === 'audio' && (

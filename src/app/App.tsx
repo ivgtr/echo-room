@@ -221,9 +221,18 @@ export function App() {
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef]);
   const handleHotspot = useCallback(
-    (hotspotId: HotspotId) =>
-      actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId }),
-    [actorRef],
+    (hotspotId: HotspotId) => {
+      if (hotspotId === 'hotspot_clock')
+        appendHistory([discoveryEntry('アナログ時計は02:17で止まっている。')]);
+      if (hotspotId === 'hotspot_desk')
+        appendHistory([
+          discoveryEntry(
+            'EMERGENCY POWER TEST――起動順序：周波数の低い回路から接続すること。',
+          ),
+        ]);
+      actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId });
+    },
+    [actorRef, appendHistory],
   );
   const handleView = useCallback(
     (nextLocationId: LocationId) =>

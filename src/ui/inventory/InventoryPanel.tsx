@@ -1,7 +1,9 @@
 import { useState } from 'react';
 
 import type { ItemId } from '../../game/machine/gameMachine';
+import { FacilityMap } from '../evidence/FacilityMap';
 import { itemDetails } from './itemDetails';
+import { StaffAccessCard } from './StaffAccessCard';
 
 export function InventoryPanel({
   items,
@@ -15,6 +17,7 @@ export function InventoryPanel({
   const [selectedItem, setSelectedItem] = useState<ItemId>(
     items[0] ?? 'item_screwdriver',
   );
+  const [mapExpanded, setMapExpanded] = useState(false);
   const detail = itemDetails[selectedItem];
   return (
     <section
@@ -46,10 +49,20 @@ export function InventoryPanel({
           <p className="eyebrow">{detail.code}</p>
           <h3>{detail.label}</h3>
           <p>{detail.description}</p>
-          {selectedItem === 'item_floor_map' && (
-            <button type="button" onClick={onInspectMap}>
+          {selectedItem === 'item_staff_card' && <StaffAccessCard />}
+          {selectedItem === 'item_floor_map' && !mapExpanded && (
+            <button
+              type="button"
+              onClick={() => {
+                setMapExpanded(true);
+                onInspectMap();
+              }}
+            >
               フロア図を展開する
             </button>
+          )}
+          {selectedItem === 'item_floor_map' && mapExpanded && (
+            <FacilityMap compact />
           )}
         </section>
       </div>

@@ -30,6 +30,7 @@ import { WorldCanvas } from '../world/renderer/WorldCanvas';
 import { ModalFocusScope } from './accessibility/ModalFocusScope';
 import { IntroDialogue } from './dialogue/IntroDialogue';
 import { EndingPanel } from './ending/EndingPanel';
+import { InspectionEvidencePanel } from './evidence/InspectionEvidencePanel';
 import { HintPanel } from './hints/HintPanel';
 import { ItemAcquisitionNotice } from './inventory/ItemAcquisitionNotice';
 import { InventoryPanel } from './inventory/InventoryPanel';
@@ -139,6 +140,8 @@ export function GameScreen(props: Props) {
   const ending =
     props.storyStage === 'ending' || props.storyStage === 'completed';
   const inspectionModalOpen =
+    props.selectedHotspotId === 'hotspot_clock' ||
+    props.selectedHotspotId === 'hotspot_desk' ||
     (props.powerRestored && props.selectedHotspotId === 'hotspot_terminal') ||
     (props.selectedHotspotId === 'hotspot_locker' &&
       props.storyStage === 'unlock_locker') ||
@@ -317,6 +320,10 @@ export function GameScreen(props: Props) {
       onToggle={handleBreakerToggle}
       onClose={closeInspection}
     />
+  ) : props.selectedHotspotId === 'hotspot_clock' ? (
+    <InspectionEvidencePanel kind="clock" onClose={closeInspection} />
+  ) : props.selectedHotspotId === 'hotspot_desk' ? (
+    <InspectionEvidencePanel kind="power-test" onClose={closeInspection} />
   ) : props.powerRestored &&
     props.selectedHotspotId === 'hotspot_terminal' &&
     !ending ? (

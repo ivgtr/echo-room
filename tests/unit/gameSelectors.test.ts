@@ -25,8 +25,8 @@ describe('exploration messaging selectors', () => {
     for (let index = 0; index < 7; index += 1) {
       actor.send({ type: 'DIALOGUE_ADVANCED' });
     }
-    actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_clock' });
-    expect(selectSubtitle(actor.getSnapshot())).toContain('02:17');
+    actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_door' });
+    expect(selectSubtitle(actor.getSnapshot())).toContain('非常ロック');
 
     actor.send({ type: 'PUZZLE_CLOSED' });
     expect(selectSubtitle(actor.getSnapshot())).toBeNull();

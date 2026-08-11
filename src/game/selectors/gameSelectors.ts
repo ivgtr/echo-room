@@ -66,14 +66,8 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   if (snapshot.context.selectedHotspotId === 'hotspot_door') {
     return '非常ロックが作動している。電源系統を確認する必要がある。';
   }
-  if (snapshot.context.selectedHotspotId === 'hotspot_clock') {
-    return 'アナログ時計は02:17で止まっている。';
-  }
   if (snapshot.context.selectedHotspotId === 'hotspot_intercom') {
     return '通信回線は生きている。受信を待つしかなさそうだ。';
-  }
-  if (snapshot.context.selectedHotspotId === 'hotspot_desk') {
-    return 'EMERGENCY POWER TEST――起動順序：周波数の低い回路から接続すること。';
   }
   if (
     snapshot.context.selectedHotspotId === 'hotspot_terminal' &&

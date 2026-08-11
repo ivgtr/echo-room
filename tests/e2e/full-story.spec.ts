@@ -30,6 +30,9 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     .getByRole('button', { name: '壁面端末を調べる' })
     .click();
   const terminal = page.getByRole('dialog', { name: '壁面端末' });
+  await expect(
+    terminal.getByText('緊急時は「送信側の時刻」を使用する。'),
+  ).toBeVisible();
   await terminal.getByRole('button', { name: 'LOG' }).click();
   await expect(terminal.getByText('02:37:18')).toBeVisible();
   await terminal.getByRole('button', { name: '20分の差を確認した' }).click();
@@ -64,12 +67,23 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
     .getByRole('button', { name: 'INVENTORY / 所持品' })
     .click();
   const inventory = page.getByRole('dialog', { name: '所持品' });
+  await inventory
+    .getByRole('button', { name: /ACCESS CARD 職員用カード/ })
+    .click();
+  await expect(
+    inventory.getByLabel('施設E-01 職員用アクセスカード'),
+  ).toBeVisible();
   const floorMap = inventory.getByRole('button', {
     name: /FACILITY MAP 簡易フロア図/,
   });
   await floorMap.focus();
   await page.keyboard.press('Enter');
   await inventory.getByRole('button', { name: 'フロア図を展開する' }).click();
+  await expect(
+    inventory.getByText(
+      'E-01の左右は機械設備とコンクリート壁。隣室は存在しない。',
+    ),
+  ).toBeVisible();
   await inventory.getByRole('button', { name: '所持品を閉じる' }).click();
   await page.getByRole('button', { name: /右を向く（北壁/ }).click();
   await page.getByRole('button', { name: /右を向く（東壁/ }).click();
@@ -106,6 +120,17 @@ test('safe checkpoint reaches transmission complete through every remaining puzz
   await analysis.getByRole('button', { name: '結果を確認する' }).click();
 
   const finalTerminal = page.getByRole('dialog', { name: '壁面端末' });
+  await expect(
+    finalTerminal.getByText('TRANSMISSION DESTINATION'),
+  ).toBeVisible();
+  await expect(
+    finalTerminal.getByText('-00:20:00', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    finalTerminal
+      .getByRole('list', { name: '送信パケット4枠' })
+      .getByRole('listitem'),
+  ).toHaveCount(4);
   for (const name of [
     '最後に、赤いボタンを押せ。',
     'ログは気にするな。',

@@ -10,8 +10,9 @@
 - UIQ-01は完了。方角タブ、矩形調査ボタン、常時目的、常時露出していた音声・タイトル操作を撤去し、画面端・左右キー・スワイプ、背景直接ホットスポット、SYSTEMメニューの単一構造へ置き換えた。
 - UIQ-02は完了。ReactとPixiJSが共有する6〜10点の輪郭polygon hotspot、hover・focus・touch接近marker、380msの寄り、動き軽減crossfade、遷移中・modal中のWorld入力停止とfocus復帰を実装した。
 - UIQ-03は完了。独白・通信・発見を共通Narrative UIへ整理し、取得演出、所持品トレイと対象使用、SYSTEMの会話履歴・資料再読・字幕・系統別音量設定を実装した。
-- UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。
-- 次の確認点はUIQ-04の代表画面。利用者確認後はP4-03の正確な画面情報とP5-01の保存完成へ進む。
+- UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。2026-08-11に代表画面の利用者承認を得た。
+- P4-03は正確な画面情報の統合中。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード外装、4 PACKET・送信先・4枠をHTML/CSSで実装した。
+- 次の確認点はP4-03の代表画面と主人公profile。承認済みprofileがないため、職員証とVOICE ANALYSISの人物写真・個人情報は捏造せず保留している。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
@@ -35,7 +36,7 @@
 | P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
 | P4-02 | in_progress | 3 bundle・25画像、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。UIQ-02でReact・Pixi共通の6〜10点polygon hotspotへ更新。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit、同一Canvas維持・全4面fade・電源復旧・全編・touch・輪郭外click拒否E2E | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-04の着手は阻害しない |
-| P4-03 | pending |  |  | 依存済み。P4-02・UIQと並行着手可能 |
+| P4-03 | in_progress | 時計接写へ正確な02:17のHTML/CSS時計盤、デスク接写へ非常電源テスト用紙を合成。端末SYSTEMへ-00:20:00・02:17・02:37と緊急時メモ、SECURITYと所持品へE-01の左右に隣室がない施設図、職員カードへE-01・SECURITY権限を表示。最終送信を4つの明示slot、4 PACKET、送信先-00:20:00、赤い送信buttonへ整理 | Node 24で`npm run check`成功（14 files/33 tests）、Chromium E2E 10件（時計・用紙接写、カード・図面、全端末時刻、予備電源状態から全編、4 slot送信）、1280×720の代表6画面を目視確認 | `gfx-item-003`主人公profile（年齢、性別表現、髪型、服装）が未承認。職員証写真・個人情報とVOICE ANALYSIS写真は承認後に統合 |
 | P4-04 | pending |  |  | 本番音声 |
 | P4-05 | in_progress | UIQ-02の380ms調査接近と動き軽減代替、UIQ-03の通信Narrative・所持品取得演出、UIQ-04の10分・5分・00:00段階表示、5分以下の電圧低下と静的な動き軽減代替を実装 | 通常・reduced-motion E2E、1280×720の通信・SYSTEM・critical・reserve画面を目視確認 | 通信ノイズ・声紋解析・送信・ドア解錠・endingの本番演出はP4-02〜04で継続 |
 | P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
@@ -45,7 +46,7 @@
 | UIQ-01 | completed | 方角タブ・矩形調査ボタン・常時目的・常時音声/タイトル操作を撤去。左右端、左右キー、swipe、画像座標由来の直接hotspot、目的・音声・視覚補助・所持品・ヒント・タイトルを収めたSYSTEMへ単一化。調査messageをevent時だけ表示し、SYSTEMのfocus trap・復帰を実装 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 5件: mouse/keyboard/touch/swipe/focus/全編）、通常探索・SYSTEMを1280×720で目視確認 | なし |
 | UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
 | UIQ-03 | completed | 独白・通信・発見を用途別の共通Narrative UIへ整理し、SIGNAL・話者・通信表示を統一。所持品取得演出、必要時トレイ、対象へのカード・ドライバー使用、SYSTEMのARCHIVE・字幕・系統別音量設定を実装 | Node 24で`npm run check`成功（11 files/23 tests）、`npm run test:e2e`成功（Chromium 8件: 無音、字幕拡大・背景・速度、背景復帰、archive、mouse・touch・keyboard所持品、全編）、1280×720通信・ARCHIVE・設定を目視確認 | アクティブ時間と非常演出はUIQ-04、履歴のcheckpoint永続化はP5-01で継続 |
-| UIQ-04 | completed | `BATTERY 00:19:48`から実プレイ時間を計測し、10分以下LOW、5分以下CRITICALと電圧低下、00:00のRESERVEを文字と背景で段階表示。SYSTEM内へ停止中の残量と目的を併記し、SYSTEM・browser非表示中の停止、保存復元、00:00後の進行継続、動き軽減を実装 | Node 24で`npm run check`成功（13 files/29 tests）、Chromium E2E 9件（固定時計、pause、visibility、保存復元、reduced-motion、予備電源から全編、keyboard、touch）、1280×720のSYSTEM・critical・reserveを目視確認 | 代表画面の利用者確認待ち。機能blockerなし |
+| UIQ-04 | completed | `BATTERY 00:19:48`から実プレイ時間を計測し、10分以下LOW、5分以下CRITICALと電圧低下、00:00のRESERVEを文字と背景で段階表示。SYSTEM内へ停止中の残量と目的を併記し、SYSTEM・browser非表示中の停止、保存復元、00:00後の進行継続、動き軽減を実装。2026-08-11に代表画面の利用者承認を取得 | Node 24で`npm run check`成功（13 files/29 tests）、Chromium E2E 9件（固定時計、pause、visibility、保存復元、reduced-motion、予備電源から全編、keyboard、touch）、1280×720のSYSTEM・critical・reserveを目視確認 | なし |
 | P6-01 | pending |  |  | P4・P5 |
 | P6-02 | pending |  |  | P6-01 |
 | P6-03 | pending |  |  | P4・P5 |
@@ -65,7 +66,7 @@
 ## 次作業者への引き継ぎ
 
 1. `docs/README.md`のUIルーティングに従い、`requirements.md` 9〜13章、`technical-design.md` 7・10・15章、`quality-up-plan.md`、`implementation-plan.md`のP2・P5・10章を読む。
-2. UIQ-04の1280×720代表画面（SYSTEM停止、5分以下CRITICAL、00:00 RESERVE）について利用者確認を得る。修正指示があればUIQ-04内で反映する。
-3. 承認後はP4-03を開始し、時計02:17、BATTERY、端末全メニュー、メモ、フロア図、職員証、4 packetと送信画面の正確な画面情報をHTML/CSSまたは高解像度ラスターで統合する。
-4. P5-01はP4-03と並行可能。全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
-5. UIQ-01〜04の単一HUD、polygon hotspot、Narrative・Inventory・System・非常システムを再導入・二重化せず利用する。
+2. `tmp/p4-03-*.png`の1280×720代表6画面について利用者確認を得る。修正指示があればP4-03内で反映する。
+3. `graphics-generation.yaml`の`g-d01`に従い、主人公の年齢、性別表現、髪型、承認済み研究施設用衣服を確認する。未承認の人物像や職員証個人情報を独断で作らない。
+4. profile承認後、`gfx-item-003`の職員証写真とVOICE ANALYSIS cropを同じ原本から制作・統合し、P4-03を完了する。
+5. P5-01はP4-03と並行可能。全主要checkpoint、自動保存、設定保持、保存消去、version移行を完成させる。
