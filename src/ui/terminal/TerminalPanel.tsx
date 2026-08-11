@@ -1,21 +1,11 @@
-import { useState } from 'react';
-
 import type {
   StoryStage,
   TerminalMenuId,
 } from '../../game/machine/gameMachine';
-import {
-  FINAL_PACKET_ORDER,
-  type PacketId,
-} from '../../game/puzzles/storyPuzzles';
+import { stagePuzzle } from '../../game/machine/gameMachine';
+import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import { FacilityMap } from '../evidence/FacilityMap';
-
-const packetText: Record<PacketId, string> = {
-  audio_packet_01: '……聞こえるか？',
-  audio_packet_02: 'まず電源を戻せ。',
-  audio_packet_03: 'ログは気にするな。',
-  audio_packet_04: '最後に、赤いボタンを押せ。',
-};
+import { PuzzleWorkbench } from '../puzzles/PuzzleWorkbench';
 
 const menuLabels: Record<TerminalMenuId, string> = {
   system: 'SYSTEM',
@@ -24,237 +14,191 @@ const menuLabels: Record<TerminalMenuId, string> = {
   security: 'SECURITY',
 };
 
+const puzzleMenu: Partial<Record<PuzzleId, TerminalMenuId>> = {
+  puzzle_carrier_sync: 'system',
+  puzzle_log_pairing: 'log',
+  puzzle_signal_route: 'security',
+  puzzle_packet_repair: 'audio',
+  puzzle_temporal_anomaly: 'audio',
+  puzzle_causal_script: 'system',
+  puzzle_transmission_window: 'system',
+};
+
 type Props = {
   menuId: TerminalMenuId;
   stage: StoryStage;
-  finalReady: boolean;
+  completedPuzzleIds: readonly PuzzleId[];
+  puzzleFailures: Record<PuzzleId, number>;
   onSelect: (menuId: TerminalMenuId) => void;
   onClose: () => void;
-  onLogsConfirmed: () => void;
-  onMapInspected: () => void;
-  onPacketPlayed: (packetId: PacketId) => void;
-  onFinalSubmit: (ids: string[]) => void;
+  onPuzzleSubmit: (puzzleId: PuzzleId, answer: string[]) => void;
   onTransmit: () => void;
 };
 
 export function TerminalPanel(props: Props) {
-  const [order, setOrder] = useState<string[]>([]);
-  const [securityAuthorized, setSecurityAuthorized] = useState(false);
-  const signalUnlocked = [
-    'inspect_audio',
-    'analyze_voice',
-    'transmit_packets',
-    'ending',
-    'completed',
-  ].includes(props.stage);
-  const securityUnlocked = [
-    'reveal_no_adjacent_room',
-    'inspect_audio',
-    'analyze_voice',
-    'transmit_packets',
-    'ending',
-    'completed',
-  ].includes(props.stage);
-  const final = props.stage === 'transmit_packets';
-  const choosePacket = (id: string) =>
-    setOrder((current) =>
-      current.includes(id) ? current : [...current, id].slice(0, 4),
-    );
+  const currentPuzzleId = stagePuzzle[props.stage];
+  const currentPuzzleMenu = currentPuzzleId
+    ? puzzleMenu[currentPuzzleId]
+    : undefined;
+  const puzzleVisible =
+    currentPuzzleId !== undefined && currentPuzzleMenu === props.menuId;
+  const transmissionReady = props.stage === 'transmission_ready';
+
   return (
     <section
-      className={
-        final
-          ? 'terminal-modal artwork-modal final-transmission-modal'
-          : 'terminal-modal artwork-modal terminal-screen-modal'
-      }
+      className="puzzle-modal terminal-panel artwork-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="terminal-title"
     >
       <header>
-        <p className="eyebrow">ECHO BUFFER / ONLINE</p>
+        <p className="eyebrow">ECHO BUFFER / gfx-close-010</p>
         <h2 id="terminal-title">壁面端末</h2>
       </header>
-      {!final && (
-        <nav aria-label="端末メニュー">
-          {(['system', 'log', 'audio', 'security'] as const).map((id) => {
-            const locked =
-              (id === 'audio' && !signalUnlocked) ||
-              (id === 'security' && !securityUnlocked);
-            return (
-              <button
-                type="button"
-                key={id}
-                disabled={locked}
-                aria-current={props.menuId === id ? 'page' : undefined}
-                onClick={() => props.onSelect(id)}
-              >
-                {menuLabels[id]} {locked && '— LOCKED'}
-              </button>
-            );
-          })}
-        </nav>
-      )}
-      <div className="terminal-display">
-        {final && (
-          <div className="final-transmission-screen">
-            <header>
-              <p>ECHO BUFFER / SIGNAL TRANSFER WINDOW</p>
-              <h3>FINAL TRANSMISSION</h3>
-            </header>
-            <dl className="transmission-destination">
-              <div>
-                <dt>TRANSMISSION DESTINATION</dt>
-                <dd>-00:20:00</dd>
-              </div>
-              <div>
-                <dt>PACKET SLOTS</dt>
-                <dd>04</dd>
-              </div>
-            </dl>
-            <ol className="packet-slots" aria-label="送信パケット4枠">
-              {FINAL_PACKET_ORDER.map((_, index) => {
-                const id = order[index] as PacketId | undefined;
-                return (
-                  <li key={index} data-filled={Boolean(id)}>
-                    <span>PACKET {String(index + 1).padStart(2, '0')}</span>
-                    <p>{id ? packetText[id] : 'EMPTY / 未設定'}</p>
-                  </li>
-                );
-              })}
-            </ol>
-            <div className="packet-options" role="group" aria-label="文章候補">
-              {FINAL_PACKET_ORDER.map((id) => (
-                <button
-                  type="button"
-                  key={id}
-                  disabled={order.includes(id)}
-                  onClick={() => choosePacket(id)}
-                >
-                  {id.replace('audio_', '').replace('_', ' ').toUpperCase()} /{' '}
-                  {packetText[id]}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setOrder([])}>
-              並べ直す
-            </button>
-            <button type="button" onClick={() => props.onFinalSubmit(order)}>
-              4枠を設定
-            </button>
-            <button
-              type="button"
-              className="transmit-button"
-              disabled={!props.finalReady}
-              onClick={props.onTransmit}
-            >
-              赤い送信ボタンを押す
-            </button>
-            <p className="transmission-confirmation">
-              SEND TO -00:20:00? / 20分前へ送信
-            </p>
-            {order.length === 4 && !props.finalReady && (
-              <p role="alert">順番を確認してください。</p>
-            )}
-            {props.finalReady && (
-              <p role="status">送信順序を確認しました。送信できます。</p>
-            )}
-          </div>
-        )}
-        {!final && props.menuId === 'system' && (
-          <div className="terminal-system-screen">
-            <dl>
-              <div>
-                <dt>NEGATIVE DELAY</dt>
-                <dd>-00:20:00</dd>
-              </div>
-              <div>
-                <dt>LAST RECEIVE</dt>
-                <dd>02:17</dd>
-              </div>
-              <div>
-                <dt>SOURCE</dt>
-                <dd>02:37</dd>
-              </div>
-            </dl>
-            <aside className="terminal-memo" aria-label="緊急時メモ">
-              <span>EMERGENCY NOTE</span>
-              <p>緊急時は「送信側の時刻」を使用する。</p>
-            </aside>
-          </div>
-        )}
-        {!final && props.menuId === 'log' && (
-          <>
-            <table>
-              <caption>受信ログと送信元時刻</caption>
-              <thead>
-                <tr>
-                  <th>RECEIVE</th>
-                  <th>SOURCE</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>02:11:04</td>
-                  <td>02:31:04</td>
-                </tr>
-                <tr>
-                  <td>02:14:32</td>
-                  <td>02:34:32</td>
-                </tr>
-                <tr>
-                  <td>02:17:18</td>
-                  <td>02:37:18</td>
-                </tr>
-              </tbody>
-            </table>
-            {props.stage === 'inspect_logs' && (
-              <button type="button" onClick={props.onLogsConfirmed}>
-                20分の差を確認した
-              </button>
-            )}
-          </>
-        )}
-        {!final && props.menuId === 'security' && (
-          <>
-            {!securityAuthorized ? (
-              <div className="security-authentication">
-                <h3>SECURITY / ACCESS REQUIRED</h3>
-                <p>施設図面の閲覧には職員用カードが必要です。</p>
-                <button
-                  type="button"
-                  className="inventory-card item-use-card"
-                  onClick={() => {
-                    setSecurityAuthorized(true);
-                    props.onMapInspected();
-                  }}
-                >
-                  <span>ACCESS CARD</span> 職員用カードを選択して図面を確認
-                </button>
-              </div>
-            ) : (
-              <FacilityMap />
-            )}
-          </>
-        )}
-        {!final && props.menuId === 'audio' && (
-          <>
-            <h3>ECHO SIGNAL BUFFER</h3>
-            <p>発話音声は再生せず、受信文と声紋データだけを展開する。</p>
-            {FINAL_PACKET_ORDER.map((id) => (
-              <div className="packet-row" key={id}>
-                <span>{id.replace('audio_', '').toUpperCase()}</span>
-                <button type="button" onClick={() => props.onPacketPlayed(id)}>
-                  字幕と信号を確認
-                </button>
-                <p>{packetText[id]}</p>
-              </div>
-            ))}
-          </>
+      <nav className="terminal-menu" aria-label="端末メニュー">
+        {(Object.keys(menuLabels) as TerminalMenuId[]).map((id) => (
+          <button
+            type="button"
+            key={id}
+            aria-pressed={props.menuId === id}
+            onClick={() => props.onSelect(id)}
+          >
+            {menuLabels[id]}
+          </button>
+        ))}
+      </nav>
+
+      <div className="terminal-content">
+        {puzzleVisible && currentPuzzleId ? (
+          <PuzzleWorkbench
+            embedded
+            puzzleId={currentPuzzleId}
+            failures={props.puzzleFailures[currentPuzzleId]}
+            onSubmit={props.onPuzzleSubmit}
+            onClose={props.onClose}
+          />
+        ) : transmissionReady && props.menuId === 'system' ? (
+          <TransmissionReady onTransmit={props.onTransmit} />
+        ) : (
+          <TerminalMenuContent
+            menuId={props.menuId}
+            stage={props.stage}
+            completedPuzzleIds={props.completedPuzzleIds}
+            currentPuzzleMenu={currentPuzzleMenu}
+          />
         )}
       </div>
       <button type="button" onClick={props.onClose}>
         端末を閉じる
+      </button>
+    </section>
+  );
+}
+
+function TerminalMenuContent({
+  menuId,
+  stage,
+  completedPuzzleIds,
+  currentPuzzleMenu,
+}: {
+  menuId: TerminalMenuId;
+  stage: StoryStage;
+  completedPuzzleIds: readonly PuzzleId[];
+  currentPuzzleMenu: TerminalMenuId | undefined;
+}) {
+  if (menuId === 'system')
+    return (
+      <div className="terminal-system-grid">
+        <div>
+          <span>NEGATIVE DELAY</span>
+          <strong>-00:20:00</strong>
+        </div>
+        <div>
+          <span>LOCAL CLOCK</span>
+          <strong>02:17 / STOPPED</strong>
+        </div>
+        <div>
+          <span>PUZZLES VERIFIED</span>
+          <strong>{completedPuzzleIds.length} / 10</strong>
+        </div>
+        <p>
+          {currentPuzzleMenu
+            ? `現在の検証は ${menuLabels[currentPuzzleMenu]} で行う。`
+            : stage === 'puzzle_voiceprint_calibration'
+              ? 'PACKET特徴量は端末横の解析パネルで校正する。'
+              : stage === 'puzzle_maintenance_lock'
+                ? '保守用品は西壁ロッカーに格納されている。'
+                : '送信系統を確認中。'}
+        </p>
+      </div>
+    );
+
+  if (menuId === 'log')
+    return (
+      <div className="terminal-placeholder">
+        <h3>RECEIVE / SOURCE LOG</h3>
+        <p>受信側と送信側は別時計で記録され、行順は一致しない。</p>
+        <p>
+          {completedPuzzleIds.includes('puzzle_log_pairing')
+            ? '照合済み：全3組のSOURCEはRECEIVEの正確に20分後。'
+            : '波形指紋の照合が必要。'}
+        </p>
+      </div>
+    );
+
+  if (menuId === 'security')
+    return (
+      <div className="terminal-placeholder">
+        <FacilityMap conduitLayer />
+        <p>
+          {completedPuzzleIds.includes('puzzle_signal_route')
+            ? '確認済み：E-01の通信線は隣室ではなくECHO BUFFER RETURNへ接続。'
+            : '職員カード取得後、室内図と通信配線層を照合できる。'}
+        </p>
+      </div>
+    );
+
+  return (
+    <div className="terminal-placeholder signal-summary">
+      <h3>ECHO SIGNAL BUFFER</h3>
+      <p>発話音声は使用しない。本文、波形指紋、声紋特徴量を表示する。</p>
+      {['01', '02', '03', '04'].map((id) => (
+        <span key={id}>PACKET {id} / DATA FRAME</span>
+      ))}
+      {currentPuzzleMenu && currentPuzzleMenu !== menuId && (
+        <p>現在の検証は {menuLabels[currentPuzzleMenu]} で行う。</p>
+      )}
+    </div>
+  );
+}
+
+function TransmissionReady({ onTransmit }: { onTransmit: () => void }) {
+  return (
+    <section
+      className="transmission-ready"
+      aria-labelledby="transmission-title"
+    >
+      <p className="eyebrow">TEST TRANSMISSION / ALL CONDITIONS PASSED</p>
+      <h3 id="transmission-title">ECHO TRANSMISSION READY</h3>
+      <p>PUZZLES VERIFIED: 10 / 10</p>
+      <ol aria-label="送信パケット4枠">
+        <li>W1 / ……聞こえるか？</li>
+        <li>W2 / まず電源を戻せ。</li>
+        <li>W3 / ログは気にするな。</li>
+        <li>W4 / 最後に、赤いボタンを押せ。</li>
+      </ol>
+      <dl>
+        <div>
+          <dt>DELAY</dt>
+          <dd>-00:20:00</dd>
+        </div>
+        <div>
+          <dt>ROUTE</dt>
+          <dd>ECHO BUFFER RETURN</dd>
+        </div>
+      </dl>
+      <button type="button" className="transmit-button" onClick={onTransmit}>
+        赤い送信ボタンを押す
       </button>
     </section>
   );

@@ -33,15 +33,12 @@ describe('InventoryPanel', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('button', { name: /FACILITY MAP 簡易フロア図/ }),
+      screen.getByRole('button', { name: /CONDUIT MAP 設備・配線図/ }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'フロア図を展開する' }));
     expect(onInspectMap).toHaveBeenCalledOnce();
-    expect(
-      screen.getByText(
-        'E-01の左右は機械設備とコンクリート壁。隣室は存在しない。',
-      ),
-    ).toBeVisible();
+    expect(screen.getByText(/通信線は壁内中継器/)).toBeVisible();
+    expect(screen.getByText('ECHO BUFFER RETURN ○')).toBeVisible();
     expect(screen.getByText('CONTROL ROOM')).toBeVisible();
     expect(screen.getByText('MACHINE ROOM')).toBeVisible();
   });

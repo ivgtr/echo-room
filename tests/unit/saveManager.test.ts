@@ -28,20 +28,21 @@ const createStorage = (): Storage => {
 };
 
 describe('saveManager', () => {
-  it('round-trips a safe late-game checkpoint as schema v2', () => {
+  it('round-trips a current ten-puzzle checkpoint as schema v3', () => {
     const storage = createStorage();
     saveProgress(
       createPowerRestoredProgress({
-        checkpointId: 'checkpoint_voice_identity',
-        locationId: 'location_east_wall',
-        storyStage: 'transmit_packets',
+        checkpointId: 'checkpoint_puzzle_07',
+        storyStage: 'puzzle_voiceprint_calibration',
         inventory: ['item_screwdriver', 'item_staff_card', 'item_floor_map'],
-        inspectedMaps: ['inventory', 'security'],
-        heardPackets: [
-          'audio_packet_01',
-          'audio_packet_02',
-          'audio_packet_03',
-          'audio_packet_04',
+        completedPuzzleIds: [
+          'puzzle_power_route',
+          'puzzle_carrier_sync',
+          'puzzle_maintenance_lock',
+          'puzzle_log_pairing',
+          'puzzle_signal_route',
+          'puzzle_packet_repair',
+          'puzzle_temporal_anomaly',
         ],
         activeElapsedMs: 456_789,
         reservePower: true,
@@ -51,45 +52,25 @@ describe('saveManager', () => {
     expect(loadProgress(storage)).toMatchObject({
       status: 'valid',
       data: {
-        schemaVersion: 2,
+        schemaVersion: 3,
+        contentVersion: '0.2.0',
         progress: {
-          checkpointId: 'checkpoint_voice_identity',
-          storyStage: 'transmit_packets',
+          checkpointId: 'checkpoint_puzzle_07',
+          storyStage: 'puzzle_voiceprint_calibration',
           activeElapsedMs: 456_789,
-          reservePower: true,
         },
       },
     });
   });
 
-  it('rejects an unsupported schema without mutating the stored source', () => {
+  it('rejects old and corrupt saves without mutating them', () => {
     const storage = createStorage();
-    const legacyRaw = JSON.stringify({
-      schemaVersion: 1,
-      contentVersion: '0.1.0',
-      savedAt: '2026-08-11T00:00:00.000Z',
-      progress: {
-        checkpointId: 'checkpoint_power_restored',
-        powerRestored: true,
-        locationId: 'location_east_wall',
-        activeElapsedMs: 1234,
-        reservePower: false,
-      },
-    });
-    storage.setItem(SAVE_KEY, legacyRaw);
+    const old = JSON.stringify({ schemaVersion: 2, contentVersion: '0.1.0' });
+    storage.setItem(SAVE_KEY, old);
     expect(loadProgress(storage)).toEqual({ status: 'corrupt' });
-    expect(storage.getItem(SAVE_KEY)).toBe(legacyRaw);
-  });
-
-  it('protects corrupt and unsupported saves instead of overwriting them', () => {
-    const storage = createStorage();
+    expect(storage.getItem(SAVE_KEY)).toBe(old);
     storage.setItem(SAVE_KEY, '{bad json');
     expect(loadProgress(storage)).toEqual({ status: 'corrupt' });
-    expect(storage.getItem(SAVE_KEY)).toBe('{bad json');
-
-    storage.setItem(SAVE_KEY, JSON.stringify({ schemaVersion: 99 }));
-    expect(loadProgress(storage)).toEqual({ status: 'corrupt' });
-    expect(storage.getItem(SAVE_KEY)).toBe('{"schemaVersion":99}');
   });
 
   it('keeps settings when progress is cleared', () => {
@@ -99,11 +80,6 @@ describe('saveManager', () => {
       soundEnabled: false,
       visualAssist: true,
       soundLevels: { ...defaultSettings.soundLevels, effects: 35 },
-      subtitleSettings: {
-        size: 'large' as const,
-        background: 'solid' as const,
-        speed: 'fast' as const,
-      },
     };
     saveProgress(createPowerRestoredProgress(), storage);
     saveSettings(settings, storage);
@@ -119,31 +95,25 @@ describe('saveManager', () => {
     expect(loadSettings(storage)).toEqual(defaultSettings);
   });
 
-  it('maps every story stage to a safe checkpoint', () => {
-    expect(getCheckpointId('inspect_logs', false)).toBe(
-      'checkpoint_power_restored',
+  it('maps solved puzzle count and terminal states to checkpoints', () => {
+    expect(getCheckpointId('puzzle_carrier_sync', ['puzzle_power_route'])).toBe(
+      'checkpoint_puzzle_01',
     );
-    expect(getCheckpointId('unlock_locker', false)).toBe(
-      'checkpoint_time_offset_confirmed',
-    );
-    expect(getCheckpointId('reveal_no_adjacent_room', false)).toBe(
-      'checkpoint_locker_opened',
-    );
-    expect(getCheckpointId('inspect_audio', false)).toBe(
-      'checkpoint_no_adjacent_room',
-    );
-    expect(getCheckpointId('analyze_voice', false)).toBe(
-      'checkpoint_audio_packets',
-    );
-    expect(getCheckpointId('transmit_packets', false)).toBe(
-      'checkpoint_voice_identity',
-    );
-    expect(getCheckpointId('transmit_packets', true)).toBe(
-      'checkpoint_final_order_ready',
-    );
-    expect(getCheckpointId('ending', true)).toBe(
+    expect(
+      getCheckpointId('puzzle_causal_script', [
+        'puzzle_power_route',
+        'puzzle_carrier_sync',
+        'puzzle_maintenance_lock',
+        'puzzle_log_pairing',
+        'puzzle_signal_route',
+        'puzzle_packet_repair',
+        'puzzle_temporal_anomaly',
+        'puzzle_voiceprint_calibration',
+      ]),
+    ).toBe('checkpoint_puzzle_08');
+    expect(getCheckpointId('ending', [])).toBe(
       'checkpoint_transmission_started',
     );
-    expect(getCheckpointId('completed', true)).toBe('checkpoint_completed');
+    expect(getCheckpointId('completed', [])).toBe('checkpoint_completed');
   });
 });

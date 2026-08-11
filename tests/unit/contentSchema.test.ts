@@ -6,10 +6,11 @@ import { parseGameContent } from '../../src/game/content/schema';
 const storySource = readFileSync('src/content/story.yaml', 'utf8');
 
 describe('game content schema', () => {
-  it('loads all seven puzzles and their three-stage hints', () => {
+  it('loads all ten puzzles and their three-stage hints', () => {
     const content = parseGameContent(storySource);
-    expect(content.puzzles).toHaveLength(7);
-    expect(content.hints).toHaveLength(21);
+    expect(content.puzzles).toHaveLength(10);
+    expect(content.hints).toHaveLength(30);
+    expect(content.storyFacts.silentPlay).toBe(true);
   });
 
   it('rejects a story timestamp that is not exactly twenty minutes apart', () => {

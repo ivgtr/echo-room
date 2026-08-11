@@ -14,11 +14,12 @@ describe('InspectionEvidencePanel', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('renders the exact emergency power instruction on the desk paper', () => {
+  it('renders the capacity and fault evidence on the desk paper', () => {
     render(<InspectionEvidencePanel kind="power-test" onClose={vi.fn()} />);
     expect(
-      screen.getByRole('heading', { name: 'EMERGENCY POWER TEST' }),
+      screen.getByRole('heading', { name: '非常電源配分表' }),
     ).toBeVisible();
-    expect(screen.getByText('周波数の低い回路から接続すること')).toBeVisible();
+    expect(screen.getByText(/TERMINAL 2.*INTERCOM 1/)).toBeVisible();
+    expect(screen.getByText(/SHORT DETECTED/)).toBeVisible();
   });
 });

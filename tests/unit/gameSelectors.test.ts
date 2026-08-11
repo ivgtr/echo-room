@@ -15,7 +15,9 @@ describe('exploration messaging selectors', () => {
       actor.send({ type: 'DIALOGUE_ADVANCED' });
     }
 
-    expect(selectObjective(actor.getSnapshot())).toContain('非常電源を復旧');
+    expect(selectObjective(actor.getSnapshot())).toContain(
+      '非常電源の損傷箇所',
+    );
     expect(selectSubtitle(actor.getSnapshot())).toBeNull();
   });
 

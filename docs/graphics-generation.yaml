@@ -550,14 +550,15 @@ assets:
     prompt: >-
       Focus on the bolted service panel immediately beside the same terminal.
       Create closed and opened states. In the opened state, reveal tidy wiring and
-      one clearly readable physical toggle area for VOICE ANALYSIS, but no text.
+      three clearly readable calibration control areas for spacing, envelope and
+      phase feature channels, but no text.
       Preserve every surrounding pixel and the camera between states.
     state_variants: [closed, open]
     preserve_pixels_outside_mask: true
     deliverables: *closeup_deliverables
 
   - id: gfx-close-010
-    label: VOICE ANALYSISスイッチ接写
+    label: 声紋特徴量校正パネル接写
     category: world_closeup
     stage: 3
     priority: required
@@ -940,9 +941,9 @@ non_generated_assets:
     method: html_css
     reason: Interaction states and accessibility.
   - id: gfx-ui-005
-    label: 音高視覚補助
+    label: 搬送波・PACKET指紋・声紋特徴量
     method: html_css_or_canvas
-    reason: Exact four-level puzzle semantics.
+    reason: Exact waveform semantics and equivalent numeric labels.
   - id: gfx-fx-003
     label: 白飛び
     method: runtime_gradient
@@ -975,7 +976,7 @@ post_generation_validation:
     - Promotional assets contain no identity reveal spoiler.
   story_accuracy:
     - Clock overlay reads exactly 02:17.
-    - Locker solution overlay can display exactly 0237.
+    - Locker overlay can display the four maintenance symbols without baked-in text.
     - Terminal can display receive/source times with exactly 20 minutes difference.
     - Facility map shows no room adjacent to E-01.
     - Final transmission control has exactly four packet slots and one red button.

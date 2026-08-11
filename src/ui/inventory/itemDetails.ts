@@ -15,8 +15,8 @@ export const itemDetails: Record<
     description: '実験棟の職員用カード。壁面端末のSECURITY認証に使用できる。',
   },
   item_floor_map: {
-    label: '簡易フロア図',
-    code: 'FACILITY MAP',
-    description: 'E-01周辺の設備配置を記した紙の図面。',
+    label: '設備・配線図',
+    code: 'CONDUIT MAP',
+    description: 'E-01の室内配置と通信配線層を重ねた保守用の二層図。',
   },
 };

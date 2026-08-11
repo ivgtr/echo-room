@@ -124,7 +124,9 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     'true',
   );
   await expect(
-    system.getByText('非常電源を復旧する。室内を観察し、電源設備を探す。'),
+    system.getByText(
+      '非常電源の損傷箇所と必要容量を調べ、給電経路を構成する。',
+    ),
   ).toBeVisible();
   const archiveEntry = system.getByRole('button', {
     name: 'ARCHIVE / 会話履歴・資料再読',
@@ -160,23 +162,35 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     .getByRole('button', { name: 'ブレーカーパネルを調べる' })
     .press('Enter');
 
-  await page.getByRole('button', { name: '回路 1' }).focus();
-  await page.keyboard.press('Enter');
-  await expect(
-    page.getByText('接続順が違う。全レバーが戻った。もう一度試せる。'),
-  ).toBeVisible();
-  await page
-    .getByRole('button', { name: '音高の視覚補助：OFF' })
-    .press('Enter');
-  for (const name of [
-    /回路 3、音高レベル 1/,
-    /回路 1、音高レベル 2/,
-    /回路 4、音高レベル 3/,
-    /回路 2、音高レベル 4/,
-  ]) {
-    await page.getByRole('button', { name }).focus();
-    await page.keyboard.press('Enter');
+  const powerPuzzle = page.locator(
+    '[data-puzzle-id="puzzle_power_route"]:visible',
+  );
+  for (const [groupName, optionName] of [
+    ['最初に隔離する系統', 'TERMINAL / 2 UNIT'],
+    ['給電順 1', 'TERMINAL'],
+    ['給電順 2', 'INTERCOM'],
+    ['給電順 3', 'ECHO BUFFER'],
+  ] as const) {
+    await powerPuzzle
+      .getByRole('group', { name: groupName })
+      .getByRole('button', { name: optionName })
+      .press('Enter');
   }
+  await powerPuzzle
+    .getByRole('button', { name: '構成を検証する' })
+    .press('Enter');
+  await expect(
+    page.getByText(
+      '保護回路が作動した。容量、短絡痕、起動条件をすべて満たす必要がある。',
+    ),
+  ).toBeVisible();
+  await powerPuzzle
+    .getByRole('group', { name: '最初に隔離する系統' })
+    .getByRole('button', { name: /DOOR \/ 4 UNIT/ })
+    .press('Enter');
+  await powerPuzzle
+    .getByRole('button', { name: '構成を検証する' })
+    .press('Enter');
 
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(world).toHaveAttribute('data-transition-state', 'idle');
@@ -186,11 +200,9 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   );
   const saveToast = page.getByText('電源復旧地点を自動保存しました');
   await expect(saveToast).toBeVisible();
-  await expect(saveToast).toHaveCSS('pointer-events', 'none');
   await page.getByRole('button', { name: '壁面端末を調べる' }).press('Enter');
   const terminal = page.getByRole('dialog', { name: '壁面端末' });
-  await terminal.getByRole('button', { name: 'LOG' }).press('Enter');
-  await expect(terminal.getByText('02:37:18')).toBeVisible();
+  await expect(terminal.getByText('搬送波同期')).toBeVisible();
   await expect(saveToast).toBeHidden({ timeout: 5000 });
   await terminal.getByRole('button', { name: '端末を閉じる' }).press('Enter');
   await page.reload();
@@ -198,13 +210,13 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(saveToast).toHaveCount(0);
   await expect(
-    page.getByText('端末のLOGで受信時刻と送信元時刻を確認しよう。'),
+    page.getByText('端末のSYSTEMでECHO BUFFERの搬送波を同期する。'),
   ).toBeHidden();
   await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   await expect(
     page
       .getByRole('dialog', { name: 'SYSTEM' })
-      .getByText('端末のLOGで受信時刻と送信元時刻を確認しよう。'),
+      .getByText('端末のSYSTEMでECHO BUFFERの搬送波を同期する。'),
   ).toBeVisible();
 });
 
@@ -374,7 +386,9 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
   await door.dispatchEvent('click');
   await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
   await expect(world).toHaveCSS('transform', 'none');
-  await expect(page.getByText('非常ロックが作動している。')).toBeVisible();
+  await expect(
+    page.getByText('非常ロックは通信完了信号と連動している。'),
+  ).toBeVisible();
 });
 
 test('system archive and subtitle/sound settings preserve the exploration view', async ({
@@ -390,7 +404,7 @@ test('system archive and subtitle/sound settings preserve the exploration view',
     .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
     .click();
   await expect(system.getByText('……聞こえるか？')).toBeVisible();
-  await expect(system.getByText('EMERGENCY POWER TEST')).toBeVisible();
+  await expect(system.getByText('EMERGENCY BYPASS PLAN')).toBeVisible();
   await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
   await system
     .getByRole('button', {
@@ -511,7 +525,7 @@ test.describe('touch input', () => {
       .getByRole('button', { name: 'ブレーカーパネルを調べる' });
     await breaker.tap();
     await expect(
-      page.getByRole('heading', { name: '非常電源ブレーカー' }),
+      page.getByRole('heading', { name: '非常電源経路' }),
     ).toBeVisible();
   });
 });

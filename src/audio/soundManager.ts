@@ -1,5 +1,3 @@
-import type { BreakerId } from '../game/domain/ids';
-
 export type SoundEffectId =
   | 'ui_click'
   | 'text_blip'
@@ -26,13 +24,6 @@ type Tone = {
   duration: number;
   gain: number;
   type?: OscillatorType;
-};
-
-const BREAKER_FREQUENCIES: Record<BreakerId, number> = {
-  breaker_1: 330,
-  breaker_2: 660,
-  breaker_3: 220,
-  breaker_4: 440,
 };
 
 export const SOUND_CUES: Readonly<Record<SoundEffectId, readonly Tone[]>> = {
@@ -157,17 +148,6 @@ export class SoundManager {
     if (!nextState.active || !nextState.enabled) this.stopEffects();
     this.syncBuses();
     this.syncEnvironment();
-  }
-
-  playBreaker(breakerId: BreakerId) {
-    this.playTones([
-      {
-        frequency: BREAKER_FREQUENCIES[breakerId],
-        delay: 0,
-        duration: 0.25,
-        gain: 0.08,
-      },
-    ]);
   }
 
   playEffect(effectId: SoundEffectId) {

@@ -17,18 +17,3 @@ export const locationIds = [
   'location_west_wall',
 ] as const;
 export type LocationId = (typeof locationIds)[number];
-
-export const breakerIds = [
-  'breaker_1',
-  'breaker_2',
-  'breaker_3',
-  'breaker_4',
-] as const;
-export type BreakerId = (typeof breakerIds)[number];
-
-export const BREAKER_ORDER: readonly BreakerId[] = [
-  'breaker_3',
-  'breaker_1',
-  'breaker_4',
-  'breaker_2',
-];

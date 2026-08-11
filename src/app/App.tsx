@@ -2,14 +2,12 @@ import { useActorRef, useSelector } from '@xstate/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { soundManager } from '../audio/soundManager';
-import {
-  BREAKER_ORDER,
-  type BreakerId,
-  type HotspotId,
-  type LocationId,
-} from '../game/domain/ids';
+import { type HotspotId, type LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
-import { isLockerCodeCorrect } from '../game/puzzles/storyPuzzles';
+import {
+  isPuzzleAnswerCorrect,
+  type PuzzleId,
+} from '../game/puzzles/storyPuzzles';
 import {
   clearProgress,
   getCheckpointId,
@@ -20,23 +18,19 @@ import {
   type SavedProgress,
 } from '../game/save/saveManager';
 import {
-  selectBreakerFailures,
-  selectBreakerSequence,
   selectActiveElapsedMs,
+  selectCompletedPuzzleIds,
   selectEndingLineIndex,
-  selectFinalOrderReady,
   selectHintLevel,
-  selectHeardPackets,
-  selectInspectedMaps,
   selectInventory,
   selectIntroLineIndex,
-  selectIsBreakerPuzzle,
+  selectIsPowerPuzzle,
   selectIsIntro,
   selectIsPlaying,
   selectLocation,
-  selectLockerFailures,
   selectObjective,
   selectPowerRestored,
+  selectPuzzleFailures,
   selectReservePower,
   selectSelectedHotspot,
   selectSubtitle,
@@ -48,10 +42,8 @@ import {
   discoveryEntry,
   getArchiveDocuments,
   getRestoredNarrativeHistory,
-  identityEntries,
   introEntries,
-  noAdjacentRoomEntries,
-  packetEntries,
+  getPuzzleCompletionEntries,
   powerRestoredEntry,
   type NarrativeEntry,
 } from '../ui/narrative/narrativeArchive';
@@ -97,21 +89,17 @@ export function App() {
   const actorRef = useActorRef(gameMachine);
   const isPlaying = useSelector(actorRef, selectIsPlaying);
   const intro = useSelector(actorRef, selectIsIntro);
-  const breakerPuzzle = useSelector(actorRef, selectIsBreakerPuzzle);
+  const powerPuzzle = useSelector(actorRef, selectIsPowerPuzzle);
   const locationId = useSelector(actorRef, selectLocation);
   const selectedHotspotId = useSelector(actorRef, selectSelectedHotspot);
   const subtitle = useSelector(actorRef, selectSubtitle);
   const powerRestored = useSelector(actorRef, selectPowerRestored);
-  const breakerSequence = useSelector(actorRef, selectBreakerSequence);
-  const breakerFailures = useSelector(actorRef, selectBreakerFailures);
   const introLineIndex = useSelector(actorRef, selectIntroLineIndex);
   const terminalMenuId = useSelector(actorRef, selectTerminalMenu);
   const storyStage = useSelector(actorRef, selectStoryStage);
   const inventory = useSelector(actorRef, selectInventory);
-  const inspectedMaps = useSelector(actorRef, selectInspectedMaps);
-  const heardPackets = useSelector(actorRef, selectHeardPackets);
-  const lockerFailures = useSelector(actorRef, selectLockerFailures);
-  const finalReady = useSelector(actorRef, selectFinalOrderReady);
+  const completedPuzzleIds = useSelector(actorRef, selectCompletedPuzzleIds);
+  const puzzleFailures = useSelector(actorRef, selectPuzzleFailures);
   const endingLineIndex = useSelector(actorRef, selectEndingLineIndex);
   const hintLevel = useSelector(actorRef, selectHintLevel);
   const objective = useSelector(actorRef, selectObjective);
@@ -129,18 +117,15 @@ export function App() {
   const reservePowerRef = useRef(reservePower);
 
   latestProgressRef.current = {
-    checkpointId: getCheckpointId(storyStage, finalReady),
+    checkpointId: getCheckpointId(storyStage, completedPuzzleIds),
     powerRestored: true,
     locationId,
     storyStage,
     inventory: [...inventory],
-    inspectedMaps: [...inspectedMaps],
-    heardPackets: [...heardPackets],
-    finalOrderReady: finalReady,
+    completedPuzzleIds: [...completedPuzzleIds],
+    puzzleFailures: { ...puzzleFailures },
     endingLineIndex: storyStage === 'completed' ? 6 : 0,
     hintLevel,
-    breakerFailures,
-    lockerFailures,
     activeElapsedMs,
     reservePower,
   };
@@ -278,13 +263,10 @@ export function App() {
     if (firstSave) queueMicrotask(() => appendHistory([powerRestoredEntry]));
   }, [
     appendHistory,
-    breakerFailures,
-    finalReady,
-    heardPackets,
+    completedPuzzleIds,
     hintLevel,
-    inspectedMaps,
     inventory,
-    lockerFailures,
+    puzzleFailures,
     persistCurrentProgress,
     powerRestored,
     reservePower,
@@ -365,7 +347,7 @@ export function App() {
       if (hotspotId === 'hotspot_desk')
         appendHistory([
           discoveryEntry(
-            'EMERGENCY POWER TEST――起動順序：周波数の低い回路から接続すること。',
+            '非常電源容量は7 UNIT。ドア駆動線に短絡痕があり、BUFFERは最後に起動する。',
           ),
         ]);
       actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId });
@@ -377,18 +359,20 @@ export function App() {
       actorRef.send({ type: 'VIEW_CHANGED', locationId: nextLocationId }),
     [actorRef],
   );
-  const handleBreaker = useCallback(
-    (breakerId: BreakerId) => {
-      soundManager.playBreaker(breakerId);
-      const nextSequence = [...breakerSequence, breakerId];
-      if (
-        nextSequence.length === BREAKER_ORDER.length &&
-        nextSequence.every((id, index) => id === BREAKER_ORDER[index])
-      )
-        soundManager.playEffect('power_restore');
-      actorRef.send({ type: 'BREAKER_TOGGLED', breakerId });
+  const handlePuzzleSubmit = useCallback(
+    (puzzleId: PuzzleId, answer: string[]) => {
+      const correct = isPuzzleAnswerCorrect(puzzleId, answer);
+      soundManager.playEffect(
+        correct
+          ? puzzleId === 'puzzle_power_route'
+            ? 'power_restore'
+            : 'terminal_connect'
+          : 'locker_error',
+      );
+      if (correct) appendHistory(getPuzzleCompletionEntries(puzzleId));
+      actorRef.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
     },
-    [actorRef, breakerSequence],
+    [actorRef, appendHistory],
   );
 
   const archiveDocuments = getArchiveDocuments(
@@ -448,9 +432,7 @@ export function App() {
       intro={intro}
       introLineIndex={introLineIndex}
       introSeen={introSeen}
-      breakerPuzzle={breakerPuzzle}
-      breakerSequence={breakerSequence}
-      breakerFailures={breakerFailures}
+      powerPuzzle={powerPuzzle}
       visualAssist={visualAssist}
       motionReduced={motionReduced}
       soundEnabled={soundEnabled}
@@ -463,9 +445,9 @@ export function App() {
       terminalMenuId={terminalMenuId}
       storyStage={storyStage}
       inventory={inventory}
+      completedPuzzleIds={completedPuzzleIds}
+      puzzleFailures={puzzleFailures}
       inventoryOpen={inventoryOpen}
-      lockerFailures={lockerFailures}
-      finalReady={finalReady}
       endingLineIndex={endingLineIndex}
       hintLevel={hintLevel}
       hintOpen={hintOpen}
@@ -485,7 +467,7 @@ export function App() {
       }}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}
-      onBreakerToggle={handleBreaker}
+      onPuzzleSubmit={handlePuzzleSubmit}
       onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleMotion={() => setMotionReduced((value) => !value)}
@@ -504,38 +486,10 @@ export function App() {
       onTerminalMenu={(menuId) =>
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
       }
-      onLogsConfirmed={() => {
-        soundManager.playEffect('terminal_connect');
-        actorRef.send({ type: 'LOGS_CONFIRMED' });
-      }}
-      onLockerSubmit={(answer) => {
-        soundManager.playEffect(
-          isLockerCodeCorrect(answer) ? 'locker_unlock' : 'locker_error',
-        );
-        actorRef.send({ type: 'LOCKER_SUBMITTED', answer });
-      }}
       onInventoryToggle={() => {
         setSystemMenuOpen(false);
         setInventoryOpen((value) => !value);
       }}
-      onMapInspected={(source) => {
-        if (!inspectedMaps.includes(source) && inspectedMaps.length === 1)
-          appendHistory(noAdjacentRoomEntries);
-        actorRef.send({ type: 'FLOOR_MAP_INSPECTED', source });
-      }}
-      onPacketPlayed={(packetId) => {
-        soundManager.playEffect('communication_noise');
-        appendHistory([packetEntries[packetId]]);
-        actorRef.send({ type: 'PACKET_PLAYED', packetId });
-      }}
-      onAnalysisComplete={() => {
-        soundManager.playEffect('analysis_complete');
-        appendHistory(identityEntries);
-        actorRef.send({ type: 'VOICE_ANALYSIS_STARTED' });
-      }}
-      onFinalSubmit={(packetIds) =>
-        actorRef.send({ type: 'FINAL_ORDER_SUBMITTED', packetIds })
-      }
       onTransmit={() => {
         soundManager.playEffect('transmission');
         actorRef.send({ type: 'TRANSMISSION_CONFIRMED' });

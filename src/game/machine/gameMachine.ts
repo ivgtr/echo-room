@@ -1,51 +1,82 @@
 import { assign, setup } from 'xstate';
 
+import type { HotspotId, LocationId } from '../domain/ids';
 import {
-  BREAKER_ORDER,
-  type BreakerId,
-  type HotspotId,
-  type LocationId,
-} from '../domain/ids';
-import {
-  isFinalPacketOrderCorrect,
-  isLockerCodeCorrect,
-  type PacketId,
+  isPuzzleAnswerCorrect,
+  puzzleIds,
+  type PuzzleId,
 } from '../puzzles/storyPuzzles';
 import type { SavedProgress } from '../save/saveManager';
 import { EMERGENCY_POWER_DURATION_MS } from '../time/emergencyPower';
 
 export type TerminalMenuId = 'system' | 'log' | 'audio' | 'security';
 export type StoryStage =
-  | 'inspect_logs'
-  | 'unlock_locker'
-  | 'reveal_no_adjacent_room'
-  | 'inspect_audio'
-  | 'analyze_voice'
-  | 'transmit_packets'
+  | 'puzzle_carrier_sync'
+  | 'puzzle_maintenance_lock'
+  | 'puzzle_log_pairing'
+  | 'puzzle_signal_route'
+  | 'puzzle_packet_repair'
+  | 'puzzle_temporal_anomaly'
+  | 'puzzle_voiceprint_calibration'
+  | 'puzzle_causal_script'
+  | 'puzzle_transmission_window'
+  | 'transmission_ready'
   | 'ending'
   | 'completed';
 export type ItemId = 'item_screwdriver' | 'item_staff_card' | 'item_floor_map';
 
+export const stagePuzzle: Partial<Record<StoryStage, PuzzleId>> = {
+  puzzle_carrier_sync: 'puzzle_carrier_sync',
+  puzzle_maintenance_lock: 'puzzle_maintenance_lock',
+  puzzle_log_pairing: 'puzzle_log_pairing',
+  puzzle_signal_route: 'puzzle_signal_route',
+  puzzle_packet_repair: 'puzzle_packet_repair',
+  puzzle_temporal_anomaly: 'puzzle_temporal_anomaly',
+  puzzle_voiceprint_calibration: 'puzzle_voiceprint_calibration',
+  puzzle_causal_script: 'puzzle_causal_script',
+  puzzle_transmission_window: 'puzzle_transmission_window',
+};
+
+const nextStage: Record<PuzzleId, StoryStage> = {
+  puzzle_power_route: 'puzzle_carrier_sync',
+  puzzle_carrier_sync: 'puzzle_maintenance_lock',
+  puzzle_maintenance_lock: 'puzzle_log_pairing',
+  puzzle_log_pairing: 'puzzle_signal_route',
+  puzzle_signal_route: 'puzzle_packet_repair',
+  puzzle_packet_repair: 'puzzle_temporal_anomaly',
+  puzzle_temporal_anomaly: 'puzzle_voiceprint_calibration',
+  puzzle_voiceprint_calibration: 'puzzle_causal_script',
+  puzzle_causal_script: 'puzzle_transmission_window',
+  puzzle_transmission_window: 'transmission_ready',
+};
+
+const menuForStage = (stage: StoryStage): TerminalMenuId => {
+  if (stage === 'puzzle_log_pairing') return 'log';
+  if (stage === 'puzzle_signal_route') return 'security';
+  if (
+    stage === 'puzzle_packet_repair' ||
+    stage === 'puzzle_temporal_anomaly' ||
+    stage === 'puzzle_voiceprint_calibration'
+  )
+    return 'audio';
+  return 'system';
+};
+
 export type GameEvent =
   | { type: 'GAME_STARTED' }
-  | {
-      type: 'PROGRESS_RESTORED';
-      progress: SavedProgress;
-    }
+  | { type: 'PROGRESS_RESTORED'; progress: SavedProgress }
   | { type: 'ACTIVE_TIME_ELAPSED'; deltaMs: number }
   | { type: 'DIALOGUE_ADVANCED' }
   | { type: 'DIALOGUE_SKIPPED' }
   | { type: 'VIEW_CHANGED'; locationId: LocationId }
   | { type: 'HOTSPOT_SELECTED'; hotspotId: HotspotId }
-  | { type: 'BREAKER_TOGGLED'; breakerId: BreakerId }
+  | {
+      type: 'PUZZLE_SUBMITTED';
+      puzzleId: PuzzleId;
+      answer: string[];
+    }
   | { type: 'PUZZLE_CLOSED' }
   | { type: 'TERMINAL_MENU_SELECTED'; menuId: TerminalMenuId }
-  | { type: 'LOGS_CONFIRMED' }
-  | { type: 'LOCKER_SUBMITTED'; answer: string }
-  | { type: 'FLOOR_MAP_INSPECTED'; source: 'inventory' | 'security' }
-  | { type: 'PACKET_PLAYED'; packetId: PacketId }
-  | { type: 'VOICE_ANALYSIS_STARTED' }
-  | { type: 'FINAL_ORDER_SUBMITTED'; packetIds: string[] }
   | { type: 'TRANSMISSION_CONFIRMED' }
   | { type: 'ENDING_ADVANCED' }
   | { type: 'HINT_REQUESTED' }
@@ -55,36 +86,34 @@ export type GameContext = {
   locationId: LocationId;
   selectedHotspotId: HotspotId | null;
   introLineIndex: number;
-  breakerSequence: BreakerId[];
-  breakerFailures: number;
   powerRestored: boolean;
   terminalMenuId: TerminalMenuId;
   storyStage: StoryStage;
   inventory: ItemId[];
-  lockerFailures: number;
-  inspectedMaps: ('inventory' | 'security')[];
-  heardPackets: PacketId[];
-  finalOrderReady: boolean;
+  completedPuzzleIds: PuzzleId[];
+  puzzleFailures: Record<PuzzleId, number>;
   endingLineIndex: number;
   hintLevel: number;
   activeElapsedMs: number;
   reservePower: boolean;
 };
 
+const emptyFailures = () =>
+  Object.fromEntries(puzzleIds.map((id) => [id, 0])) as Record<
+    PuzzleId,
+    number
+  >;
+
 const initialContext: GameContext = {
   locationId: 'location_north_wall',
   selectedHotspotId: null,
   introLineIndex: 0,
-  breakerSequence: [],
-  breakerFailures: 0,
   powerRestored: false,
   terminalMenuId: 'system',
-  storyStage: 'inspect_logs',
+  storyStage: 'puzzle_carrier_sync',
   inventory: [],
-  lockerFailures: 0,
-  inspectedMaps: [],
-  heardPackets: [],
-  finalOrderReady: false,
+  completedPuzzleIds: [],
+  puzzleFailures: emptyFailures(),
   endingLineIndex: 0,
   hintLevel: 0,
   activeElapsedMs: 0,
@@ -98,27 +127,16 @@ export const gameMachine = setup({
     selectedBreaker: ({ event }) =>
       event.type === 'HOTSPOT_SELECTED' &&
       event.hotspotId === 'hotspot_breaker',
-    correctFinalInput: ({ context, event }) =>
-      event.type === 'BREAKER_TOGGLED' &&
-      [...context.breakerSequence, event.breakerId].every(
-        (id, index) => id === BREAKER_ORDER[index],
-      ) &&
-      context.breakerSequence.length + 1 === 4,
-    incorrectInput: ({ context, event }) =>
-      event.type === 'BREAKER_TOGGLED' &&
-      event.breakerId !== BREAKER_ORDER[context.breakerSequence.length],
-    correctLockerCode: ({ event }) =>
-      event.type === 'LOCKER_SUBMITTED' && isLockerCodeCorrect(event.answer),
-    secondMapInspected: ({ context, event }) =>
-      event.type === 'FLOOR_MAP_INSPECTED' &&
-      !context.inspectedMaps.includes(event.source) &&
-      context.inspectedMaps.length === 1,
-    packetFourPlayed: ({ event }) =>
-      event.type === 'PACKET_PLAYED' && event.packetId === 'audio_packet_04',
-    correctFinalOrder: ({ event }) =>
-      event.type === 'FINAL_ORDER_SUBMITTED' &&
-      isFinalPacketOrderCorrect(event.packetIds),
-    transmissionReady: ({ context }) => context.finalOrderReady,
+    correctPowerRoute: ({ event }) =>
+      event.type === 'PUZZLE_SUBMITTED' &&
+      event.puzzleId === 'puzzle_power_route' &&
+      isPuzzleAnswerCorrect(event.puzzleId, event.answer),
+    correctCurrentPuzzle: ({ context, event }) =>
+      event.type === 'PUZZLE_SUBMITTED' &&
+      stagePuzzle[context.storyStage] === event.puzzleId &&
+      isPuzzleAnswerCorrect(event.puzzleId, event.answer),
+    transmissionReady: ({ context }) =>
+      context.storyStage === 'transmission_ready',
     endingHasMoreLines: ({ context }) => context.endingLineIndex < 5,
   },
   actions: {
@@ -137,25 +155,17 @@ export const gameMachine = setup({
       selectedHotspotId: ({ event }) =>
         event.type === 'HOTSPOT_SELECTED' ? event.hotspotId : null,
     }),
-    appendBreaker: assign({
-      breakerSequence: ({ context, event }) =>
-        event.type === 'BREAKER_TOGGLED'
-          ? [...context.breakerSequence, event.breakerId]
-          : context.breakerSequence,
-    }),
-    resetBreaker: assign({
-      breakerSequence: [],
-      breakerFailures: ({ context }) => context.breakerFailures + 1,
-    }),
     restorePower: assign({
-      breakerSequence: () => [...BREAKER_ORDER],
       powerRestored: true,
+      completedPuzzleIds: ['puzzle_power_route'],
       selectedHotspotId: null,
       locationId: 'location_east_wall',
+      storyStage: 'puzzle_carrier_sync',
+      terminalMenuId: 'system',
+      hintLevel: 0,
     }),
     restoreProgress: assign({
       introLineIndex: 7,
-      breakerSequence: () => [...BREAKER_ORDER],
       powerRestored: true,
       selectedHotspotId: null,
       locationId: ({ event }) =>
@@ -165,29 +175,24 @@ export const gameMachine = setup({
       storyStage: ({ event }) =>
         event.type === 'PROGRESS_RESTORED'
           ? event.progress.storyStage
-          : 'inspect_logs',
+          : 'puzzle_carrier_sync',
       inventory: ({ event }) =>
         event.type === 'PROGRESS_RESTORED' ? event.progress.inventory : [],
-      inspectedMaps: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED' ? event.progress.inspectedMaps : [],
-      heardPackets: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED' ? event.progress.heardPackets : [],
-      finalOrderReady: ({ event }) =>
+      completedPuzzleIds: ({ event }) =>
         event.type === 'PROGRESS_RESTORED'
-          ? event.progress.finalOrderReady
-          : false,
+          ? event.progress.completedPuzzleIds
+          : ['puzzle_power_route'],
+      puzzleFailures: ({ event }) =>
+        event.type === 'PROGRESS_RESTORED'
+          ? event.progress.puzzleFailures
+          : emptyFailures(),
       endingLineIndex: ({ event }) =>
         event.type === 'PROGRESS_RESTORED' ? event.progress.endingLineIndex : 0,
       hintLevel: ({ event }) =>
         event.type === 'PROGRESS_RESTORED' ? event.progress.hintLevel : 0,
-      breakerFailures: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED' ? event.progress.breakerFailures : 0,
-      lockerFailures: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED' ? event.progress.lockerFailures : 0,
       terminalMenuId: ({ event }) =>
-        event.type === 'PROGRESS_RESTORED' &&
-        event.progress.storyStage === 'inspect_audio'
-          ? 'audio'
+        event.type === 'PROGRESS_RESTORED'
+          ? menuForStage(event.progress.storyStage)
           : 'system',
       activeElapsedMs: ({ event }) =>
         event.type === 'PROGRESS_RESTORED' ? event.progress.activeElapsedMs : 0,
@@ -209,63 +214,46 @@ export const gameMachine = setup({
               EMERGENCY_POWER_DURATION_MS
           : context.reservePower,
     }),
-    resetSession: assign(() => ({ ...initialContext })),
+    resetSession: assign(() => ({
+      ...initialContext,
+      puzzleFailures: emptyFailures(),
+    })),
     selectTerminalMenu: assign({
       terminalMenuId: ({ event }) =>
         event.type === 'TERMINAL_MENU_SELECTED' ? event.menuId : 'system',
     }),
     closeInspection: assign({ selectedHotspotId: null }),
-    confirmLogs: assign({
-      storyStage: 'unlock_locker',
+    failPuzzle: assign({
+      puzzleFailures: ({ context, event }) => {
+        if (event.type !== 'PUZZLE_SUBMITTED') return context.puzzleFailures;
+        return {
+          ...context.puzzleFailures,
+          [event.puzzleId]: context.puzzleFailures[event.puzzleId] + 1,
+        };
+      },
+    }),
+    completePuzzle: assign({
+      storyStage: ({ event }) =>
+        event.type === 'PUZZLE_SUBMITTED'
+          ? nextStage[event.puzzleId]
+          : 'puzzle_carrier_sync',
+      completedPuzzleIds: ({ context, event }) =>
+        event.type === 'PUZZLE_SUBMITTED' &&
+        !context.completedPuzzleIds.includes(event.puzzleId)
+          ? [...context.completedPuzzleIds, event.puzzleId]
+          : context.completedPuzzleIds,
+      inventory: ({ context, event }) =>
+        event.type === 'PUZZLE_SUBMITTED' &&
+        event.puzzleId === 'puzzle_maintenance_lock'
+          ? ['item_screwdriver', 'item_staff_card', 'item_floor_map']
+          : context.inventory,
       selectedHotspotId: null,
+      terminalMenuId: ({ event }) =>
+        event.type === 'PUZZLE_SUBMITTED'
+          ? menuForStage(nextStage[event.puzzleId])
+          : 'system',
       hintLevel: 0,
     }),
-    unlockLocker: assign({
-      storyStage: 'reveal_no_adjacent_room',
-      inventory: ['item_screwdriver', 'item_staff_card', 'item_floor_map'],
-      selectedHotspotId: null,
-      hintLevel: 0,
-    }),
-    failLocker: assign({
-      lockerFailures: ({ context }) => context.lockerFailures + 1,
-    }),
-    inspectMap: assign({
-      inspectedMaps: ({ context, event }) =>
-        event.type === 'FLOOR_MAP_INSPECTED' &&
-        !context.inspectedMaps.includes(event.source)
-          ? [...context.inspectedMaps, event.source]
-          : context.inspectedMaps,
-    }),
-    revealNoRoom: assign({
-      storyStage: 'inspect_audio',
-      inspectedMaps: ({ context, event }) =>
-        event.type === 'FLOOR_MAP_INSPECTED'
-          ? [...new Set([...context.inspectedMaps, event.source])]
-          : context.inspectedMaps,
-      terminalMenuId: 'audio',
-      hintLevel: 0,
-    }),
-    hearPacket: assign({
-      heardPackets: ({ context, event }) =>
-        event.type === 'PACKET_PLAYED' &&
-        !context.heardPackets.includes(event.packetId)
-          ? [...context.heardPackets, event.packetId]
-          : context.heardPackets,
-    }),
-    advanceToAnalysis: assign({
-      storyStage: 'analyze_voice',
-      selectedHotspotId: null,
-      hintLevel: 0,
-    }),
-    completeAnalysis: assign({
-      storyStage: 'transmit_packets',
-      terminalMenuId: 'system',
-      selectedHotspotId: 'hotspot_terminal',
-      locationId: 'location_east_wall',
-      hintLevel: 0,
-    }),
-    acceptFinalOrder: assign({ finalOrderReady: true }),
-    rejectFinalOrder: assign({ finalOrderReady: false }),
     beginEnding: assign({
       storyStage: 'ending',
       endingLineIndex: 0,
@@ -325,14 +313,13 @@ export const gameMachine = setup({
         },
         breakerPuzzle: {
           on: {
-            BREAKER_TOGGLED: [
+            PUZZLE_SUBMITTED: [
               {
-                guard: 'correctFinalInput',
+                guard: 'correctPowerRoute',
                 target: 'powered',
                 actions: 'restorePower',
               },
-              { guard: 'incorrectInput', actions: 'resetBreaker' },
-              { actions: 'appendBreaker' },
+              { actions: 'failPuzzle' },
             ],
             PUZZLE_CLOSED: 'exploring',
           },
@@ -343,26 +330,9 @@ export const gameMachine = setup({
             HOTSPOT_SELECTED: { actions: 'selectHotspot' },
             TERMINAL_MENU_SELECTED: { actions: 'selectTerminalMenu' },
             PUZZLE_CLOSED: { actions: 'closeInspection' },
-            LOGS_CONFIRMED: { actions: 'confirmLogs' },
-            LOCKER_SUBMITTED: [
-              { guard: 'correctLockerCode', actions: 'unlockLocker' },
-              { actions: 'failLocker' },
-            ],
-            FLOOR_MAP_INSPECTED: [
-              { guard: 'secondMapInspected', actions: 'revealNoRoom' },
-              { actions: 'inspectMap' },
-            ],
-            PACKET_PLAYED: [
-              {
-                guard: 'packetFourPlayed',
-                actions: ['hearPacket', 'advanceToAnalysis'],
-              },
-              { actions: 'hearPacket' },
-            ],
-            VOICE_ANALYSIS_STARTED: { actions: 'completeAnalysis' },
-            FINAL_ORDER_SUBMITTED: [
-              { guard: 'correctFinalOrder', actions: 'acceptFinalOrder' },
-              { actions: 'rejectFinalOrder' },
+            PUZZLE_SUBMITTED: [
+              { guard: 'correctCurrentPuzzle', actions: 'completePuzzle' },
+              { actions: 'failPuzzle' },
             ],
             TRANSMISSION_CONFIRMED: {
               guard: 'transmissionReady',

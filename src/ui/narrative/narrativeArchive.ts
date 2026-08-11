@@ -1,5 +1,5 @@
 import type { ItemId, StoryStage } from '../../game/machine/gameMachine';
-import type { PacketId } from '../../game/puzzles/storyPuzzles';
+import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import type { SavedProgress } from '../../game/save/saveManager';
 
 export type NarrativeKind =
@@ -48,125 +48,102 @@ export const introEntries = [
   },
 ] as const satisfies readonly NarrativeEntry[];
 
-export const packetEntries: Record<PacketId, NarrativeEntry> = {
-  audio_packet_01: {
-    id: 'packet_01',
-    kind: 'communication',
-    speaker: 'UNKNOWN / PACKET 01',
-    text: '……聞こえるか？',
-  },
-  audio_packet_02: {
-    id: 'packet_02',
-    kind: 'communication',
-    speaker: 'UNKNOWN / PACKET 02',
-    text: 'まず電源を戻せ。',
-  },
-  audio_packet_03: {
-    id: 'packet_03',
-    kind: 'communication',
-    speaker: 'UNKNOWN / PACKET 03',
-    text: 'ログは気にするな。',
-  },
-  audio_packet_04: {
-    id: 'packet_04',
-    kind: 'communication',
-    speaker: 'UNKNOWN / PACKET 04',
-    text: '最後に、赤いボタンを押せ。',
-  },
-};
-
 export const powerRestoredEntry: NarrativeEntry = {
   id: 'system_power_restored',
   kind: 'system',
   speaker: 'FACILITY SYSTEM',
-  text: '主電源が復旧し、壁面端末が起動した。',
+  text: '非常電源の経路が成立し、壁面端末とECHO BUFFERが起動した。',
 };
 
-export const noAdjacentRoomEntries: readonly NarrativeEntry[] = [
+const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
   {
-    id: 'no_room_question',
-    kind: 'monologue',
-    text: '隣の部屋なんてないぞ。',
-  },
-  {
-    id: 'no_room_answer',
-    kind: 'communication',
-    speaker: 'UNKNOWN',
-    text: '分かってる。まだ説明できない。',
-  },
-];
+    puzzle_log_pairing: [
+      {
+        id: 'offset_discovered',
+        kind: 'discovery',
+        text: '照合した三通信は、どれも送信元が受信より正確に20分後だ。',
+      },
+      {
+        id: 'offset_warning',
+        kind: 'communication',
+        speaker: 'UNKNOWN',
+        text: 'ログは気にするな。',
+      },
+    ],
+    puzzle_signal_route: [
+      {
+        id: 'no_room_question',
+        kind: 'monologue',
+        text: '隣の部屋なんてない。回線はこの部屋へ戻っている。',
+      },
+      {
+        id: 'no_room_answer',
+        kind: 'communication',
+        speaker: 'UNKNOWN',
+        text: '分かってる。まだ説明できない。',
+      },
+    ],
+    puzzle_temporal_anomaly: [
+      {
+        id: 'future_packet',
+        kind: 'discovery',
+        text: 'PACKET 04は、まだ起きていない赤いボタンの操作を知っている。',
+      },
+    ],
+    puzzle_voiceprint_calibration: [
+      {
+        id: 'identity_question',
+        kind: 'monologue',
+        text: 'この特徴量は……俺の職員記録と同じだ。',
+      },
+      {
+        id: 'identity_answer',
+        kind: 'communication',
+        speaker: '20分後の自分',
+        text: '20分後のお前だ。',
+      },
+    ],
+  };
 
-export const identityEntries: readonly NarrativeEntry[] = [
-  { id: 'identity_question', kind: 'monologue', text: 'お前は……。' },
-  {
-    id: 'identity_answer',
-    kind: 'communication',
-    speaker: '20分後の自分',
-    text: '20分後のお前だ。',
-  },
-];
+export const getPuzzleCompletionEntries = (puzzleId: PuzzleId) =>
+  completionEntries[puzzleId] ?? [];
 
 export function discoveryEntry(text: string): NarrativeEntry {
-  return {
-    id: `discovery_${text}`,
-    kind: 'discovery',
-    text,
-  };
+  return { id: `discovery_${text}`, kind: 'discovery', text };
 }
 
-const powerTest: ArchiveDocument = {
-  id: 'document_power_test',
-  title: 'EMERGENCY POWER TEST',
-  body: '起動順序：周波数の低い回路から接続すること。',
+const powerPlan: ArchiveDocument = {
+  id: 'document_power_plan',
+  title: 'EMERGENCY BYPASS PLAN',
+  body: '容量7 UNIT。ドア駆動線は短絡。端末、通話器、BUFFERの順に給電する。',
 };
 
-const emergencyNote: ArchiveDocument = {
-  id: 'document_emergency_note',
-  title: '緊急時メモ',
-  body: '緊急時は「送信側の時刻」を使用する。',
+const maintenanceSheet: ArchiveDocument = {
+  id: 'document_maintenance_order',
+  title: 'MAINTENANCE ORDER',
+  body: '点検順：端末、通話器、ECHO BUFFER、ドア。回路銘板の記号へ変換する。',
 };
 
 const floorMap: ArchiveDocument = {
   id: 'document_floor_map',
-  title: 'FACILITY MAP',
-  body: 'E-01の左右は機械設備とコンクリート壁。隣室は存在しない。',
+  title: 'FACILITY / CONDUIT MAP',
+  body: 'E-01の左右は設備壁。環端子の通信実線はJ-2からECHO BUFFER RETURNへ続く。',
 };
-
-const stageOrder: StoryStage[] = [
-  'inspect_logs',
-  'unlock_locker',
-  'reveal_no_adjacent_room',
-  'inspect_audio',
-  'analyze_voice',
-  'transmit_packets',
-  'ending',
-  'completed',
-];
 
 export function getArchiveDocuments(
   powerRestored: boolean,
-  stage: StoryStage,
+  _stage: StoryStage,
   inventory: readonly ItemId[],
 ) {
   const documents: ArchiveDocument[] = [];
-  if (powerRestored) documents.push(powerTest);
-  if (stageOrder.indexOf(stage) >= stageOrder.indexOf('unlock_locker'))
-    documents.push(emergencyNote);
+  if (powerRestored) documents.push(powerPlan, maintenanceSheet);
   if (inventory.includes('item_floor_map')) documents.push(floorMap);
   return documents;
 }
 
 export function getRestoredNarrativeHistory(progress: SavedProgress) {
   const history: NarrativeEntry[] = [...introEntries, powerRestoredEntry];
-  const noRoomRevealed =
-    stageOrder.indexOf(progress.storyStage) >=
-    stageOrder.indexOf('inspect_audio');
-  if (noRoomRevealed) history.push(...noAdjacentRoomEntries);
-  for (const packetId of progress.heardPackets)
-    history.push(packetEntries[packetId]);
-  const identityRevealed =
-    stageOrder.indexOf(progress.storyStage) >=
-    stageOrder.indexOf('transmit_packets');
-  if (identityRevealed) history.push(...identityEntries);
+  for (const puzzleId of progress.completedPuzzleIds)
+    history.push(...getPuzzleCompletionEntries(puzzleId));
   return history;
 }

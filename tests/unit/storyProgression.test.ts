@@ -2,25 +2,49 @@ import { createActor } from 'xstate';
 import { describe, expect, it } from 'vitest';
 
 import { gameMachine } from '../../src/game/machine/gameMachine';
+import type { PuzzleId } from '../../src/game/puzzles/storyPuzzles';
 import { createPowerRestoredProgress } from '../../src/game/save/saveManager';
 
-const poweredActor = () => {
-  const actor = createActor(gameMachine).start();
-  actor.send({
-    type: 'PROGRESS_RESTORED',
-    progress: createPowerRestoredProgress(),
-  });
-  return actor;
-};
+const solutions: [PuzzleId, string[]][] = [
+  ['puzzle_carrier_sync', ['right-2', 'none', 'left-1']],
+  ['puzzle_maintenance_lock', ['double', 'ring', 'triangle', 'node']],
+  ['puzzle_log_pairing', ['s-b', 's-c', 's-a']],
+  ['puzzle_signal_route', ['signal', 'ring-relay', 'echo-buffer']],
+  ['puzzle_packet_repair', ['c', 'd', 'a', 'b']],
+  ['puzzle_temporal_anomaly', ['packet-04', 'unseen-event']],
+  ['puzzle_voiceprint_calibration', ['compress-half', 'invert', 'left-2']],
+  [
+    'puzzle_causal_script',
+    ['packet-01', 'packet-02', 'packet-03', 'packet-04'],
+  ],
+  [
+    'puzzle_transmission_window',
+    [
+      'packet-01',
+      'packet-02',
+      'packet-03',
+      'packet-04',
+      'minus-20',
+      'echo-return',
+    ],
+  ],
+];
 
-describe('full story progression', () => {
-  it('rejects a wrong locker code and grants all items only for 0237', () => {
-    const actor = poweredActor();
-    actor.send({ type: 'LOGS_CONFIRMED' });
-    actor.send({ type: 'LOCKER_SUBMITTED', answer: '0217' });
-    expect(actor.getSnapshot().context.lockerFailures).toBe(1);
-    expect(actor.getSnapshot().context.inventory).toEqual([]);
-    actor.send({ type: 'LOCKER_SUBMITTED', answer: '0237' });
+describe('ten-puzzle story progression', () => {
+  it('does not advance for a wrong answer and grants items at puzzle 3', () => {
+    const actor = createActor(gameMachine).start();
+    actor.send({
+      type: 'PROGRESS_RESTORED',
+      progress: createPowerRestoredProgress(),
+    });
+    actor.send({
+      type: 'PUZZLE_SUBMITTED',
+      puzzleId: 'puzzle_carrier_sync',
+      answer: ['none', 'none', 'none'],
+    });
+    expect(actor.getSnapshot().context.storyStage).toBe('puzzle_carrier_sync');
+    for (const [puzzleId, answer] of solutions.slice(0, 2))
+      actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
     expect(actor.getSnapshot().context.inventory).toEqual([
       'item_screwdriver',
       'item_staff_card',
@@ -28,39 +52,19 @@ describe('full story progression', () => {
     ]);
   });
 
-  it('reaches the ending without allowing an incorrect final packet order', () => {
-    const actor = poweredActor();
-    actor.send({ type: 'LOGS_CONFIRMED' });
-    actor.send({ type: 'LOCKER_SUBMITTED', answer: '0237' });
-    actor.send({ type: 'FLOOR_MAP_INSPECTED', source: 'inventory' });
-    actor.send({ type: 'FLOOR_MAP_INSPECTED', source: 'security' });
-    expect(actor.getSnapshot().context.storyStage).toBe('inspect_audio');
-    actor.send({ type: 'PACKET_PLAYED', packetId: 'audio_packet_04' });
-    actor.send({ type: 'VOICE_ANALYSIS_STARTED' });
+  it('requires all ten deductions before transmission and ending', () => {
+    const actor = createActor(gameMachine).start();
     actor.send({
-      type: 'FINAL_ORDER_SUBMITTED',
-      packetIds: [
-        'audio_packet_04',
-        'audio_packet_03',
-        'audio_packet_02',
-        'audio_packet_01',
-      ],
+      type: 'PROGRESS_RESTORED',
+      progress: createPowerRestoredProgress(),
     });
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
-    expect(actor.getSnapshot().context.storyStage).toBe('transmit_packets');
-    actor.send({
-      type: 'FINAL_ORDER_SUBMITTED',
-      packetIds: [
-        'audio_packet_01',
-        'audio_packet_02',
-        'audio_packet_03',
-        'audio_packet_04',
-      ],
-    });
+    expect(actor.getSnapshot().context.storyStage).toBe('puzzle_carrier_sync');
+    for (const [puzzleId, answer] of solutions)
+      actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
+    expect(actor.getSnapshot().context.completedPuzzleIds).toHaveLength(10);
+    expect(actor.getSnapshot().context.storyStage).toBe('transmission_ready');
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
     expect(actor.getSnapshot().context.storyStage).toBe('ending');
-    for (let index = 0; index < 6; index += 1)
-      actor.send({ type: 'ENDING_ADVANCED' });
-    expect(actor.getSnapshot().context.storyStage).toBe('completed');
   });
 });

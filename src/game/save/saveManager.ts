@@ -1,31 +1,48 @@
 import { z } from 'zod';
 
+import { puzzleIds } from '../puzzles/storyPuzzles';
+
 export const SAVE_KEY = 'echo-room:progress';
 export const SETTINGS_KEY = 'echo-room:settings';
-export const CONTENT_VERSION = '0.1.0';
+export const CONTENT_VERSION = '0.2.0';
 
 const checkpointSchema = z.enum([
-  'checkpoint_power_restored',
-  'checkpoint_time_offset_confirmed',
-  'checkpoint_locker_opened',
-  'checkpoint_no_adjacent_room',
-  'checkpoint_audio_packets',
-  'checkpoint_voice_identity',
-  'checkpoint_final_order_ready',
+  'checkpoint_puzzle_01',
+  'checkpoint_puzzle_02',
+  'checkpoint_puzzle_03',
+  'checkpoint_puzzle_04',
+  'checkpoint_puzzle_05',
+  'checkpoint_puzzle_06',
+  'checkpoint_puzzle_07',
+  'checkpoint_puzzle_08',
+  'checkpoint_puzzle_09',
+  'checkpoint_puzzle_10',
   'checkpoint_transmission_started',
   'checkpoint_completed',
 ]);
 
 const storyStageSchema = z.enum([
-  'inspect_logs',
-  'unlock_locker',
-  'reveal_no_adjacent_room',
-  'inspect_audio',
-  'analyze_voice',
-  'transmit_packets',
+  'puzzle_carrier_sync',
+  'puzzle_maintenance_lock',
+  'puzzle_log_pairing',
+  'puzzle_signal_route',
+  'puzzle_packet_repair',
+  'puzzle_temporal_anomaly',
+  'puzzle_voiceprint_calibration',
+  'puzzle_causal_script',
+  'puzzle_transmission_window',
+  'transmission_ready',
   'ending',
   'completed',
 ]);
+
+const puzzleIdSchema = z.enum(puzzleIds);
+
+const puzzleFailuresSchema = z.object(
+  Object.fromEntries(
+    puzzleIds.map((id) => [id, z.number().int().nonnegative()]),
+  ) as Record<(typeof puzzleIds)[number], z.ZodNumber>,
+);
 
 const progressSchema = z.object({
   checkpointId: checkpointSchema,
@@ -40,28 +57,16 @@ const progressSchema = z.object({
   inventory: z
     .array(z.enum(['item_screwdriver', 'item_staff_card', 'item_floor_map']))
     .max(3),
-  inspectedMaps: z.array(z.enum(['inventory', 'security'])).max(2),
-  heardPackets: z
-    .array(
-      z.enum([
-        'audio_packet_01',
-        'audio_packet_02',
-        'audio_packet_03',
-        'audio_packet_04',
-      ]),
-    )
-    .max(4),
-  finalOrderReady: z.boolean(),
+  completedPuzzleIds: z.array(puzzleIdSchema).max(10),
+  puzzleFailures: puzzleFailuresSchema,
   endingLineIndex: z.number().int().min(0).max(6),
   hintLevel: z.number().int().min(0).max(3),
-  breakerFailures: z.number().int().nonnegative(),
-  lockerFailures: z.number().int().nonnegative(),
   activeElapsedMs: z.number().nonnegative(),
   reservePower: z.boolean(),
 });
 
-const saveSchemaV2 = z.object({
-  schemaVersion: z.literal(2),
+const saveSchemaV3 = z.object({
+  schemaVersion: z.literal(3),
   contentVersion: z.literal(CONTENT_VERSION),
   savedAt: z.string().datetime(),
   progress: progressSchema,
@@ -88,7 +93,7 @@ const settingsSchema = z.object({
 
 export type CheckpointId = z.infer<typeof checkpointSchema>;
 export type SavedProgress = z.infer<typeof progressSchema>;
-export type SaveData = z.infer<typeof saveSchemaV2>;
+export type SaveData = z.infer<typeof saveSchemaV3>;
 export type SettingsData = z.infer<typeof settingsSchema>;
 export type LoadResult =
   | { status: 'empty' }
@@ -109,22 +114,24 @@ export const defaultSettings: SettingsData = {
   },
 };
 
+const emptyFailures = () =>
+  Object.fromEntries(
+    puzzleIds.map((id) => [id, 0]),
+  ) as SavedProgress['puzzleFailures'];
+
 export const createPowerRestoredProgress = (
   overrides: Partial<SavedProgress> = {},
 ): SavedProgress =>
   progressSchema.parse({
-    checkpointId: 'checkpoint_power_restored',
+    checkpointId: 'checkpoint_puzzle_01',
     powerRestored: true,
     locationId: 'location_east_wall',
-    storyStage: 'inspect_logs',
+    storyStage: 'puzzle_carrier_sync',
     inventory: [],
-    inspectedMaps: [],
-    heardPackets: [],
-    finalOrderReady: false,
+    completedPuzzleIds: ['puzzle_power_route'],
+    puzzleFailures: emptyFailures(),
     endingLineIndex: 0,
     hintLevel: 0,
-    breakerFailures: 0,
-    lockerFailures: 0,
     activeElapsedMs: 0,
     reservePower: false,
     ...overrides,
@@ -132,25 +139,17 @@ export const createPowerRestoredProgress = (
 
 export const getCheckpointId = (
   storyStage: SavedProgress['storyStage'],
-  finalOrderReady: boolean,
+  completedPuzzleIds: SavedProgress['completedPuzzleIds'],
 ): CheckpointId => {
   if (storyStage === 'completed') return 'checkpoint_completed';
   if (storyStage === 'ending') return 'checkpoint_transmission_started';
-  if (storyStage === 'transmit_packets')
-    return finalOrderReady
-      ? 'checkpoint_final_order_ready'
-      : 'checkpoint_voice_identity';
-  if (storyStage === 'analyze_voice') return 'checkpoint_audio_packets';
-  if (storyStage === 'inspect_audio') return 'checkpoint_no_adjacent_room';
-  if (storyStage === 'reveal_no_adjacent_room')
-    return 'checkpoint_locker_opened';
-  if (storyStage === 'unlock_locker') return 'checkpoint_time_offset_confirmed';
-  return 'checkpoint_power_restored';
+  const count = Math.max(1, Math.min(10, completedPuzzleIds.length));
+  return `checkpoint_puzzle_${String(count).padStart(2, '0')}` as CheckpointId;
 };
 
 export const createSave = (progress: SavedProgress): SaveData =>
-  saveSchemaV2.parse({
-    schemaVersion: 2,
+  saveSchemaV3.parse({
+    schemaVersion: 3,
     contentVersion: CONTENT_VERSION,
     savedAt: new Date().toISOString(),
     progress,
@@ -170,7 +169,7 @@ export const loadProgress = (
   if (!raw) return { status: 'empty' };
   try {
     const parsed: unknown = JSON.parse(raw);
-    const current = saveSchemaV2.safeParse(parsed);
+    const current = saveSchemaV3.safeParse(parsed);
     return current.success
       ? { status: 'valid', data: current.data }
       : { status: 'corrupt' };

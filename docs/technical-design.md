@@ -177,13 +177,17 @@ boot
   -> loading
   -> playing
        intro
-       restore_power
-       inspect_logs
-       unlock_locker
-       reveal_no_adjacent_room
-       inspect_audio
-       analyze_voice
-       transmit_packets
+       puzzle_power_route
+       puzzle_carrier_sync
+       puzzle_maintenance_lock
+       puzzle_log_pairing
+       puzzle_signal_route
+       puzzle_packet_repair
+       puzzle_temporal_anomaly
+       puzzle_voiceprint_calibration
+       puzzle_causal_script
+       puzzle_transmission_window
+       transmission_ready
        ending
   -> completed
   -> fatal_error
@@ -231,7 +235,6 @@ type GameEvent =
   | { type: 'ITEM_USED'; itemId: ItemId; targetId: HotspotId }
   | { type: 'DIALOGUE_ADVANCED' }
   | { type: 'PUZZLE_SUBMITTED'; puzzleId: PuzzleId; answer: unknown }
-  | { type: 'PACKET_REVIEW_REQUESTED'; packetId: PacketId }
   | { type: 'HINT_REQUESTED'; hintId: HintId }
   | { type: 'PAUSED' }
   | { type: 'RESUMED' };
@@ -486,20 +489,32 @@ type PuzzleResult =
 
 | パズル | 種別 | 主なUI | 判定 |
 |---|---|---|---|
-| 非常電源 | sequence | PixiJS上のレバー + DOM補助操作 | 4音を低い順に選択 |
-| 20分のずれ | observation | React端末 | 情報閲覧で進行フラグを付与 |
-| ロッカー | keypad | React | `0237`との一致 |
-| 隣室 | inspect/reveal | PixiJS + React文書 | 2つの図面確認後に会話開始 |
-| 通信PACKET | media inspection | React | PACKET 04確認後に会話開始 |
-| 声紋 | item-use + sequence | PixiJS + React演出 | ドライバー使用後に解析開始 |
-| 最終送信 | reorder + confirm | React | 4台詞のIDと順序が一致 |
+| 非常電源経路 | routing | React共通Workbench | 隔離対象と3設備の給電順 |
+| 搬送波同期 | calibration | React + HTML/CSS波形 | 3回線の位相補正 |
+| 保守ロッカー | correlation | React共通Workbench | 点検順から変換した4記号 |
+| 通信ログ照合 | correlation | React端末 + 波形 | RECEIVEとSOURCEの3対応 |
+| 通信経路追跡 | routing | React二層図 | 線種、中継端子、終端 |
+| PACKET復元 | reconstruction | React端末 + 波形 | 4断片の連続順 |
+| 時系列矛盾 | correlation | React共通Workbench | 未発生PACKETと根拠 |
+| 声紋校正 | calibration | React解析パネル + 波形 | 3特徴の逆変換 |
+| 因果会話 | reconstruction | React端末 | 設備状態に基づく4文順 |
+| 最終送信設計 | routing | React端末 | 4受信窓、遅延、回線終端 |
 
-### 9.3 非常電源の聴覚補助
+### 9.3 共通Workbench
 
-- 通常表示では各レバーの音高を直接文字表示しない。
-- 聴覚補助を有効にすると、音の再生時に4段階の波形高さまたは振動位置を表示する。
-- 補助表現は低い音ほど低い位置になるよう、一貫した視覚規則を使う。
-- 正解判定は音声再生の成否と独立させる。
+- `PuzzleDefinition`は証拠、複数の判断task、誤答feedbackをdataとして持つ。
+- UIはtaskごとの未選択状態を保ち、すべて判断した後に一括検証する。
+- XStateへ送るeventは`PUZZLE_SUBMITTED { puzzleId, answer[] }`へ統一する。
+- 正解表はUI componentに持たせず、`isPuzzleAnswerCorrect`純粋関数だけが参照する。
+- 正解時は完了IDと次の`StoryStage`だけをXState contextへ反映する。
+- 個別専用machineと共通machineを併存させない。
+
+### 9.4 波形の共通文法
+
+- 横軸は常に時間とし、同じ線高・短長・節点は同じ特徴を表す。
+- 搬送波、PACKET指紋、声紋特徴量の三用途だけに限定する。
+- HTML/CSSの線高と同じ内容を数列・短長表現でも表示する。
+- 音声再生、色、animationの有無は正解判定へ影響させない。
 
 ---
 
@@ -534,7 +549,8 @@ master
 ### 10.4 声紋演出
 
 - PACKETには発話文と声紋特徴量がデータとして含まれる。
-- VOICE ANALYSISはその特徴量をE-01 OCCUPANTの職員記録と照合し、98%、99%、100%を視覚的に示す。
+- プレイヤーが間隔、包絡、位相の三特徴を職員記録の基準へ校正する。
+- 全特徴が一致した結果としてE-01 OCCUPANTと主人公写真を表示する。自動解析率だけで進行させない。
 - 発話音声の聞き比べ、加工解除、演者の同一性には依存しない。
 
 ---
@@ -555,7 +571,7 @@ master
 - 予備電源中は照明や環境音を弱め、ヒント利用可能の通知を出せる。
 - セーブにはアクティブプレイ時間と、予備電源移行済みかを保存する。
 
-この扱いによって、物語上の「約20分」という緊迫感と、15〜25分という想定プレイ幅を両立する。厳密な因果時間は会話・送信ログの時刻で保証する。
+この扱いによって、物語上の「約20分」という緊迫感と、初見20〜30分という想定プレイ幅を両立する。厳密な因果時間は会話・送信ログの時刻で保証する。
 
 ---
 
@@ -571,8 +587,8 @@ master
 ### 12.2 保存形式
 
 ```ts
-type SaveDataV2 = {
-  schemaVersion: 2;
+type SaveDataV3 = {
+  schemaVersion: 3;
   contentVersion: string;
   savedAt: string;
   progress: {
@@ -581,13 +597,10 @@ type SaveDataV2 = {
     storyStage: StoryStage;
     locationId: LocationId;
     inventory: ItemId[];
-    inspectedMaps: MapSource[];
-    heardPackets: PacketId[];
-    finalOrderReady: boolean;
+    completedPuzzleIds: PuzzleId[];
+    puzzleFailures: Record<PuzzleId, number>;
     endingLineIndex: number;
     hintLevel: number;
-    breakerFailures: number;
-    lockerFailures: number;
     activeElapsedMs: number;
     reservePower: boolean;
   };
@@ -596,7 +609,7 @@ type SaveDataV2 = {
 
 - XState内部snapshotをそのまま保存せず、明示したドメインデータだけを保存する。
 - 読込時はZodで検証する。
-- 現行の`schemaVersion`と`contentVersion`だけを受理し、旧形式を並行実装しない。
+- 現行の進行schema v3と`contentVersion`だけを受理し、旧7問形式の変換・読込分岐を実装しない。
 - 非対応versionまたは破損時はデータを上書きせず、新規開始と消去を選べるようにする。
 - 設定データは進行データと分け、最初からやり直しても保持する。現行の設定schema v4は字幕・SOUND master・効果音・環境音・視覚補助・動き軽減と冒頭会話の既読状態を持つ。
 
@@ -687,7 +700,7 @@ type AssetBundle = {
 - キーボードだけで全必須操作を完了できる。
 - フォーカス順は画面内の視覚的な並びと一致させる。
 - 色だけで正誤、ロック、選択を伝えない。
-- 音高パズルには視覚補助を用意する。
+- 波形は線高と同じ内容を数列・短長表現でも示す。
 - `prefers-reduced-motion`を初期値へ反映し、設定で上書き可能にする。
 - 字幕サイズ、背景、話者名表示、音量系統を設定可能にする。
 - ゲーム画面の拡大縮小時にも、字幕や操作UIが欠けないことを確認する。

@@ -62,7 +62,7 @@ export function InventoryPanel({
             </button>
           )}
           {selectedItem === 'item_floor_map' && mapExpanded && (
-            <FacilityMap compact />
+            <FacilityMap compact conduitLayer />
           )}
         </section>
       </div>

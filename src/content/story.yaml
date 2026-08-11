@@ -1,14 +1,17 @@
-schemaVersion: 1
-contentVersion: '0.1.0'
+schemaVersion: 2
+contentVersion: '0.2.0'
 chapters:
   - { id: chapter_intro, label: 覚醒 }
-  - { id: chapter_restore_power, label: 非常電源 }
-  - { id: chapter_inspect_logs, label: 20分のずれ }
-  - { id: chapter_unlock_locker, label: ロッカー }
-  - { id: chapter_no_adjacent_room, label: 隣室の否定 }
-  - { id: chapter_audio_packets, label: 未来の通信PACKET }
-  - { id: chapter_voice_identity, label: 声紋の正体 }
-  - { id: chapter_final_transmission, label: 時間の輪 }
+  - { id: chapter_power_route, label: 非常電源経路 }
+  - { id: chapter_carrier_sync, label: 搬送波同期 }
+  - { id: chapter_maintenance_lock, label: 保守ロッカー }
+  - { id: chapter_log_pairing, label: 通信ログ照合 }
+  - { id: chapter_signal_route, label: 通信経路追跡 }
+  - { id: chapter_packet_repair, label: PACKET復元 }
+  - { id: chapter_temporal_anomaly, label: 時系列矛盾 }
+  - { id: chapter_voiceprint, label: 声紋校正 }
+  - { id: chapter_causal_script, label: 因果会話 }
+  - { id: chapter_transmission, label: 最終送信設計 }
   - { id: chapter_ending, label: 脱出 }
 locations:
   - { id: location_north_wall, label: 北壁 }
@@ -34,18 +37,14 @@ hotspots:
       label: インターホン,
       conditions: [],
     }
-  - {
-      id: hotspot_terminal,
-      locationId: location_east_wall,
-      label: 壁面端末,
-      conditions: [{ type: puzzleSolved, puzzleId: puzzle_emergency_power }],
-    }
-  - {
-      id: hotspot_analysis_panel,
-      locationId: location_east_wall,
-      label: 解析パネル,
-      conditions: [{ type: itemOwned, itemId: item_screwdriver }],
-    }
+  - id: hotspot_terminal
+    locationId: location_east_wall
+    label: 壁面端末
+    conditions: [{ type: puzzleSolved, puzzleId: puzzle_power_route }]
+  - id: hotspot_analysis_panel
+    locationId: location_east_wall
+    label: 解析パネル
+    conditions: [{ type: itemOwned, itemId: item_screwdriver }]
   - {
       id: hotspot_desk,
       locationId: location_south_wall,
@@ -61,28 +60,28 @@ hotspots:
   - {
       id: hotspot_locker,
       locationId: location_west_wall,
-      label: ロッカー,
+      label: 保守ロッカー,
       conditions: [],
     }
 items:
   - { id: item_screwdriver, label: ドライバー }
   - { id: item_staff_card, label: 職員用カード }
-  - { id: item_floor_map, label: 簡易フロア図 }
+  - { id: item_floor_map, label: 設備・配線図 }
 documents:
   - {
-      id: document_power_test,
-      title: EMERGENCY POWER TEST,
-      body: 起動順序：周波数の低い回路から接続すること,
+      id: document_power_plan,
+      title: EMERGENCY BYPASS PLAN,
+      body: 容量7 UNIT。ドア駆動線は短絡。BUFFERは最後に接続する。,
     }
   - {
-      id: document_emergency_note,
-      title: 緊急時メモ,
-      body: 緊急時は「送信側の時刻」を使用する。,
+      id: document_maintenance_order,
+      title: MAINTENANCE ORDER,
+      body: 点検順を回路銘板の記号へ変換する。,
     }
   - {
-      id: document_floor_map,
-      title: FACILITY MAP,
-      body: E-01の左右は機械設備とコンクリート壁。隣室は存在しない。,
+      id: document_conduit_map,
+      title: FACILITY CONDUIT MAP,
+      body: E-01の通信実線は環端子J-2を経てECHO BUFFER RETURNへ続く。,
     }
 dialogues:
   - {
@@ -108,221 +107,278 @@ dialogues:
   - {
       id: dialogue_no_room_question,
       speaker: protagonist,
-      text: 隣の部屋なんてないぞ。,
+      text: 隣の部屋なんてない。回線はこの部屋へ戻っている。,
     }
   - {
       id: dialogue_no_room_answer,
       speaker: future_protagonist,
       text: 分かってる。まだ説明できない。,
     }
-  - { id: dialogue_identity_question, speaker: protagonist, text: お前は……。 }
+  - {
+      id: dialogue_identity_question,
+      speaker: protagonist,
+      text: この特徴量は俺の記録と同じだ。,
+    }
   - {
       id: dialogue_identity_answer,
       speaker: future_protagonist,
       text: 20分後のお前だ。,
     }
 puzzles:
-  - {
-      id: puzzle_emergency_power,
-      kind: sequence,
-      correctAnswer: [breaker_3, breaker_1, breaker_4, breaker_2],
-      incorrectFeedback: 全レバーが戻った。,
-      effects: [{ type: unlockTerminal, menuId: log }],
-      hintIds: [hint_power_1, hint_power_2, hint_power_3],
-    }
-  - {
-      id: puzzle_time_offset,
-      kind: observation,
-      correctAnswer: observed,
-      incorrectFeedback: 受信と送信元の時刻を見比べよう。,
-      effects: [{ type: advanceChapter, chapterId: chapter_unlock_locker }],
-      hintIds: [hint_time_1, hint_time_2, hint_time_3],
-    }
-  - {
-      id: puzzle_locker,
-      kind: keypad,
-      correctAnswer: '0237',
-      incorrectFeedback: ロックは解除されない。,
-      effects:
-        [
-          { type: grantItem, itemId: item_screwdriver },
-          { type: grantItem, itemId: item_staff_card },
-          { type: grantItem, itemId: item_floor_map },
-        ],
-      hintIds: [hint_locker_1, hint_locker_2, hint_locker_3],
-    }
-  - {
-      id: puzzle_no_adjacent_room,
-      kind: reveal,
-      correctAnswer: both_maps,
-      incorrectFeedback: 2つの図面を確認しよう。,
-      effects: [{ type: advanceChapter, chapterId: chapter_audio_packets }],
-      hintIds: [hint_room_1, hint_room_2, hint_room_3],
-    }
-  - {
-      id: puzzle_audio_packets,
-      kind: media,
-      correctAnswer: audio_packet_04,
-      incorrectFeedback: 未確認のPACKETがある。,
-      effects: [{ type: advanceChapter, chapterId: chapter_voice_identity }],
-      hintIds: [hint_audio_1, hint_audio_2, hint_audio_3],
-    }
-  - {
-      id: puzzle_voice_identity,
-      kind: analysis,
-      correctAnswer: voice_analysis_on,
-      incorrectFeedback: パネルを開く道具が必要だ。,
-      effects:
-        [{ type: advanceChapter, chapterId: chapter_final_transmission }],
-      hintIds: [hint_voice_1, hint_voice_2, hint_voice_3],
-    }
-  - {
-      id: puzzle_final_transmission,
-      kind: reorder,
-      correctAnswer:
-        [audio_packet_01, audio_packet_02, audio_packet_03, audio_packet_04],
-      incorrectFeedback: 冒頭で聞いた順番と違う。,
-      effects: [{ type: advanceChapter, chapterId: chapter_ending }],
-      hintIds: [hint_final_1, hint_final_2, hint_final_3],
-    }
+  - id: puzzle_power_route
+    kind: routing
+    correctAnswer: [door, terminal, intercom, buffer]
+    incorrectFeedback: 容量、短絡痕、起動条件をすべて満たす必要がある。
+    effects: [{ type: unlockTerminal, menuId: system }]
+    hintIds: [hint_power_1, hint_power_2, hint_power_3]
+  - id: puzzle_carrier_sync
+    kind: calibration
+    correctAnswer: [right-2, none, left-1]
+    incorrectFeedback: 早い波形と遅い波形では補正方向が逆になる。
+    effects: [{ type: advanceChapter, chapterId: chapter_maintenance_lock }]
+    hintIds: [hint_carrier_1, hint_carrier_2, hint_carrier_3]
+  - id: puzzle_maintenance_lock
+    kind: correlation
+    correctAnswer: [double, ring, triangle, node]
+    incorrectFeedback: 点検対象を回路銘板の記号へ置き換える。
+    effects:
+      - { type: grantItem, itemId: item_screwdriver }
+      - { type: grantItem, itemId: item_staff_card }
+      - { type: grantItem, itemId: item_floor_map }
+    hintIds: [hint_lock_1, hint_lock_2, hint_lock_3]
+  - id: puzzle_log_pairing
+    kind: correlation
+    correctAnswer: [s-b, s-c, s-a]
+    incorrectFeedback: 三節すべてが同じ波形指紋を探す。
+    effects: [{ type: advanceChapter, chapterId: chapter_signal_route }]
+    hintIds: [hint_log_1, hint_log_2, hint_log_3]
+  - id: puzzle_signal_route
+    kind: routing
+    correctAnswer: [signal, ring-relay, echo-buffer]
+    incorrectFeedback: 線種と端子記号の両方を維持する。
+    effects: [{ type: advanceChapter, chapterId: chapter_packet_repair }]
+    hintIds: [hint_route_1, hint_route_2, hint_route_3]
+  - id: puzzle_packet_repair
+    kind: reconstruction
+    correctAnswer: [c, d, a, b]
+    incorrectFeedback: 先頭、終端、断片間の接続を確認する。
+    effects: [{ type: advanceChapter, chapterId: chapter_temporal_anomaly }]
+    hintIds: [hint_repair_1, hint_repair_2, hint_repair_3]
+  - id: puzzle_temporal_anomaly
+    kind: correlation
+    correctAnswer: [packet-04, unseen-event]
+    incorrectFeedback: 既発生と未発生の出来事を分ける。
+    effects: [{ type: advanceChapter, chapterId: chapter_voiceprint }]
+    hintIds: [hint_anomaly_1, hint_anomaly_2, hint_anomaly_3]
+  - id: puzzle_voiceprint_calibration
+    kind: calibration
+    correctAnswer: [compress-half, invert, left-2]
+    incorrectFeedback: 三チャンネルを個別に基準へ戻す。
+    effects: [{ type: advanceChapter, chapterId: chapter_causal_script }]
+    hintIds: [hint_voice_1, hint_voice_2, hint_voice_3]
+  - id: puzzle_causal_script
+    kind: reconstruction
+    correctAnswer: [packet-01, packet-02, packet-03, packet-04]
+    incorrectFeedback: 発言可能になる設備状態を確認する。
+    effects: [{ type: advanceChapter, chapterId: chapter_transmission }]
+    hintIds: [hint_script_1, hint_script_2, hint_script_3]
+  - id: puzzle_transmission_window
+    kind: routing
+    correctAnswer:
+      [packet-01, packet-02, packet-03, packet-04, minus-20, echo-return]
+    incorrectFeedback: 受信順、固定遅延、正規終端を満たす。
+    effects: [{ type: advanceChapter, chapterId: chapter_ending }]
+    hintIds: [hint_send_1, hint_send_2, hint_send_3]
 hints:
   - {
       id: hint_power_1,
-      puzzleId: puzzle_emergency_power,
+      puzzleId: puzzle_power_route,
       level: 1,
-      text: デスクの紙を確認しよう。,
+      text: 容量と短絡痕を確認する。,
     }
   - {
       id: hint_power_2,
-      puzzleId: puzzle_emergency_power,
+      puzzleId: puzzle_power_route,
       level: 2,
-      text: 4つの音の高さを比べよう。,
+      text: ドア線を隔離し、必要設備だけを使う。,
     }
   - {
       id: hint_power_3,
-      puzzleId: puzzle_emergency_power,
+      puzzleId: puzzle_power_route,
       level: 3,
-      text: 低い音から順に接続する。,
+      text: ドア隔離、端末、通話器、BUFFER。,
     }
   - {
-      id: hint_time_1,
-      puzzleId: puzzle_time_offset,
+      id: hint_carrier_1,
+      puzzleId: puzzle_carrier_sync,
       level: 1,
-      text: LOGの2列を見比べよう。,
+      text: 同期点を比較する。,
     }
   - {
-      id: hint_time_2,
-      puzzleId: puzzle_time_offset,
+      id: hint_carrier_2,
+      puzzleId: puzzle_carrier_sync,
       level: 2,
-      text: 同じ行の分と秒に注目する。,
+      text: 早い波形は右へ戻す。,
     }
   - {
-      id: hint_time_3,
-      puzzleId: puzzle_time_offset,
+      id: hint_carrier_3,
+      puzzleId: puzzle_carrier_sync,
       level: 3,
-      text: 送信元は受信より20分後だ。,
+      text: 右2、なし、左1。,
     }
   - {
-      id: hint_locker_1,
-      puzzleId: puzzle_locker,
+      id: hint_lock_1,
+      puzzleId: puzzle_maintenance_lock,
       level: 1,
-      text: 緊急時メモを確認する。,
+      text: 点検順と銘板を対応させる。,
     }
   - {
-      id: hint_locker_2,
-      puzzleId: puzzle_locker,
+      id: hint_lock_2,
+      puzzleId: puzzle_maintenance_lock,
       level: 2,
-      text: SYSTEMの送信側時刻を使う。,
+      text: 機器名を記号へ変換する。,
     }
   - {
-      id: hint_locker_3,
-      puzzleId: puzzle_locker,
+      id: hint_lock_3,
+      puzzleId: puzzle_maintenance_lock,
       level: 3,
-      text: 02:37を4桁にする。,
+      text: 二重線、環、三角、節点。,
     }
   - {
-      id: hint_room_1,
-      puzzleId: puzzle_no_adjacent_room,
+      id: hint_log_1,
+      puzzleId: puzzle_log_pairing,
       level: 1,
-      text: SECURITYと所持品を確認する。,
+      text: 時刻順ではなく指紋を見る。,
     }
   - {
-      id: hint_room_2,
-      puzzleId: puzzle_no_adjacent_room,
+      id: hint_log_2,
+      puzzleId: puzzle_log_pairing,
       level: 2,
-      text: E-01の左右を比較する。,
+      text: 三節すべてを比較する。,
     }
   - {
-      id: hint_room_3,
-      puzzleId: puzzle_no_adjacent_room,
+      id: hint_log_3,
+      puzzleId: puzzle_log_pairing,
       level: 3,
-      text: 隣室は図面に存在しない。,
+      text: R1=B、R2=C、R3=A。,
     }
   - {
-      id: hint_audio_1,
-      puzzleId: puzzle_audio_packets,
+      id: hint_route_1,
+      puzzleId: puzzle_signal_route,
       level: 1,
-      text: SIGNALを最後まで確認する。,
+      text: 室内図と配線層を重ねる。,
     }
   - {
-      id: hint_audio_2,
-      puzzleId: puzzle_audio_packets,
+      id: hint_route_2,
+      puzzleId: puzzle_signal_route,
       level: 2,
-      text: 冒頭になかった未確認のPACKETを探す。,
+      text: 実線と環端子を追う。,
     }
   - {
-      id: hint_audio_3,
-      puzzleId: puzzle_audio_packets,
+      id: hint_route_3,
+      puzzleId: puzzle_signal_route,
       level: 3,
-      text: PACKET 04を再生する。,
+      text: J-2からECHO BUFFER RETURN。,
+    }
+  - {
+      id: hint_repair_1,
+      puzzleId: puzzle_packet_repair,
+      level: 1,
+      text: 先頭と終端を先に決める。,
+    }
+  - {
+      id: hint_repair_2,
+      puzzleId: puzzle_packet_repair,
+      level: 2,
+      text: 断片端の記号を一致させる。,
+    }
+  - {
+      id: hint_repair_3,
+      puzzleId: puzzle_packet_repair,
+      level: 3,
+      text: C、D、A、B。,
+    }
+  - {
+      id: hint_anomaly_1,
+      puzzleId: puzzle_temporal_anomaly,
+      level: 1,
+      text: 各発言の前提となる出来事を見る。,
+    }
+  - {
+      id: hint_anomaly_2,
+      puzzleId: puzzle_temporal_anomaly,
+      level: 2,
+      text: 未発生の操作を知る文を探す。,
+    }
+  - {
+      id: hint_anomaly_3,
+      puzzleId: puzzle_temporal_anomaly,
+      level: 3,
+      text: PACKET 04。,
     }
   - {
       id: hint_voice_1,
-      puzzleId: puzzle_voice_identity,
+      puzzleId: puzzle_voiceprint_calibration,
       level: 1,
-      text: 端末横のパネルを調べる。,
+      text: 受信形を基準形へ戻す。,
     }
   - {
       id: hint_voice_2,
-      puzzleId: puzzle_voice_identity,
+      puzzleId: puzzle_voiceprint_calibration,
       level: 2,
-      text: ドライバーを使用する。,
+      text: 尺度、上下、位置を個別に補正する。,
     }
   - {
       id: hint_voice_3,
-      puzzleId: puzzle_voice_identity,
+      puzzleId: puzzle_voiceprint_calibration,
       level: 3,
-      text: VOICE ANALYSISをONにする。,
+      text: 半分、上下反転、左2。,
     }
   - {
-      id: hint_final_1,
-      puzzleId: puzzle_final_transmission,
+      id: hint_script_1,
+      puzzleId: puzzle_causal_script,
       level: 1,
-      text: 冒頭の会話を思い出す。,
+      text: 発言可能になる設備状態を見る。,
     }
   - {
-      id: hint_final_2,
-      puzzleId: puzzle_final_transmission,
+      id: hint_script_2,
+      puzzleId: puzzle_causal_script,
       level: 2,
-      text: PACKET 01から04の順を再現する。,
+      text: 応答、電源、LOG、最終操作。,
     }
   - {
-      id: hint_final_3,
-      puzzleId: puzzle_final_transmission,
+      id: hint_script_3,
+      puzzleId: puzzle_causal_script,
       level: 3,
-      text: 聞こえるか、電源、ログ、赤いボタンの順。,
+      text: PACKET 01、02、03、04。,
+    }
+  - {
+      id: hint_send_1,
+      puzzleId: puzzle_transmission_window,
+      level: 1,
+      text: 会話を受信窓へ割り当てる。,
+    }
+  - {
+      id: hint_send_2,
+      puzzleId: puzzle_transmission_window,
+      level: 2,
+      text: 遅延と回線は全PACKET共通。,
+    }
+  - {
+      id: hint_send_3,
+      puzzleId: puzzle_transmission_window,
+      level: 3,
+      text: 会話順、20分前、BUFFER RETURN。,
     }
 storyFacts:
   wallClock: '02:17'
   negativeDelay: '-00:20:00'
-  lockerCode: '0237'
   finalSlots: 4
+  silentPlay: true
   receiveTimes: ['02:11:04', '02:14:32', '02:17:18']
   sourceTimes: ['02:31:04', '02:34:32', '02:37:18']
   packets:
-    [
-      '……聞こえるか？',
-      'まず電源を戻せ。',
-      'ログは気にするな。',
-      '最後に、赤いボタンを押せ。',
-    ]
+    - '……聞こえるか？'
+    - 'まず電源を戻せ。'
+    - 'ログは気にするな。'
+    - '最後に、赤いボタンを押せ。'

@@ -6,20 +6,15 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 
-import {
-  BREAKER_ORDER,
-  type BreakerId,
-  type HotspotId,
-  type LocationId,
-} from '../game/domain/ids';
+import { type HotspotId, type LocationId } from '../game/domain/ids';
 import type {
   ItemId,
   StoryStage,
   TerminalMenuId,
 } from '../game/machine/gameMachine';
 import {
-  isLockerCodeCorrect,
-  type PacketId,
+  isPuzzleAnswerCorrect,
+  type PuzzleId,
 } from '../game/puzzles/storyPuzzles';
 import {
   getHotspotBounds,
@@ -39,9 +34,7 @@ import type {
   ArchiveDocument,
   NarrativeEntry,
 } from './narrative/narrativeArchive';
-import { AnalysisPanel } from './puzzles/AnalysisPanel';
-import { BreakerPuzzle } from './puzzles/BreakerPuzzle';
-import { LockerPanel } from './puzzles/LockerPanel';
+import { PuzzleWorkbench } from './puzzles/PuzzleWorkbench';
 import { SystemMenu } from './system/SystemMenu';
 import type {
   SoundLevels,
@@ -68,9 +61,7 @@ type Props = {
   intro: boolean;
   introLineIndex: number;
   introSeen: boolean;
-  breakerPuzzle: boolean;
-  breakerSequence: readonly BreakerId[];
-  breakerFailures: number;
+  powerPuzzle: boolean;
   visualAssist: boolean;
   motionReduced: boolean;
   soundEnabled: boolean;
@@ -83,9 +74,9 @@ type Props = {
   terminalMenuId: TerminalMenuId;
   storyStage: StoryStage;
   inventory: ItemId[];
+  completedPuzzleIds: PuzzleId[];
+  puzzleFailures: Record<PuzzleId, number>;
   inventoryOpen: boolean;
-  lockerFailures: number;
-  finalReady: boolean;
   endingLineIndex: number;
   hintLevel: number;
   hintOpen: boolean;
@@ -96,7 +87,7 @@ type Props = {
   onDialogueSkip: () => void;
   onViewChanged: (id: LocationId) => void;
   onHotspotSelected: (id: HotspotId) => void;
-  onBreakerToggle: (id: BreakerId) => void;
+  onPuzzleSubmit: (puzzleId: PuzzleId, answer: string[]) => void;
   onClose: () => void;
   onToggleAssist: () => void;
   onToggleMotion: () => void;
@@ -105,13 +96,7 @@ type Props = {
   onSubtitleSettingChange: SubtitleSettingChange;
   onExit: () => void;
   onTerminalMenu: (id: TerminalMenuId) => void;
-  onLogsConfirmed: () => void;
-  onLockerSubmit: (answer: string) => void;
   onInventoryToggle: () => void;
-  onMapInspected: (source: 'inventory' | 'security') => void;
-  onPacketPlayed: (id: PacketId) => void;
-  onAnalysisComplete: () => void;
-  onFinalSubmit: (ids: string[]) => void;
   onTransmit: () => void;
   onEndingAdvance: () => void;
   onHintToggle: () => void;
@@ -151,12 +136,12 @@ export function GameScreen(props: Props) {
     props.selectedHotspotId === 'hotspot_desk' ||
     (props.powerRestored && props.selectedHotspotId === 'hotspot_terminal') ||
     (props.selectedHotspotId === 'hotspot_locker' &&
-      props.storyStage === 'unlock_locker') ||
+      props.storyStage === 'puzzle_maintenance_lock') ||
     (props.selectedHotspotId === 'hotspot_analysis_panel' &&
-      props.storyStage === 'analyze_voice');
+      props.storyStage === 'puzzle_voiceprint_calibration');
   const overlayOpen =
     props.intro ||
-    props.breakerPuzzle ||
+    props.powerPuzzle ||
     props.acquiredItems.length > 0 ||
     props.inventoryOpen ||
     props.hintOpen ||
@@ -166,11 +151,12 @@ export function GameScreen(props: Props) {
     Boolean(props.subtitle) ||
     ending;
   const explorationControlsVisible =
-    !props.intro && !props.breakerPuzzle && !ending;
+    !props.intro && !props.powerPuzzle && !ending;
   const availableHotspots = worldViewAssets[props.locationId].hotspots.filter(
     ({ id }) =>
       (id !== 'hotspot_breaker' || !props.powerRestored) &&
-      (id !== 'hotspot_analysis_panel' || props.storyStage === 'analyze_voice'),
+      (id !== 'hotspot_analysis_panel' ||
+        props.storyStage === 'puzzle_voiceprint_calibration'),
   );
   const displayedInspectionTargetId =
     props.selectedHotspotId ?? inspectionTargetId;
@@ -238,30 +224,9 @@ export function GameScreen(props: Props) {
     finishInspection();
   }
 
-  function handleBreakerToggle(breakerId: BreakerId) {
-    props.onBreakerToggle(breakerId);
-    const sequence = [...props.breakerSequence, breakerId];
-    if (
-      sequence.length === BREAKER_ORDER.length &&
-      sequence.every((id, index) => id === BREAKER_ORDER[index])
-    ) {
-      finishInspection();
-    }
-  }
-
-  function handleLockerSubmit(answer: string) {
-    props.onLockerSubmit(answer);
-    if (isLockerCodeCorrect(answer)) finishInspection();
-  }
-
-  function handleLogsConfirmed() {
-    props.onLogsConfirmed();
-    finishInspection();
-  }
-
-  function handlePacketPlayed(packetId: PacketId) {
-    props.onPacketPlayed(packetId);
-    if (packetId === 'audio_packet_04') finishInspection();
+  function handlePuzzleSubmit(puzzleId: PuzzleId, answer: string[]) {
+    props.onPuzzleSubmit(puzzleId, answer);
+    if (isPuzzleAnswerCorrect(puzzleId, answer)) finishInspection();
   }
 
   function handleTransmit() {
@@ -323,14 +288,11 @@ export function GameScreen(props: Props) {
     turn(deltaX < 0 ? 1 : -1);
   }
 
-  const inspectionDialog = props.breakerPuzzle ? (
-    <BreakerPuzzle
-      sequence={props.breakerSequence}
-      failures={props.breakerFailures}
-      visualAssist={props.visualAssist}
-      soundEnabled={props.soundEnabled}
-      onToggleAssist={props.onToggleAssist}
-      onToggle={handleBreakerToggle}
+  const inspectionDialog = props.powerPuzzle ? (
+    <PuzzleWorkbench
+      puzzleId="puzzle_power_route"
+      failures={props.puzzleFailures.puzzle_power_route}
+      onSubmit={handlePuzzleSubmit}
       onClose={closeInspection}
     />
   ) : props.selectedHotspotId === 'hotspot_clock' ? (
@@ -343,27 +305,27 @@ export function GameScreen(props: Props) {
     <TerminalPanel
       menuId={props.terminalMenuId}
       stage={props.storyStage}
-      finalReady={props.finalReady}
+      completedPuzzleIds={props.completedPuzzleIds}
+      puzzleFailures={props.puzzleFailures}
       onSelect={props.onTerminalMenu}
       onClose={closeInspection}
-      onLogsConfirmed={handleLogsConfirmed}
-      onMapInspected={() => props.onMapInspected('security')}
-      onPacketPlayed={handlePacketPlayed}
-      onFinalSubmit={props.onFinalSubmit}
+      onPuzzleSubmit={handlePuzzleSubmit}
       onTransmit={handleTransmit}
     />
   ) : props.selectedHotspotId === 'hotspot_locker' &&
-    props.storyStage === 'unlock_locker' ? (
-    <LockerPanel
-      failures={props.lockerFailures}
-      onSubmit={handleLockerSubmit}
+    props.storyStage === 'puzzle_maintenance_lock' ? (
+    <PuzzleWorkbench
+      puzzleId="puzzle_maintenance_lock"
+      failures={props.puzzleFailures.puzzle_maintenance_lock}
+      onSubmit={handlePuzzleSubmit}
       onClose={closeInspection}
     />
   ) : props.selectedHotspotId === 'hotspot_analysis_panel' &&
-    props.storyStage === 'analyze_voice' ? (
-    <AnalysisPanel
-      items={props.inventory}
-      onComplete={props.onAnalysisComplete}
+    props.storyStage === 'puzzle_voiceprint_calibration' ? (
+    <PuzzleWorkbench
+      puzzleId="puzzle_voiceprint_calibration"
+      failures={props.puzzleFailures.puzzle_voiceprint_calibration}
+      onSubmit={handlePuzzleSubmit}
       onClose={closeInspection}
     />
   ) : null;
@@ -523,7 +485,7 @@ export function GameScreen(props: Props) {
         {inspectionDialog && (
           <ModalFocusScope
             focusKey={
-              props.breakerPuzzle
+              props.powerPuzzle
                 ? 'hotspot_breaker'
                 : (props.selectedHotspotId ?? 'inspection')
             }
@@ -553,7 +515,7 @@ export function GameScreen(props: Props) {
           >
             <InventoryPanel
               items={props.inventory}
-              onInspectMap={() => props.onMapInspected('inventory')}
+              onInspectMap={() => undefined}
               onClose={props.onInventoryToggle}
             />
           </ModalFocusScope>
@@ -585,7 +547,9 @@ export function GameScreen(props: Props) {
             motionReduced={props.motionReduced}
             inventoryAvailable={props.inventory.length > 0}
             hintAvailable={props.powerRestored}
-            hintUnlocked={props.breakerFailures + props.lockerFailures > 0}
+            hintUnlocked={Object.values(props.puzzleFailures).some(
+              (failures) => failures > 0,
+            )}
             narrativeHistory={props.narrativeHistory}
             documents={props.archiveDocuments}
             returnFocusRef={systemReturnFocusRef}

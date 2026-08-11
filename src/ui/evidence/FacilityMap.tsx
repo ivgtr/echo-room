@@ -1,4 +1,10 @@
-export function FacilityMap({ compact = false }: { compact?: boolean }) {
+export function FacilityMap({
+  compact = false,
+  conduitLayer = false,
+}: {
+  compact?: boolean;
+  conduitLayer?: boolean;
+}) {
   return (
     <figure
       className={`facility-map${compact ? ' is-compact' : ''}`}
@@ -28,8 +34,16 @@ export function FacilityMap({ compact = false }: { compact?: boolean }) {
           <span>機械室</span>
         </div>
       </div>
+      {conduitLayer && (
+        <div className="facility-conduit-layer" aria-label="通信配線層">
+          <span>INTERCOM ○</span>
+          <i aria-hidden="true">━━━━ ○ J-2 ━━━━</i>
+          <strong>ECHO BUFFER RETURN ○</strong>
+          <small>実線：通信 / 破線：電力</small>
+        </div>
+      )}
       <p className="map-finding">
-        E-01の左右は機械設備とコンクリート壁。隣室は存在しない。
+        E-01の左右は設備壁。通信線は壁内中継器へ続いている。
       </p>
     </figure>
   );
