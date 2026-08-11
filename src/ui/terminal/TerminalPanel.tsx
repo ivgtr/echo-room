@@ -53,7 +53,11 @@ export function TerminalPanel(props: Props) {
     );
   return (
     <section
-      className="terminal-modal"
+      className={
+        final
+          ? 'terminal-modal artwork-modal final-transmission-modal'
+          : 'terminal-modal artwork-modal terminal-screen-modal'
+      }
       role="dialog"
       aria-modal="true"
       aria-labelledby="terminal-title"

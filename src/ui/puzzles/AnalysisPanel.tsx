@@ -18,7 +18,7 @@ export function AnalysisPanel({
   };
   return (
     <section
-      className="puzzle-modal compact-modal"
+      className={`puzzle-modal compact-modal artwork-modal analysis-modal ${opened ? 'is-open' : 'is-closed'}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="analysis-title"

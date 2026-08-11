@@ -28,7 +28,7 @@ export function BreakerPuzzle({
 }: Props) {
   return (
     <section
-      className="puzzle-modal"
+      className="puzzle-modal artwork-modal breaker-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="breaker-title"

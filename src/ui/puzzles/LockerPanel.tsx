@@ -10,7 +10,7 @@ export function LockerPanel({ failures, onSubmit, onClose }: Props) {
   const [answer, setAnswer] = useState('');
   return (
     <section
-      className="puzzle-modal compact-modal"
+      className="puzzle-modal compact-modal artwork-modal locker-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="locker-title"

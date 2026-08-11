@@ -130,3 +130,13 @@ REF-002は1672×941のgeometry承認用preview。REF-003 / 004は2048×2048。ge
 - emergency: poweredと同一geometryから明度・彩度を抑え、深い赤色gradeを重ねて派生。物体位置を再生成していない。
 - 出力: `public/assets/images/world/gfx-wide-001`〜`004`の`powered.webp` / `emergency.webp`。
 - 制約: 3840×2160以上の制作原本、1920×1080の正式runtime書き出し、layer分離は未完了。単純拡大を制作原本として扱わず、P4-02内で継続する。
+
+### Stage 3 接写preview・runtime統合
+
+- provider / mode: OpenAI built-in `image_gen`。承認済みWIDEまたは直前の承認可能な接写を単一参照とした`precise-object-edit`。
+- 共通方針: 同じ対象、材質、光源、周辺wall cueを維持し、16:9の中央80%へ操作対象を収める。正確な文字・数字・記号は生成せず、P4-03のHTML／高解像度raster合成へ分離する。
+- 出力: `artwork/close/gfx-close-001`〜`012`。基礎12 IDに加え、紙あり／取得後、locker閉／内容物あり／空、panel閉／開、toggle OFF／ONの計17状態を制作した。
+- exact-count検収: CLOSE-005はlever 4本、CLOSE-007は空表示4枠とinput zone 4つ、CLOSE-011はpacket slot 4つと赤button 1つ。
+- 修正: CLOSE-009初稿に生成文字が混入したため不採用とし、無地銘板へ限定編集した。CLOSE-010の縦長drift稿は不採用とし、承認可能な16:9 panel open稿からOFF／ONを派生した。
+- runtime: 17状態を品質88のWebPとして`public/assets/images/close/`へ書き出し、`room_closeups` bundleへ登録。breaker、locker lock、terminal、analysis、final transmissionの既存HTML UI背景へ接続した。
+- 制約: 現在は1672×941の実機debug用preview。正式な2560×1440以上の接写原本、個別hit mask、可動part分離、全状態差分の完成は利用者の実機確認後に継続する。

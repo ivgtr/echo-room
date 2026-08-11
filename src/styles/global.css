@@ -297,6 +297,58 @@ button:focus-visible {
   box-shadow: 0 20px 90px #000;
 }
 
+.artwork-modal {
+  background-position: center;
+  background-size: cover;
+  isolation: isolate;
+}
+
+.artwork-modal::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: rgb(4 8 9 / 84%);
+  content: '';
+  backdrop-filter: blur(1px);
+}
+
+.breaker-modal {
+  background-image: url('/assets/images/close/gfx-close-005__all-off__preview-flat.webp');
+}
+
+.locker-modal {
+  background-image: url('/assets/images/close/gfx-close-007__locked__preview-flat.webp');
+}
+
+.analysis-modal.is-closed {
+  background-image: url('/assets/images/close/gfx-close-009__closed__preview-flat.webp');
+}
+
+.analysis-modal.is-open {
+  background-image: url('/assets/images/close/gfx-close-010__on__preview-flat.webp');
+}
+
+.terminal-screen-modal {
+  background-image: url('/assets/images/close/gfx-close-008__off__preview-flat.webp');
+}
+
+.final-transmission-modal {
+  background-image: url('/assets/images/close/gfx-close-011__inactive__preview-flat.webp');
+}
+
+.artwork-modal > header,
+.artwork-modal > nav,
+.artwork-modal > footer,
+.artwork-modal > label,
+.artwork-modal > p,
+.artwork-modal > button,
+.artwork-modal > .terminal-display,
+.artwork-modal > .breaker-grid,
+.artwork-modal > .analysis-result {
+  background-color: rgb(5 9 10 / 82%);
+  box-shadow: 0 0 0 0.55rem rgb(5 9 10 / 82%);
+}
+
 .terminal-modal {
   position: absolute;
   z-index: 10;
