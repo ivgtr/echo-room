@@ -526,7 +526,8 @@ master
 ### 10.3 素材形式
 
 - 現行本編の環境音・効果音はWeb Audio APIのoscillatorとgainで手続き生成し、`SoundManager`のcue registryへ集約する。外部音声ファイル、別player、Audio Spriteは併存させない。
-- 非常電源中と電源復旧後の機械ハムをenvironment busでループし、通信ノイズ、接続、回路、電源、ロック、解析、送信、ドア解錠をeffects busの短いcueとして生成する。
+- 非常電源中と電源復旧後の機械ハムをenvironment busでループし、共通UI click、話者差のないtext blip、通信ノイズ、接続、回路、電源、ロック、解析、送信、ドア解錠をeffects busの短いcueとして生成する。
+- text blipは字幕速度に同期して句読点を避けながら間引き、`performance.now()`基準の文字送り表示と合わせる。早押しでは全文表示まで、動き軽減では文字送りとblipを省略する。
 - 将来、手続き音を外部素材へ置き換える場合だけ、制作原本は非圧縮WAV、配信用はOpus系とAAC系を比較し、同じcue IDと単一Sound Manager境界を維持する。
 - 発話音声として解釈できる素材はmanifestに登録しない。
 

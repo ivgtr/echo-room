@@ -350,6 +350,14 @@ export function App() {
     void soundManager.unlock().catch(() => undefined);
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef]);
+  const handleUiClick = useCallback(
+    () => soundManager.playEffect('ui_click'),
+    [],
+  );
+  const handleTextBlip = useCallback(
+    () => soundManager.playEffect('text_blip'),
+    [],
+  );
   const handleHotspot = useCallback(
     (hotspotId: HotspotId) => {
       if (hotspotId === 'hotspot_clock')
@@ -547,6 +555,8 @@ export function App() {
         setSystemMenuOpen((value) => !value);
       }}
       onDismissAcquisition={() => setAcquiredItems([])}
+      onUiClick={handleUiClick}
+      onTextBlip={handleTextBlip}
     />
   );
 }

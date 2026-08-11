@@ -4,7 +4,11 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
   page,
 }) => {
   await page.addInitScript(() => {
-    const audit = { started: 0, stopped: 0, resumed: 0 };
+    const audit = {
+      started: [] as number[],
+      immediateStops: [] as number[],
+      resumed: 0,
+    };
     Object.defineProperty(window, '__soundAudit', { value: audit });
 
     class FakeParam {
@@ -30,10 +34,10 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
       type: OscillatorType = 'sine';
       onended: (() => void) | null = null;
       start() {
-        audit.started += 1;
+        audit.started.push(this.frequency.value);
       }
-      stop() {
-        audit.stopped += 1;
+      stop(when?: number) {
+        if (when === undefined) audit.immediateStops.push(this.frequency.value);
       }
     }
     class FakeAudioContext {
@@ -63,23 +67,41 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
       () =>
         (
           window as unknown as {
-            __soundAudit: { started: number; stopped: number; resumed: number };
+            __soundAudit: {
+              started: number[];
+              immediateStops: number[];
+              resumed: number;
+            };
           }
         ).__soundAudit,
     );
 
   await page.goto('/');
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
-  await expect.poll(async () => (await readAudit()).started).toBe(2);
+  const environmentStarts = async () =>
+    (await readAudit()).started.filter(
+      (frequency) => frequency === 43 || frequency === 43 * 2.01,
+    ).length;
+  const environmentStops = async () =>
+    (await readAudit()).immediateStops.filter(
+      (frequency) => frequency === 43 || frequency === 43 * 2.01,
+    ).length;
+  await expect.poll(environmentStarts).toBe(2);
+  await expect
+    .poll(async () => (await readAudit()).started.includes(520))
+    .toBe(true);
   expect((await readAudit()).resumed).toBe(1);
 
   await page.getByRole('button', { name: 'SYSTEM' }).click();
-  await expect.poll(async () => (await readAudit()).stopped).toBe(2);
+  await expect
+    .poll(async () => (await readAudit()).started.includes(760))
+    .toBe(true);
+  await expect.poll(environmentStops).toBe(2);
   await page
     .getByRole('dialog', { name: 'SYSTEM' })
     .getByRole('button', { name: 'RESUME / ゲームへ戻る' })
     .click();
-  await expect.poll(async () => (await readAudit()).started).toBe(4);
+  await expect.poll(environmentStarts).toBe(4);
 
   await page.evaluate(() => {
     document.documentElement.dataset.testVisibility = 'hidden';
@@ -89,12 +111,12 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
     });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await expect.poll(async () => (await readAudit()).stopped).toBe(4);
+  await expect.poll(environmentStops).toBe(4);
   await page.evaluate(() => {
     document.documentElement.dataset.testVisibility = 'visible';
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await expect.poll(async () => (await readAudit()).started).toBe(6);
+  await expect.poll(environmentStarts).toBe(6);
 
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   const system = page.getByRole('dialog', { name: 'SYSTEM' });
@@ -103,5 +125,5 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
     .click();
   await system.getByRole('button', { name: /MASTER \/ サウンド ON/ }).click();
   await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
-  await expect.poll(async () => (await readAudit()).started).toBe(6);
+  await expect.poll(environmentStarts).toBe(6);
 });

@@ -3,8 +3,17 @@ import { expect, test, type Page } from '@playwright/test';
 async function enterRoom(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
-  for (let index = 0; index < 6; index += 1)
+  for (let index = 0; index < 6; index += 1) {
+    await expect(page.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+    );
     await page.getByRole('button', { name: '次へ' }).click();
+  }
+  await expect(page.locator('.narrative-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+  );
   await page.getByRole('button', { name: '探索を始める' }).click();
 }
 

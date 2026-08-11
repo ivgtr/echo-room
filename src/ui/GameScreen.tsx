@@ -118,6 +118,8 @@ type Props = {
   onHintReveal: () => void;
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
+  onUiClick: () => void;
+  onTextBlip: () => void;
 };
 
 export function GameScreen(props: Props) {
@@ -384,6 +386,14 @@ export function GameScreen(props: Props) {
         onPointerCancel={() => {
           swipeRef.current = null;
         }}
+        onClickCapture={(event) => {
+          const target = event.target;
+          if (
+            target instanceof Element &&
+            target.closest('button:not(:disabled)')
+          )
+            props.onUiClick();
+        }}
       >
         <WorldCanvas
           locationId={props.locationId}
@@ -493,6 +503,9 @@ export function GameScreen(props: Props) {
               text={props.subtitle}
               actionLabel="閉じる"
               onAdvance={closeInspection}
+              textSpeed={props.subtitleSettings.speed}
+              motionReduced={props.motionReduced}
+              onTextBlip={props.onTextBlip}
             />
           </ModalFocusScope>
         )}
@@ -502,6 +515,9 @@ export function GameScreen(props: Props) {
             canSkip={props.introSeen}
             onAdvance={props.onDialogueAdvance}
             onSkip={props.onDialogueSkip}
+            textSpeed={props.subtitleSettings.speed}
+            motionReduced={props.motionReduced}
+            onTextBlip={props.onTextBlip}
           />
         )}
         {inspectionDialog && (
@@ -589,6 +605,9 @@ export function GameScreen(props: Props) {
             lineIndex={props.endingLineIndex}
             completed={props.storyStage === 'completed'}
             onAdvance={props.onEndingAdvance}
+            textSpeed={props.subtitleSettings.speed}
+            motionReduced={props.motionReduced}
+            onTextBlip={props.onTextBlip}
           />
         )}
         {props.saveMessage && (

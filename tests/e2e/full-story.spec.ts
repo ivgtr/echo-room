@@ -175,8 +175,19 @@ test('keyboard-only checkpoint reaches transmission complete through every remai
     .press('Enter');
   await expectSavedCheckpoint(page, 'checkpoint_transmission_started');
   await expect(page.getByRole('button', { name: '続ける' })).toBeFocused();
-  for (let index = 0; index < 5; index += 1)
+  for (let index = 0; index < 5; index += 1) {
+    await expect(page.locator('.ending-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+      { timeout: 10_000 },
+    );
     await page.getByRole('button', { name: '続ける' }).press('Enter');
+  }
+  await expect(page.locator('.ending-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+    { timeout: 10_000 },
+  );
   await page.getByRole('button', { name: 'ドアを開ける' }).press('Enter');
   await expect(page.getByText('TRANSMISSION COMPLETE')).toBeVisible();
   await expectSavedCheckpoint(page, 'checkpoint_completed');

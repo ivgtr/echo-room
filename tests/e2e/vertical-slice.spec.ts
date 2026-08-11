@@ -11,8 +11,16 @@ async function enterRoom(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
   for (let index = 0; index < 6; index += 1) {
+    await expect(page.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+    );
     await page.getByRole('button', { name: '次へ' }).click();
   }
+  await expect(page.locator('.narrative-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+  );
   await page.getByRole('button', { name: '探索を始める' }).click();
 }
 
@@ -73,8 +81,17 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(
     page.getByRole('button', { name: '既読会話をスキップ' }),
   ).toHaveCount(0);
-  for (let index = 0; index < 6; index += 1)
+  for (let index = 0; index < 6; index += 1) {
+    await expect(page.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+    );
     await page.getByRole('button', { name: '次へ' }).press('Enter');
+  }
+  await expect(page.locator('.narrative-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+  );
   await page.getByRole('button', { name: '探索を始める' }).press('Enter');
   await expect
     .poll(() =>
@@ -273,7 +290,13 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
     stageBox!.x + stageBox!.width,
   );
   await page.clock.fastForward(380);
-  await page.getByRole('button', { name: '閉じる' }).click();
+  const closeNarrative = page.getByRole('button', { name: '閉じる' });
+  await closeNarrative.click();
+  await expect(page.locator('.narrative-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+  );
+  await closeNarrative.click();
   const doorBox = await page
     .getByRole('button', { name: '鉄製ドアを調べる' })
     .boundingBox();
@@ -395,6 +418,7 @@ test('system archive and subtitle/sound settings preserve the exploration view',
   await expect(narrative).toHaveCSS('animation-duration', '0.08s');
   const narrativeText = narrative.locator('.narrative-text');
   await expect(narrativeText).toHaveCSS('font-size', /(?:2[0-9]|3[0-9])px/);
+  await expect(narrativeText).toHaveAttribute('data-text-complete', 'true');
   await narrative.getByRole('button', { name: '閉じる' }).click();
   await expect(narrative).toBeHidden();
   await expect(page.getByTestId('world-canvas')).toBeVisible();
@@ -458,8 +482,16 @@ test.describe('touch input', () => {
     await page.goto('/');
     await page.getByRole('button', { name: 'ゲーム開始' }).tap();
     for (let index = 0; index < 6; index += 1) {
+      await expect(page.locator('.narrative-text')).toHaveAttribute(
+        'data-text-complete',
+        'true',
+      );
       await page.getByRole('button', { name: '次へ' }).tap();
     }
+    await expect(page.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+    );
     await page.getByRole('button', { name: '探索を始める' }).tap();
     await page.getByTestId('world-canvas').dispatchEvent('pointerdown', {
       pointerId: 1,

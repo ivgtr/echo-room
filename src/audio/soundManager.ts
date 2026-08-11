@@ -1,6 +1,8 @@
 import type { BreakerId } from '../game/domain/ids';
 
 export type SoundEffectId =
+  | 'ui_click'
+  | 'text_blip'
   | 'terminal_connect'
   | 'power_restore'
   | 'locker_unlock'
@@ -34,6 +36,12 @@ const BREAKER_FREQUENCIES: Record<BreakerId, number> = {
 };
 
 export const SOUND_CUES: Readonly<Record<SoundEffectId, readonly Tone[]>> = {
+  ui_click: [
+    { frequency: 760, delay: 0, duration: 0.028, gain: 0.026, type: 'square' },
+  ],
+  text_blip: [
+    { frequency: 520, delay: 0, duration: 0.022, gain: 0.018, type: 'square' },
+  ],
   terminal_connect: [
     { frequency: 480, delay: 0, duration: 0.06, gain: 0.05 },
     { frequency: 720, delay: 0.08, duration: 0.09, gain: 0.04 },

@@ -558,9 +558,32 @@ button:focus-visible {
 }
 
 .narrative-panel .narrative-text {
+  position: relative;
   margin: 0;
   font-size: clamp(0.95rem, 1.8vw, 1.35rem);
   line-height: 1.65;
+}
+
+.narrative-measure {
+  visibility: hidden;
+}
+
+.narrative-measure::before {
+  content: attr(data-full-text);
+}
+
+.narrative-reveal {
+  position: absolute;
+  inset: 0;
+}
+
+.ending-text {
+  position: relative;
+}
+
+.ending-text .narrative-measure,
+.ending-text .narrative-measure::before {
+  display: inline-block;
 }
 
 .narrative-actions {

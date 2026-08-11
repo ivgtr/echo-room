@@ -146,6 +146,8 @@ describe('SoundManager', () => {
 
   it('registers only non-verbal effects required by the current design', () => {
     expect(Object.keys(SOUND_CUES)).toEqual([
+      'ui_click',
+      'text_blip',
       'terminal_connect',
       'power_restore',
       'locker_unlock',

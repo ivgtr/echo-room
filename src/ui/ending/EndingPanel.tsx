@@ -1,3 +1,8 @@
+import { useCallback, useState } from 'react';
+
+import { NarrativeText } from '../narrative/NarrativeText';
+import type { TextSpeed } from '../system/uiSettings';
+
 const lines = [
   'PACKET 01 SENT / PACKET 02 SENT / PACKET 03 SENT / PACKET 04 SENT',
   '過去の主人公「……何だ、ここ……。誰だ？」',
@@ -11,11 +16,32 @@ export function EndingPanel({
   lineIndex,
   completed,
   onAdvance,
+  textSpeed,
+  motionReduced,
+  onTextBlip,
 }: {
   lineIndex: number;
   completed: boolean;
   onAdvance: () => void;
+  textSpeed: TextSpeed;
+  motionReduced: boolean;
+  onTextBlip: () => void;
 }) {
+  const text = lines[lineIndex] ?? '';
+  const [completedText, setCompletedText] = useState<string | null>(null);
+  const [forceCompleteText, setForceCompleteText] = useState<string | null>(
+    null,
+  );
+  const textComplete =
+    motionReduced || completedText === text || forceCompleteText === text;
+  const handleTextComplete = useCallback(() => setCompletedText(text), [text]);
+  const handleAdvance = () => {
+    if (!textComplete) {
+      setForceCompleteText(text);
+      return;
+    }
+    onAdvance();
+  };
   return (
     <section
       className={completed ? 'ending-panel is-complete' : 'ending-panel'}
@@ -32,8 +58,21 @@ export function EndingPanel({
         </>
       ) : (
         <>
-          <p>{lines[lineIndex]}</p>
-          <button type="button" onClick={onAdvance} autoFocus>
+          <p
+            className="ending-text"
+            data-text-complete={textComplete}
+            aria-label={text}
+          >
+            <NarrativeText
+              text={text}
+              speed={textSpeed}
+              motionReduced={motionReduced}
+              forceComplete={forceCompleteText === text}
+              onBlip={onTextBlip}
+              onComplete={handleTextComplete}
+            />
+          </p>
+          <button type="button" onClick={handleAdvance} autoFocus>
             {lineIndex === lines.length - 1 ? 'ドアを開ける' : '続ける'}
           </button>
         </>
