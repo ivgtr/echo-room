@@ -143,7 +143,7 @@
         },
         {
           "id": "gfx-close-010__off",
-          "src": "/assets/images/close/gfx-close-010__off__preview-flat.webp",
+          "src": "/assets/images/close/gfx-close-009__open__preview-flat.webp",
           "width": 1672,
           "height": 941
         },
@@ -178,7 +178,7 @@
         },
         {
           "id": "gfx-item-003__voice-analysis-crop",
-          "src": "/assets/images/items/gfx-item-003__approved__voice-analysis-crop__512x640.webp",
+          "src": "/assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp",
           "width": 512,
           "height": 640
         }
