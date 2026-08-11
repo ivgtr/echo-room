@@ -2,6 +2,14 @@
 
 最終更新: 2026-08-11
 
+## 現在地と次の着手点
+
+- P0〜P3は完了し、代替画像・字幕・仮音声で冒頭からエンディングまで通して遊べる。
+- P4は本素材統合の途中。P4-02の現行画面は利用者から肯定評価を受け、UI工程へ進む指示があったため、実機確認待ちのblockerは2026-08-11に解除された。
+- P4-02には正式高解像度原本、独立parallax layer、hit mask、残状態差分が残る。これらはP4-02内で継続するが、P5およびUI品質向上の着手を止めない。
+- 次の優先作業は`quality-up-plan.md`のUIQ-01。P5-03の一部として探索HUDを簡素化し、旧UIを残さず単一の操作構造へ置き換える。
+- P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
+
 | ID | 状態 | 完了内容 | 検証 | Blocker |
 |---|---|---|---|---|
 | P0-01 | completed | 固定・保留条件、資料優先順位、ID命名規則を`project-decisions.md`へ整理 | 全正本の通読、参照と固定条件の手動照合 | なし |
@@ -22,14 +30,18 @@
 | P3-06 | completed | 4台詞選択・並べ替え、誤順拒否、-00:20:00送信、冒頭会話再現、ドア解錠、白い光、endingを実装 | final正誤unit、冒頭からの全編E2E | 本番演出素材待ち |
 | P3-07 | completed | 各進行段階に3段階ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 21 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P4-01 | completed | 3階層の探索情報、密度上限、誤誘導禁止、壁別dressingを正本化し、WIDE-001〜004の環境ドレッシング改訂previewと4面比較sheetを制作・承認 | 4面1672×941・比較sheet 1920×1080、必須対象・edge cue・禁止decoyの目視照合、`npm run check`、2026-08-11利用者承認 | 高解像度原本とlayer分離はP4-02で継続 |
-| P4-02 | blocked | 3 bundle・25画像、画像輪郭hotspot、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装 | asset validation、world/transition unit 6件を含む8 files/19 tests、同一Canvas維持・全4面fade・電源復旧・全編・touch E2E 4件 | 利用者による実機visual/debug確認。正式高解像度原本、独立parallax layer、hit mask、残状態差分は確認後に継続 |
-| P4-03 | pending |  |  | P4-01 |
+| P4-02 | in_progress | 3 bundle・25画像、画像輪郭hotspot、主要modal背景を統合。Pixi Applicationを単一永続構造へ刷新し、旧Canvas再生成を削除。現在scene保持型double buffer、方向付き240ms crossfade、180度300ms、電源600ms、reduced-motion fade、HTTP cache warming、連続入力時の最新scene収束を実装。2026-08-11に現行画面への利用者の肯定評価とUI工程移行指示を確認 | asset validation、world/transition unit 6件を含む8 files/19 tests、同一Canvas維持・全4面fade・電源復旧・全編・touch E2E 4件 | 正式高解像度原本、独立parallax layer、hit mask、残状態差分。UIQ-01の着手は阻害しない |
+| P4-03 | pending |  |  | 依存済み。P4-02・UIQと並行着手可能 |
 | P4-04 | pending |  |  | 本番音声 |
 | P4-05 | pending |  |  | P4-02〜04 |
-| P5-01 | pending |  |  | P2・P3 |
-| P5-02 | pending |  |  | P2・P3 |
-| P5-03 | pending |  |  | P2・P3 |
-| P5-04 | pending |  |  | P2・P3 |
+| P5-01 | pending |  |  | 依存済み。UIQと並行着手可能 |
+| P5-02 | pending |  |  | 依存済み。UIQ-02・03と統合して実装 |
+| P5-03 | pending |  |  | 依存済み。UIQ-01を次に着手 |
+| P5-04 | pending |  |  | 依存済み。UIQ-04と統合して実装 |
+| UIQ-01 | pending | 探索HUD簡素化の仕様・受け入れ条件を正本化 | 文書整合、Prettier | 次の着手点。P5-03として実装 |
+| UIQ-02 | pending | 背景直接操作と調査遷移の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-01。P5-02・03、P4-05と統合 |
+| UIQ-03 | pending | Narrative・Inventory・System UIの仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-02。P5-02・03、P4-05と統合 |
+| UIQ-04 | pending | 非常システムと時間演出の仕様・受け入れ条件を正本化 | 文書整合、Prettier | UIQ-03。P5-04、P4-05と統合 |
 | P6-01 | pending |  |  | P4・P5 |
 | P6-02 | pending |  |  | P6-01 |
 | P6-03 | pending |  |  | P4・P5 |
@@ -45,3 +57,11 @@
 - 最終フォント: 当面はsystem font stack。
 - 本番画像・音声: 正規IDと寸法のCanvas製代替画像、字幕、duration metadataで実装を継続する。
 - 告知素材と公開操作: 明示的な依頼があるまで対象外。
+
+## 次作業者への引き継ぎ
+
+1. `docs/README.md`のUIルーティングに従い、`requirements.md` 9〜13章、`technical-design.md` 7・10・15章、`quality-up-plan.md`、`implementation-plan.md`のP2・P5・10章を読む。
+2. UIQ-01をP5-03の最初の作業パッケージとして開始する。方角タブ、矩形の調査ボタン、常時目的表示、常時露出する音声・タイトル操作を、計画書の単一構造へ置き換える。
+3. 見た目を非表示にしても、hotspotの名前・役割・focus順、左右キー、Tab操作、focus輪郭を失わせない。
+4. 既存のPixi Application、double buffer、scene収束処理を再導入・二重化せず、その上へ入力とUIを接続する。
+5. UIQ-01完了時はdesktop mouse/keyboard、touch、SYSTEMのfocus復帰、目的復帰導線を検証し、P5-03とUIQ-01の進捗を更新してローカルcommitする。
