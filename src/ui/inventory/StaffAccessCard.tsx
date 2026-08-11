@@ -11,7 +11,7 @@ export function StaffAccessCard() {
       <div className="staff-card-body">
         <img
           className="staff-card-portrait"
-          src="/assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp"
+          src={`${import.meta.env.BASE_URL}assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp`}
           alt="E-01職員証に登録された男性職員の写真"
         />
         <dl>

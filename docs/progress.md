@@ -27,6 +27,7 @@
 - P4-04の操作音を拡張し、話者差のないレトロゲーム風text blipと共通UI clickをeffectsへ追加。字幕速度と句読点へ同期する文字送り、早押し全文表示、動き軽減時の即時表示へ接続した。
 - P5は全作業完了。次の着手点はP4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残演出。
 - P4とP5は依存を満たす範囲で並行する。UIQ-02〜04の最終演出部分だけはP4-05と統合する。
+- P8は公開準備のみ着手。GitHub Pages公式Actionsのdeploy workflow、repository subpathを使うproduction build、簡潔なREADMEとネタバレなしのキービジュアルを整備した。pushと公開後smoke testは未実施。
 
 | ID | 状態 | 完了内容 | 検証 | Blocker |
 |---|---|---|---|---|
@@ -34,7 +35,7 @@
 | P0-02 | completed | Node.js 24.15.0、npm 11系、対象browser、標準commandを確定 | `mise ls node`、`node --version`、`npm --version` | なし |
 | P1-01 | completed | Vite・React・PixiJS・XStateの単一actor基盤、1920×1080 Canvas、React overlay、error boundary、非対応環境画面を実装 | `npm run check`、Playwright Chromium title→play E2E | なし |
 | P1-02 | completed | dev/build/preview/typecheck/lint/test/E2E/content・asset validation/check commandを実装 | `npm run check` | なし |
-| P1-03 | completed | Node 24 + npm ci、check、Chromium E2E、build容量記録のGitHub Actionsを実装 | workflow構文の手動確認、localの同等command成功 | remote CI実行はpush権限外 |
+| P1-03 | completed | Node 24 + npm ci、標準検証commandを整備。2026-08-12の依頼者指示により自動CIは廃止し、検証はlocalで実施する方針へ変更 | local commandで検証 | なし |
 | P2-01 | completed | 1920×1080 letterbox、Canvas・HUD・modal・system layer、pointer/touch/keyboard共通event、reduced-motionを実装 | `npm run check`、desktop Chromium E2E | なし |
 | P2-02 | completed | 北東南西4視点を正規ID付きruntime Canvas代替素材で描画し、hotspot・方向移動・DOM accessibility操作を接続 | mouse/keyboard/touch E2E | 本番画像はP4で差替 |
 | P2-03 | completed | 暗い北壁、非常灯、BATTERY 00:19:48、冒頭7台詞、Web Audio unlock、字幕、目的表示を実装 | unit、字幕ありE2E | なし |
@@ -71,14 +72,15 @@
 | P6-04 | pending |  |  | P1以降 |
 | P7-01 | pending |  |  | P6 Gate、利用者による初見playtest |
 | P7-02 | pending |  |  | P7-01 |
-| P8 | pending |  |  | 公開先と明示的な公開許可 |
+| P8 | in_progress | GitHub Pages向けdeploy workflow、動的base path、README、README用キービジュアルを整備 | `npm run build -- --base=/echo-room/`、生成物内のJS・CSS・HTML asset pathを確認 | push、Pages公開、公開後smoke testは未実施 |
 
 ## 保留事項
 
 - 研究所ロゴ: 当面は正確な文字表記のみ。
 - 最終フォント: 当面はsystem font stack。
 - 本番画像: 正規IDと寸法のCanvas製代替画像から正式高解像度原本への差替えを継続する。サウンドは手続き生成の正式実装に確定済み。
-- 告知素材と公開操作: 明示的な依頼があるまで対象外。
+- 告知素材: README用の横長キービジュアルのみ制作済み。正式なロゴ入り告知素材、正方形サムネイル、OGPは対象外。
+- 公開操作: workflowは準備済み。pushとGitHub Pagesへの公開は明示的な依頼があるまで対象外。
 
 ## 次作業者への引き継ぎ
 

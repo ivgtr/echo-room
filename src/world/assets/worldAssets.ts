@@ -18,8 +18,8 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
   location_north_wall: {
     label: '北壁 / ドア・時計・インターホン',
     images: {
-      emergency: '/assets/images/world/gfx-wide-001/emergency.webp',
-      powered: '/assets/images/world/gfx-wide-001/powered.webp',
+      emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-001/emergency.webp`,
+      powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-001/powered.webp`,
     },
     hotspots: [
       {
@@ -71,8 +71,8 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
   location_east_wall: {
     label: '東壁 / 壁面端末・解析パネル',
     images: {
-      emergency: '/assets/images/world/gfx-wide-002/emergency.webp',
-      powered: '/assets/images/world/gfx-wide-002/powered.webp',
+      emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-002/emergency.webp`,
+      powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-002/powered.webp`,
     },
     hotspots: [
       {
@@ -108,8 +108,8 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
   location_south_wall: {
     label: '南壁 / デスク',
     images: {
-      emergency: '/assets/images/world/gfx-wide-003/emergency.webp',
-      powered: '/assets/images/world/gfx-wide-003/powered.webp',
+      emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-003/emergency.webp`,
+      powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-003/powered.webp`,
     },
     hotspots: [
       {
@@ -129,8 +129,8 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
   location_west_wall: {
     label: '西壁 / ブレーカー・ロッカー',
     images: {
-      emergency: '/assets/images/world/gfx-wide-004/emergency.webp',
-      powered: '/assets/images/world/gfx-wide-004/powered.webp',
+      emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-004/emergency.webp`,
+      powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-004/powered.webp`,
     },
     hotspots: [
       {
