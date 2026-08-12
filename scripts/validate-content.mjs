@@ -7,22 +7,22 @@ import { z } from 'zod';
 const rootSchema = z.object({
   schemaVersion: z.literal(2),
   contentVersion: z.string().min(1),
-  chapters: z.array(z.object({ id: z.string() })).min(10),
+  chapters: z.array(z.object({ id: z.string() })).min(9),
   locations: z.array(z.object({ id: z.string() })).min(4),
   hotspots: z
     .array(z.object({ id: z.string(), locationId: z.string() }))
     .min(7),
   items: z.array(z.object({ id: z.string() })).length(3),
   documents: z.array(z.object({ id: z.string() })).min(3),
-  dialogues: z.array(z.object({ id: z.string(), text: z.string() })).min(8),
+  dialogues: z.array(z.object({ id: z.string(), text: z.string() })).min(6),
   puzzles: z
     .array(z.object({ id: z.string(), hintIds: z.array(z.string()).length(3) }))
-    .length(10),
+    .length(7),
   hints: z
     .array(
       z.object({ id: z.string(), puzzleId: z.string(), level: z.number() }),
     )
-    .length(30),
+    .length(21),
   storyFacts: z.object({
     wallClock: z.literal('02:17'),
     negativeDelay: z.literal('-00:20:00'),

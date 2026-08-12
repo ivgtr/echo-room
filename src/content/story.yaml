@@ -1,16 +1,13 @@
 schemaVersion: 2
-contentVersion: '0.2.0'
+contentVersion: '0.3.0'
 chapters:
   - { id: chapter_intro, label: 覚醒 }
   - { id: chapter_power_route, label: 非常電源切替 }
   - { id: chapter_carrier_sync, label: 回線同期 }
   - { id: chapter_maintenance_lock, label: 保守ロッカー }
-  - { id: chapter_log_pairing, label: 通信ログ }
-  - { id: chapter_signal_route, label: 通信配線 }
+  - { id: chapter_signal_investigation, label: 通信調査 }
   - { id: chapter_packet_repair, label: 破損PACKET }
-  - { id: chapter_temporal_anomaly, label: PACKET検査 }
   - { id: chapter_voiceprint, label: 声紋照合 }
-  - { id: chapter_causal_script, label: 送信文編集 }
   - { id: chapter_transmission, label: 送信予約 }
   - { id: chapter_ending, label: 脱出 }
 locations:
@@ -70,8 +67,8 @@ items:
 documents:
   - {
       id: document_power_plan,
-      title: EMERGENCY BYPASS PLAN,
-      body: 容量は7 UNIT。ドアの線はショート。起動順は端末、通話器、BUFFER。,
+      title: AUXILIARY BUS RECOVERY,
+      body: 保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。,
     }
   - {
       id: document_synchronization_note,
@@ -110,16 +107,6 @@ dialogues:
       text: 最後に、赤いボタンを押せ。,
     }
   - {
-      id: dialogue_no_room_question,
-      speaker: protagonist,
-      text: 隣の部屋なんてない。回線はこの部屋へ戻っている。,
-    }
-  - {
-      id: dialogue_no_room_answer,
-      speaker: future_protagonist,
-      text: 分かってる。まだ説明できない。,
-    }
-  - {
       id: dialogue_identity_question,
       speaker: protagonist,
       text: この波の形は……俺の職員記録と同じだ。,
@@ -132,8 +119,8 @@ dialogues:
 puzzles:
   - id: puzzle_power_route
     kind: routing
-    correctAnswer: [door, terminal, intercom, buffer]
-    incorrectFeedback: 保護回路が切れた。負荷か起動順が合っていない。
+    correctAnswer: [terminal, intercom, buffer]
+    incorrectFeedback: CONTROL SIGNAL MISSING。配線の上流を確認。
     effects: [{ type: unlockTerminal, menuId: system }]
     hintIds: [hint_power_1, hint_power_2, hint_power_3]
   - id: puzzle_carrier_sync
@@ -151,42 +138,24 @@ puzzles:
       - { type: grantItem, itemId: item_staff_card }
       - { type: grantItem, itemId: item_floor_map }
     hintIds: [hint_lock_1, hint_lock_2, hint_lock_3]
-  - id: puzzle_log_pairing
-    kind: correlation
-    correctAnswer: [s-b, s-c, s-a]
-    incorrectFeedback: 組み合わせの中に、違う波形がある。
-    effects: [{ type: advanceChapter, chapterId: chapter_signal_route }]
-    hintIds: [hint_log_1, hint_log_2, hint_log_3]
-  - id: puzzle_signal_route
+  - id: puzzle_signal_investigation
     kind: routing
-    correctAnswer: [signal, ring-relay, echo-buffer]
-    incorrectFeedback: 選んだ線は、途中で接続が切れている。
+    correctAnswer: [s-b, s-c, s-a, signal, ring-relay, echo-buffer]
+    incorrectFeedback: 波形の組か、たどった配線が一致していない。
     effects: [{ type: advanceChapter, chapterId: chapter_packet_repair }]
-    hintIds: [hint_route_1, hint_route_2, hint_route_3]
+    hintIds: [hint_signal_1, hint_signal_2, hint_signal_3]
   - id: puzzle_packet_repair
     kind: reconstruction
     correctAnswer: [c, d, a, b]
     incorrectFeedback: フレーム検査に失敗した。断片の端がつながっていない。
-    effects: [{ type: advanceChapter, chapterId: chapter_temporal_anomaly }]
-    hintIds: [hint_repair_1, hint_repair_2, hint_repair_3]
-  - id: puzzle_temporal_anomaly
-    kind: correlation
-    correctAnswer: [packet-04, unseen-event]
-    incorrectFeedback: その判断では、記録済みの出来事と矛盾しない。
     effects: [{ type: advanceChapter, chapterId: chapter_voiceprint }]
-    hintIds: [hint_anomaly_1, hint_anomaly_2, hint_anomaly_3]
+    hintIds: [hint_repair_1, hint_repair_2, hint_repair_3]
   - id: puzzle_voiceprint_calibration
     kind: calibration
     correctAnswer: [compress-half, invert, left-2]
     incorrectFeedback: 一致しない。3つの特徴のどれかが記録と違う。
-    effects: [{ type: advanceChapter, chapterId: chapter_causal_script }]
-    hintIds: [hint_voice_1, hint_voice_2, hint_voice_3]
-  - id: puzzle_causal_script
-    kind: reconstruction
-    correctAnswer: [packet-01, packet-02, packet-03, packet-04]
-    incorrectFeedback: この順番では、過去の応答記録とつながらない。
     effects: [{ type: advanceChapter, chapterId: chapter_transmission }]
-    hintIds: [hint_script_1, hint_script_2, hint_script_3]
+    hintIds: [hint_voice_1, hint_voice_2, hint_voice_3]
   - id: puzzle_transmission_window
     kind: routing
     correctAnswer:
@@ -199,19 +168,19 @@ hints:
       id: hint_power_1,
       puzzleId: puzzle_power_route,
       level: 1,
-      text: 合計容量と、ショートした線を確認する。,
+      text: 状態灯と、盤面上部の配線の始点・中継点・終端を観察する。,
     }
   - {
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: ドアの線を切り離し、必要な設備だけを使う。,
+      text: 赤い状態灯の回路を隔離し、保護解除後は制御信号の上流から復帰させる。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: ドアの線を切る。端末、通話器、BUFFERの順。,
+      text: DOORをOFFにしてから、端末、通話器、BUFFERの順にONにする。,
     }
   - {
       id: hint_carrier_1,
@@ -250,40 +219,22 @@ hints:
       text: 二重線、丸、三角、ひし形。,
     }
   - {
-      id: hint_log_1,
-      puzzleId: puzzle_log_pairing,
+      id: hint_signal_1,
+      puzzleId: puzzle_signal_investigation,
       level: 1,
-      text: 時刻ではなく、3つの波の並びを見る。,
+      text: 同じ波をつないで時刻差を確かめ、その線を地図で追う。,
     }
   - {
-      id: hint_log_2,
-      puzzleId: puzzle_log_pairing,
+      id: hint_signal_2,
+      puzzleId: puzzle_signal_investigation,
       level: 2,
-      text: 3つの波を左から順に比べる。,
+      text: R1=B、R2=C、R3=A。次に通信の実線と丸い端子をたどる。,
     }
   - {
-      id: hint_log_3,
-      puzzleId: puzzle_log_pairing,
+      id: hint_signal_3,
+      puzzleId: puzzle_signal_investigation,
       level: 3,
-      text: R1=B、R2=C、R3=A。,
-    }
-  - {
-      id: hint_route_1,
-      puzzleId: puzzle_signal_route,
-      level: 1,
-      text: 部屋の図と配線図を重ねる。,
-    }
-  - {
-      id: hint_route_2,
-      puzzleId: puzzle_signal_route,
-      level: 2,
-      text: 通信の実線と丸い端子をたどる。,
-    }
-  - {
-      id: hint_route_3,
-      puzzleId: puzzle_signal_route,
-      level: 3,
-      text: J-2からECHO BUFFER RETURN。,
+      text: 3組をつなぎ、通信実線、J-2、ECHO BUFFER RETURNの順。,
     }
   - {
       id: hint_repair_1,
@@ -304,24 +255,6 @@ hints:
       text: C、D、A、B。,
     }
   - {
-      id: hint_anomaly_1,
-      puzzleId: puzzle_temporal_anomaly,
-      level: 1,
-      text: 各発言を、これまでに起きたことと比べる。,
-    }
-  - {
-      id: hint_anomaly_2,
-      puzzleId: puzzle_temporal_anomaly,
-      level: 2,
-      text: まだしていない操作を知る発言を探す。,
-    }
-  - {
-      id: hint_anomaly_3,
-      puzzleId: puzzle_temporal_anomaly,
-      level: 3,
-      text: PACKET 04。,
-    }
-  - {
       id: hint_voice_1,
       puzzleId: puzzle_voiceprint_calibration,
       level: 1,
@@ -338,24 +271,6 @@ hints:
       puzzleId: puzzle_voiceprint_calibration,
       level: 3,
       text: 間隔は半分、上下は反転、開始位置は左へ2。,
-    }
-  - {
-      id: hint_script_1,
-      puzzleId: puzzle_causal_script,
-      level: 1,
-      text: 各発言を聞いたとき、何をしていたか思い出す。,
-    }
-  - {
-      id: hint_script_2,
-      puzzleId: puzzle_causal_script,
-      level: 2,
-      text: 呼びかけ、電源、LOG、赤いボタンの順。,
-    }
-  - {
-      id: hint_script_3,
-      puzzleId: puzzle_causal_script,
-      level: 3,
-      text: PACKET 01、02、03、04。,
     }
   - {
       id: hint_send_1,

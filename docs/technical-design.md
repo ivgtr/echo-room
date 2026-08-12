@@ -180,15 +180,14 @@ boot
        puzzle_power_route
        puzzle_carrier_sync
        puzzle_maintenance_lock
-       puzzle_log_pairing
-       puzzle_signal_route
+       puzzle_signal_investigation
        puzzle_packet_repair
-       puzzle_temporal_anomaly
        puzzle_voiceprint_calibration
-       puzzle_causal_script
        puzzle_transmission_window
        transmission_ready
-       ending
+       ending_transmission
+       ending_replay
+       ending_door
   -> completed
   -> fatal_error
 ```
@@ -492,13 +491,10 @@ type PuzzleResult =
 | 非常電源経路 | routing | 通電表示付き配線・コネクタ・物理ブレーカー | 隔離対象と3設備の給電順 |
 | 搬送波同期 | calibration | 基準へ直接dragする波形レール | 3回線の位相補正 |
 | 保守ロッカー | correlation | 四連記号ダイヤル・ハンドル | 点検順から変換した4記号 |
-| 通信ログ照合 | correlation | RECEIVE/SOURCEパッチ盤 | RECEIVEとSOURCEの3対応 |
-| 通信経路追跡 | routing | 二層図上の配線トレーサー | 線種、中継端子、終端 |
+| 通信ログ・配線調査 | routing | RECEIVE/SOURCEパッチ盤と二層図トレーサー | 3対応、20分差、線種、中継端子、終端 |
 | PACKET復元 | reconstruction | 固定HEADER・端形状付きデータ片・連続性レール | 4断片の連続順 |
-| 時系列矛盾 | correlation | PACKETカセット・出来事検査器 | 未発生PACKETと根拠 |
 | 声紋校正 | calibration | 波形画面・ダイヤル・スライダー | 3特徴の逆変換 |
-| 因果会話 | reconstruction | 送信文ストリップ・時系列レール | 設備状態に基づく4文順 |
-| 最終送信設計 | routing | 受信窓パッチ盤・試験レバー | 4受信窓、遅延、回線終端 |
+| 最終送信設計 | routing | 本文付き受信窓パッチ盤・試験レバー | 会話順、4受信窓、遅延、回線終端 |
 
 ### 9.3 装置操作と判定境界
 
@@ -590,8 +586,8 @@ master
 ### 12.2 保存形式
 
 ```ts
-type SaveDataV3 = {
-  schemaVersion: 3;
+type SaveDataV4 = {
+  schemaVersion: 4;
   contentVersion: string;
   savedAt: string;
   progress: {
@@ -612,7 +608,7 @@ type SaveDataV3 = {
 
 - XState内部snapshotをそのまま保存せず、明示したドメインデータだけを保存する。
 - 読込時はZodで検証する。
-- 現行の進行schema v3と`contentVersion`だけを受理し、旧7問形式の変換・読込分岐を実装しない。
+- 現行の進行schema v4と`contentVersion`だけを受理し、旧10問形式の変換・読込分岐を実装しない。
 - 非対応versionまたは破損時はデータを上書きせず、新規開始と消去を選べるようにする。
 - 設定データは進行データと分け、最初からやり直しても保持する。現行の設定schema v4は字幕・SOUND master・効果音・環境音・視覚補助・動き軽減と冒頭会話の既読状態を持つ。
 

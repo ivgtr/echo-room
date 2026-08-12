@@ -91,35 +91,17 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         text: '壁面端末に、未確認の通信ログが3件ある。',
       },
     ],
-    puzzle_log_pairing: [
+    puzzle_signal_investigation: [
       {
         id: 'offset_discovered',
-        kind: 'discovery',
-        text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。',
+        kind: 'monologue',
+        text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。隣の部屋なんてない。回線はこの部屋へ戻っている。',
       },
       {
         id: 'offset_warning',
         kind: 'communication',
         speaker: 'UNKNOWN',
         text: 'ログは気にするな。',
-      },
-      {
-        id: 'security_cue',
-        kind: 'monologue',
-        text: '職員カードなら、SECURITYの施設図を開けるはずだ。',
-      },
-    ],
-    puzzle_signal_route: [
-      {
-        id: 'no_room_question',
-        kind: 'monologue',
-        text: '隣の部屋なんてない。回線はこの部屋へ戻っている。',
-      },
-      {
-        id: 'no_room_answer',
-        kind: 'communication',
-        speaker: 'UNKNOWN',
-        text: '分かってる。まだ説明できない。',
       },
       {
         id: 'damaged_packet_cue',
@@ -132,14 +114,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'packet_question',
         kind: 'monologue',
-        text: '4つ目の文だけ、聞いた覚えがない。いつ届いた？',
-      },
-    ],
-    puzzle_temporal_anomaly: [
-      {
-        id: 'future_packet',
-        kind: 'discovery',
-        text: 'PACKET 04は、まだ見ていない赤いボタンを知っている。',
+        text: '……赤いボタン？ そんなものは、まだ見ていない。',
       },
       {
         id: 'voiceprint_cue',
@@ -164,15 +139,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'script_cue',
         kind: 'communication',
         speaker: '20分後の自分',
-        text: 'お前が受け取った4つの文を、順番どおりに戻せ。',
-      },
-    ],
-    puzzle_causal_script: [
-      {
-        id: 'transmission_cue',
-        kind: 'system',
-        speaker: 'FACILITY SYSTEM',
-        text: '送信文を登録。送る時刻と回線は未設定。',
+        text: 'お前が受け取った4つの文を、20分前へ戻せ。',
       },
     ],
     puzzle_transmission_window: [
@@ -189,13 +156,17 @@ export const getPuzzleCompletionEntries = (puzzleId: PuzzleId) =>
   completionEntries[puzzleId] ?? [];
 
 export function discoveryEntry(text: string): NarrativeEntry {
-  return { id: `discovery_${text}`, kind: 'discovery', text };
+  return {
+    id: `discovery_${text}`,
+    kind: 'discovery',
+    text,
+  };
 }
 
 const powerPlan: ArchiveDocument = {
   id: 'document_power_plan',
-  title: 'EMERGENCY BYPASS PLAN',
-  body: '容量は7 UNIT。ドアの線はショートしている。端末、通話器、BUFFERの順につなぐ。',
+  title: 'AUXILIARY BUS RECOVERY',
+  body: '保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。',
 };
 
 const maintenanceSheet: ArchiveDocument = {

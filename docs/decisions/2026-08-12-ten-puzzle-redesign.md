@@ -1,7 +1,7 @@
 # 10問の因果パズルへの単一移行
 
 日付: 2026-08-12
-状態: accepted
+状態: superseded（問数とschemaは`2026-08-12-seven-experience-consolidation.md`で置換）
 
 ## 背景
 

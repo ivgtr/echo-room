@@ -467,18 +467,30 @@ assets:
     canvas: *closeup_canvas
     prompt: >-
       Inspect the same industrial breaker panel straight enough for interaction.
-      It contains exactly four visually identical vertical mechanical levers in
-      one row. All start down. Leave a blank damaged label strip above them. Each
-      lever must be separable and able to pivot upward without changing the panel.
-    state_variants: [all_off, individual_lever_on, success]
+      It contains exactly four identical breaker units in one row. Give every
+      circuit exactly one physical status-lamp socket at the same coordinate;
+      mark the fourth circuit only with a small recent soot trace without changing
+      its geometry. In the upper recessed strip, add subtle physical control wiring
+      that links the first three bays as source, relay and terminated endpoint.
+      End the fourth-bay branch at a small heat-damaged disconnected terminal so
+      its exclusion is observable without changing the breaker body.
+      Use no arrows, numbers, readable text or glowing baked-in lines.
+      Generate one immutable base without levers or sockets, one transparent
+      movable lever sprite, and one transparent dark socket sprite. Duplicate the
+      same raster sprites at fixed coordinates; use CSS only for pivot motion and
+      light/fault VFX, never to draw the hardware itself.
+    state_variants:
+      [empty_panel, terminal_powered, intercom_powered, lever_sprite, socket_sprite]
     exact_counts:
       levers: 4
     deliverables:
-      - fixed_panel_base
-      - four_separate_lever_layers
-      - lever_pivot_metadata
+      - empty_panel_base
+      - camera_locked_terminal_powered_state
+      - camera_locked_intercom_powered_state
+      - single_transparent_lever_sprite
+      - single_transparent_status_socket_sprite
+      - fixed_sprite_coordinates
       - four_hit_masks
-      - success_light_mask
       - preview_states
 
   - id: gfx-close-006
@@ -744,7 +756,7 @@ assets:
       Add no generated letters or symbols.
     exact_text_added_manually:
       - EMERGENCY POWER TEST
-      - 起動順序：周波数の低い回路から接続すること
+      - DOOR短絡を解除してから補助回路を投入すること
     deliverables: *document_deliverables
 
   - id: gfx-doc-003

@@ -4,7 +4,7 @@ import { puzzleIds } from '../puzzles/storyPuzzles';
 
 export const SAVE_KEY = 'echo-room:progress';
 export const SETTINGS_KEY = 'echo-room:settings';
-export const CONTENT_VERSION = '0.2.0';
+export const CONTENT_VERSION = '0.3.0';
 
 const checkpointSchema = z.enum([
   'checkpoint_puzzle_01',
@@ -14,9 +14,6 @@ const checkpointSchema = z.enum([
   'checkpoint_puzzle_05',
   'checkpoint_puzzle_06',
   'checkpoint_puzzle_07',
-  'checkpoint_puzzle_08',
-  'checkpoint_puzzle_09',
-  'checkpoint_puzzle_10',
   'checkpoint_transmission_started',
   'checkpoint_completed',
 ]);
@@ -24,15 +21,14 @@ const checkpointSchema = z.enum([
 const storyStageSchema = z.enum([
   'puzzle_carrier_sync',
   'puzzle_maintenance_lock',
-  'puzzle_log_pairing',
-  'puzzle_signal_route',
+  'puzzle_signal_investigation',
   'puzzle_packet_repair',
-  'puzzle_temporal_anomaly',
   'puzzle_voiceprint_calibration',
-  'puzzle_causal_script',
   'puzzle_transmission_window',
   'transmission_ready',
-  'ending',
+  'ending_transmission',
+  'ending_replay',
+  'ending_door',
   'completed',
 ]);
 
@@ -57,7 +53,7 @@ const progressSchema = z.object({
   inventory: z
     .array(z.enum(['item_screwdriver', 'item_staff_card', 'item_floor_map']))
     .max(3),
-  completedPuzzleIds: z.array(puzzleIdSchema).max(10),
+  completedPuzzleIds: z.array(puzzleIdSchema).max(7),
   puzzleFailures: puzzleFailuresSchema,
   endingLineIndex: z.number().int().min(0).max(6),
   hintLevel: z.number().int().min(0).max(3),
@@ -65,8 +61,8 @@ const progressSchema = z.object({
   reservePower: z.boolean(),
 });
 
-const saveSchemaV3 = z.object({
-  schemaVersion: z.literal(3),
+const saveSchemaV4 = z.object({
+  schemaVersion: z.literal(4),
   contentVersion: z.literal(CONTENT_VERSION),
   savedAt: z.string().datetime(),
   progress: progressSchema,
@@ -93,7 +89,7 @@ const settingsSchema = z.object({
 
 export type CheckpointId = z.infer<typeof checkpointSchema>;
 export type SavedProgress = z.infer<typeof progressSchema>;
-export type SaveData = z.infer<typeof saveSchemaV3>;
+export type SaveData = z.infer<typeof saveSchemaV4>;
 export type SettingsData = z.infer<typeof settingsSchema>;
 export type LoadResult =
   | { status: 'empty' }
@@ -142,14 +138,15 @@ export const getCheckpointId = (
   completedPuzzleIds: SavedProgress['completedPuzzleIds'],
 ): CheckpointId => {
   if (storyStage === 'completed') return 'checkpoint_completed';
-  if (storyStage === 'ending') return 'checkpoint_transmission_started';
-  const count = Math.max(1, Math.min(10, completedPuzzleIds.length));
+  if (storyStage.startsWith('ending_'))
+    return 'checkpoint_transmission_started';
+  const count = Math.max(1, Math.min(7, completedPuzzleIds.length));
   return `checkpoint_puzzle_${String(count).padStart(2, '0')}` as CheckpointId;
 };
 
 export const createSave = (progress: SavedProgress): SaveData =>
-  saveSchemaV3.parse({
-    schemaVersion: 3,
+  saveSchemaV4.parse({
+    schemaVersion: 4,
     contentVersion: CONTENT_VERSION,
     savedAt: new Date().toISOString(),
     progress,
@@ -169,7 +166,7 @@ export const loadProgress = (
   if (!raw) return { status: 'empty' };
   try {
     const parsed: unknown = JSON.parse(raw);
-    const current = saveSchemaV3.safeParse(parsed);
+    const current = saveSchemaV4.safeParse(parsed);
     return current.success
       ? { status: 'valid', data: current.data }
       : { status: 'corrupt' };

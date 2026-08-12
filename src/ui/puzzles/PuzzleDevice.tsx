@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -36,8 +37,40 @@ export function PuzzleDevice({
   onSubmit,
   onClose,
 }: Props) {
-  const submit = (answer: string[]) => onSubmit(puzzleId, answer);
+  const submit = useCallback(
+    (answer: string[]) => onSubmit(puzzleId, answer),
+    [onSubmit, puzzleId],
+  );
   const Device = deviceComponents[puzzleId];
+  const [diagnosticPuzzleId, setDiagnosticPuzzleId] = useState<PuzzleId | null>(
+    null,
+  );
+  const diagnosticAvailable = diagnosticPuzzleId === puzzleId;
+  const inactivityTimerRef = useRef<number | null>(null);
+  const restartInactivityTimer = () => {
+    if (diagnosticAvailable) return;
+    if (inactivityTimerRef.current !== null)
+      window.clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = window.setTimeout(
+      () => setDiagnosticPuzzleId(puzzleId),
+      60_000,
+    );
+  };
+  useEffect(() => {
+    inactivityTimerRef.current = window.setTimeout(
+      () => setDiagnosticPuzzleId(puzzleId),
+      60_000,
+    );
+    const sessionTimer = window.setTimeout(
+      () => setDiagnosticPuzzleId(puzzleId),
+      90_000,
+    );
+    return () => {
+      if (inactivityTimerRef.current !== null)
+        window.clearTimeout(inactivityTimerRef.current);
+      window.clearTimeout(sessionTimer);
+    };
+  }, [puzzleId]);
 
   return (
     <DeviceFrame
@@ -45,16 +78,10 @@ export function PuzzleDevice({
       failures={failures}
       embedded={embedded}
       onClose={onClose}
+      diagnosticAvailable={diagnosticAvailable}
+      onActivity={restartInactivityTimer}
     >
-      <Device
-        key={
-          puzzleId === 'puzzle_packet_repair'
-            ? puzzleId
-            : `${puzzleId}-${failures}`
-        }
-        failures={failures}
-        submit={submit}
-      />
+      <Device failures={failures} submit={submit} />
     </DeviceFrame>
   );
 }
@@ -63,20 +90,15 @@ const deviceComponents: Record<PuzzleId, ComponentType<DeviceProps>> = {
   puzzle_power_route: PowerRouteDevice,
   puzzle_carrier_sync: CarrierSyncDevice,
   puzzle_maintenance_lock: MaintenanceLockDevice,
-  puzzle_log_pairing: LogPatchDevice,
-  puzzle_signal_route: SignalTraceDevice,
+  puzzle_signal_investigation: SignalInvestigationDevice,
   puzzle_packet_repair: PacketRailDevice,
-  puzzle_temporal_anomaly: EventScannerDevice,
   puzzle_voiceprint_calibration: VoiceprintDevice,
-  puzzle_causal_script: ScriptRailDevice,
   puzzle_transmission_window: TransmissionPatchDevice,
 };
 
 const closeupImages: Partial<Record<PuzzleId, string>> = {
-  puzzle_power_route:
-    'assets/images/close/gfx-close-005__all-off__preview-flat.webp',
   puzzle_maintenance_lock:
-    'assets/images/close/gfx-close-007__locked__preview-flat.webp',
+    'assets/images/close/gfx-close-007__symbol-reel__preview-flat.webp',
   puzzle_voiceprint_calibration:
     'assets/images/close/gfx-close-009__closed__preview-flat.webp',
 };
@@ -86,19 +108,22 @@ function DeviceFrame({
   failures,
   embedded,
   onClose,
+  diagnosticAvailable,
+  onActivity,
   children,
 }: {
   puzzleId: PuzzleId;
   failures: number;
   embedded: boolean;
   onClose: () => void;
+  diagnosticAvailable: boolean;
+  onActivity: () => void;
   children: ReactNode;
 }) {
   const copy = PUZZLE_DEVICE_COPY[puzzleId];
   const titleId = `${puzzleId}-title`;
   const closeupImage = closeupImages[puzzleId];
   const errorCode: Partial<Record<PuzzleId, string>> = {
-    puzzle_power_route: 'PROTECTION / TRIPPED',
     puzzle_maintenance_lock: 'LOCK / JAMMED',
     puzzle_packet_repair: 'CONTINUITY / BROKEN',
   };
@@ -114,7 +139,10 @@ function DeviceFrame({
       aria-modal={embedded ? undefined : true}
       aria-labelledby={titleId}
       data-puzzle-id={puzzleId}
+      data-diagnostic-available={diagnosticAvailable || undefined}
       style={closeupStyle}
+      onPointerDownCapture={onActivity}
+      onKeyDownCapture={onActivity}
     >
       {!embedded && (
         <button
@@ -131,115 +159,188 @@ function DeviceFrame({
         <h2 id={titleId}>{copy.title}</h2>
       </header>
       <div className="device-workarea">{children}</div>
-      <p
-        className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
-        aria-live="assertive"
-      >
-        {failures > 0
-          ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
-          : 'STATUS / STANDBY'}
-      </p>
+      {puzzleId !== 'puzzle_power_route' && (
+        <p
+          className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
+          aria-live="assertive"
+        >
+          {failures > 0
+            ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
+            : 'STATUS / STANDBY'}
+        </p>
+      )}
+      {diagnosticAvailable && (
+        <p className="device-diagnostic" role="status">
+          DIAGNOSTIC AVAILABLE / SYSTEMのヒントを確認できます
+        </p>
+      )}
     </section>
   );
 }
 
-function PowerRouteDevice({ failures, submit }: DeviceProps) {
-  const [isolated, setIsolated] = useState<string | null>(null);
-  const [sequence, setSequence] = useState<string[]>([]);
-  useAutoAnswer(
-    isolated && sequence.length === 3 ? [isolated, ...sequence] : null,
-    submit,
+function PowerRouteDevice({ submit }: DeviceProps) {
+  type CircuitId = 'terminal' | 'intercom' | 'buffer' | 'door';
+  const startupOrder: CircuitId[] = ['terminal', 'intercom', 'buffer'];
+  const [activeCircuits, setActiveCircuits] = useState<CircuitId[]>(['door']);
+  const [rejectedCircuit, setRejectedCircuit] = useState<CircuitId | null>(
+    null,
   );
+  const [isComplete, setIsComplete] = useState(false);
+  const rejectionTimerRef = useRef<number | null>(null);
+  const completionTimerRef = useRef<number | null>(null);
   const lines = [
-    ['door', 'DOOR', '4 UNIT', 'SHORT'],
-    ['terminal', 'TERMINAL', '2 UNIT', 'STANDBY'],
-    ['intercom', 'INTERCOM', '1 UNIT', 'STANDBY'],
-    ['buffer', 'ECHO BUFFER', '3 UNIT', 'STANDBY'],
+    ['terminal', 'TERMINAL', 489],
+    ['intercom', 'INTERCOM', 665],
+    ['buffer', 'ECHO BUFFER', 842],
+    ['door', 'DOOR', 1021],
   ] as const;
-  const loadUsed = sequence.reduce((total, id) => {
-    const line = lines.find(([lineId]) => lineId === id);
-    return total + Number(line?.[2].split(' ')[0] ?? 0);
-  }, 0);
+  const startedCount = startupOrder.filter((id) =>
+    activeCircuits.includes(id),
+  ).length;
+
+  useEffect(() => {
+    return () => {
+      if (rejectionTimerRef.current !== null)
+        window.clearTimeout(rejectionTimerRef.current);
+      if (completionTimerRef.current !== null)
+        window.clearTimeout(completionTimerRef.current);
+    };
+  }, []);
+
+  function rejectCircuit(id: CircuitId, answer: string[]) {
+    if (rejectionTimerRef.current !== null)
+      window.clearTimeout(rejectionTimerRef.current);
+    setRejectedCircuit(id);
+    submit(answer);
+    rejectionTimerRef.current = window.setTimeout(
+      () => setRejectedCircuit(null),
+      520,
+    );
+  }
+
+  function toggleCircuit(id: CircuitId) {
+    if (isComplete) return;
+    if (id !== 'door' && activeCircuits.includes('door')) {
+      rejectCircuit(id, ['short-circuit', id]);
+      return;
+    }
+    setRejectedCircuit(null);
+
+    if (id === 'door') {
+      setActiveCircuits((current) =>
+        current.includes('door')
+          ? current.filter((circuit) => circuit !== 'door')
+          : [...current, 'door'],
+      );
+      return;
+    }
+
+    if (activeCircuits.includes(id)) {
+      const selectedIndex = startupOrder.indexOf(id);
+      setActiveCircuits((current) =>
+        current.filter(
+          (circuit) =>
+            circuit === 'door' || startupOrder.indexOf(circuit) < selectedIndex,
+        ),
+      );
+      return;
+    }
+
+    const expectedCircuit = startupOrder[startedCount];
+    if (id !== expectedCircuit) {
+      rejectCircuit(id, ['control-signal-missing', id]);
+      return;
+    }
+
+    const nextCircuits = [...activeCircuits, id];
+    setActiveCircuits(nextCircuits);
+    if (startedCount === startupOrder.length - 1) {
+      setIsComplete(true);
+      const reduced = document.documentElement.dataset.reducedMotion === 'true';
+      completionTimerRef.current = window.setTimeout(
+        () => submit(startupOrder),
+        reduced ? 60 : 420,
+      );
+    }
+  }
+
+  const status = rejectedCircuit
+    ? activeCircuits.includes('door')
+      ? 'PROTECTION TRIPPED'
+      : 'CONTROL SIGNAL MISSING'
+    : activeCircuits.includes('door')
+      ? 'PROTECTION TRIPPED'
+      : isComplete
+        ? 'ONLINE'
+        : startedCount > 0
+          ? `BOOT SEQUENCE / ${startedCount} / 3`
+          : 'BOOT SEQUENCE READY';
+  const panelStateImage =
+    startedCount >= 2
+      ? 'gfx-close-005__intercom-powered__preview-flat.webp'
+      : startedCount >= 1
+        ? 'gfx-close-005__terminal-powered__preview-flat.webp'
+        : 'gfx-close-005__empty-panel__preview-flat.webp';
 
   return (
-    <div className={`power-device${failures > 0 ? ' is-tripped' : ''}`}>
-      <div
-        className="power-meter"
-        aria-label={`電源容量7 UNIT、使用中${loadUsed} UNIT`}
-      >
-        <span>BATTERY / 7 UNIT</span>
-        <div className="battery-cells" aria-hidden="true">
-          {Array.from({ length: 7 }, (_, index) => (
-            <i className={index < loadUsed ? 'is-used' : ''} key={index} />
-          ))}
+    <div
+      className={`power-device${rejectedCircuit ? ' is-rejecting' : ''}${isComplete ? ' is-online' : ''}`}
+    >
+      <div className="power-stage">
+        <img
+          className="power-panel-base"
+          src={`${import.meta.env.BASE_URL}assets/images/close/${panelStateImage}`}
+          alt=""
+          aria-hidden="true"
+        />
+        <p className="power-readout">AUXILIARY POWER BUS</p>
+        <p className="power-protection" role="status" aria-live="assertive">
+          {status}
+        </p>
+        <div className="breaker-bank" aria-label="非常電源の四回路">
+          {lines.map(([id, label, bayX]) => {
+            const active = activeCircuits.includes(id);
+            const rejected = rejectedCircuit === id;
+            return (
+              <button
+                type="button"
+                className={`physical-breaker${active ? ' is-on' : ''}${id === 'door' ? ' is-short' : ''}${rejected ? ' is-rejected' : ''}`}
+                style={{ '--bay-x': bayX } as CSSProperties}
+                aria-pressed={active}
+                aria-label={`${label}回路、${active ? 'ON' : 'OFF'}`}
+                disabled={isComplete}
+                key={id}
+                onClick={() => toggleCircuit(id)}
+              >
+                <span className="circuit-name">{label}</span>
+                <img
+                  className="breaker-lever-sprite"
+                  src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-005__lever-sprite.webp`}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span className="circuit-status-label" aria-hidden="true">
+                  STATUS
+                </span>
+                <span className="breaker-sockets" aria-hidden="true">
+                  <span className="breaker-socket">
+                    <img
+                      src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-005__socket-sprite.webp`}
+                      alt=""
+                    />
+                    {(active || rejected) && <i />}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <strong>LOAD {loadUsed} / 7</strong>
-      </div>
-      <div className="power-bus" aria-hidden="true">
-        <span>DC BUS</span>
-        <i />
-      </div>
-      <div className="cable-bank" aria-label="電源配線と切り離しコネクタ">
-        {lines.map(([id, label, load, status]) => (
-          <button
-            type="button"
-            className={`power-cable${isolated === id ? ' is-unplugged' : ''}${sequence.includes(id) ? ' is-energized' : ''}${id === 'door' ? ' is-short' : ''}`}
-            aria-pressed={isolated === id}
-            aria-label={`${label}ケーブルを切り離す`}
-            key={id}
-            onClick={() => setIsolated((value) => (value === id ? null : id))}
-          >
-            <b className="power-branch" aria-hidden="true" />
-            <i className="cable-plug" aria-hidden="true" />
-            {id === 'door' && isolated !== id && (
-              <em className="short-spark" aria-hidden="true">
-                ⚡
-              </em>
-            )}
-            <span>{label}</span>
-            <small>
-              {load} / {status}
-            </small>
-          </button>
-        ))}
-      </div>
-      <div
-        className="control-flow"
-        aria-label="制御信号は端末から通話器、ECHO BUFFERへ流れる"
-      >
-        <span>TERMINAL</span>
-        <i aria-hidden="true">▶</i>
-        <span>INTERCOM</span>
-        <i aria-hidden="true">▶</i>
-        <span>ECHO BUFFER</span>
-      </div>
-      <div className="breaker-bank" aria-label="起動ブレーカー">
-        {lines.slice(1).map(([id, label]) => {
-          const order = sequence.indexOf(id) + 1;
-          return (
-            <button
-              type="button"
-              className={`physical-breaker${order ? ' is-on' : ''}`}
-              aria-pressed={order > 0}
-              aria-label={`${label}ブレーカー`}
-              key={id}
-              onClick={() => {
-                if (order || sequence.length >= 3) return;
-                setSequence((current) => [...current, id]);
-              }}
-            >
-              <i aria-hidden="true" />
-              <span>{label}</span>
-              <output>{order ? 'ON' : 'OFF'}</output>
-            </button>
-          );
-        })}
       </div>
     </div>
   );
 }
 
-function CarrierSyncDevice({ submit }: DeviceProps) {
+function CarrierSyncDevice({ failures, submit }: DeviceProps) {
   const [positions, setPositions] = useState([-2, 0, 1]);
   useAutoAnswer(
     positions.every((position) => position === 0)
@@ -248,7 +349,7 @@ function CarrierSyncDevice({ submit }: DeviceProps) {
     submit,
   );
   return (
-    <div className="carrier-device">
+    <div className={`carrier-device${failures > 0 ? ' is-error' : ''}`}>
       <div className="carrier-readout">
         <span>REFERENCE</span>
         <strong>SYNC POINT / 0</strong>
@@ -363,7 +464,6 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
     <div className="locker-device">
       <div className={`lock-plate${failures > 0 ? ' is-jammed' : ''}`}>
         <span>LAST INSPECTION</span>
-        <strong>4 STEP</strong>
         <div className="symbol-dials" aria-label="四連記号錠">
           {dials.map((value, index) => {
             const symbolIndex = symbols.findIndex(([id]) => id === value);
@@ -405,15 +505,19 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
                   );
                 }}
               >
-                <small>
-                  {
-                    symbols[
-                      (symbolIndex - 1 + symbols.length) % symbols.length
-                    ]![1]
-                  }
-                </small>
-                <strong>{symbol}</strong>
-                <small>{symbols[(symbolIndex + 1) % symbols.length]![1]}</small>
+                <span className="symbol-reel-window" aria-hidden="true">
+                  <small>
+                    {
+                      symbols[
+                        (symbolIndex - 1 + symbols.length) % symbols.length
+                      ]![1]
+                    }
+                  </small>
+                  <strong key={`${index}-${value}`}>{symbol}</strong>
+                  <small>
+                    {symbols[(symbolIndex + 1) % symbols.length]![1]}
+                  </small>
+                </span>
               </button>
             );
           })}
@@ -421,10 +525,10 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
         <button
           type="button"
           className="lock-handle"
+          aria-label="LOCK HANDLE"
           onClick={() => submit(dials)}
         >
           <i aria-hidden="true" />
-          <span>LOCK HANDLE</span>
         </button>
       </div>
     </div>
@@ -440,146 +544,155 @@ const signatures = {
   's-c': '長・短・短',
 } as const;
 
-function LogPatchDevice({ submit }: DeviceProps) {
-  const [activeReceive, setActiveReceive] = useState<number | null>(null);
-  const [patches, setPatches] = useState<(string | null)[]>([null, null, null]);
-  useAutoAnswer(
-    patches.every(Boolean) ? patches.filter(isString) : null,
-    submit,
-  );
+function WaveSignature({
+  value,
+}: {
+  value: (typeof signatures)[keyof typeof signatures];
+}) {
   return (
-    <div className="patch-device">
-      <div className="log-columns">
-        <div className="jack-column">
-          <h3>RECEIVE</h3>
-          {(['r1', 'r2', 'r3'] as const).map((id, index) => (
-            <button
-              type="button"
-              className={activeReceive === index ? 'jack is-armed' : 'jack'}
-              aria-pressed={activeReceive === index}
-              aria-label={`${id.toUpperCase()}受信端子`}
-              key={id}
-              onClick={() => setActiveReceive(index)}
-            >
-              <i aria-hidden="true" />
-              <span>{id.toUpperCase()}</span>
-              <small>{signatures[id]}</small>
-            </button>
-          ))}
-        </div>
-        <div className="patch-cords" aria-label="接続状態">
-          {patches.map((source, index) => (
-            <span
-              key={index}
-            >{`R${index + 1} ─ ${source?.toUpperCase() ?? 'OPEN'}`}</span>
-          ))}
-        </div>
-        <div className="jack-column">
-          <h3>SOURCE</h3>
-          {(['s-a', 's-b', 's-c'] as const).map((id) => (
-            <button
-              type="button"
-              className="jack"
-              aria-label={`${id.toUpperCase()}送信端子`}
-              key={id}
-              onClick={() => {
-                if (activeReceive === null) return;
-                setPatches((current) =>
-                  current.map((value, index) =>
-                    index === activeReceive ? id : value,
-                  ),
-                );
-                setActiveReceive(null);
-              }}
-            >
-              <i aria-hidden="true" />
-              <span>{id.toUpperCase()}</span>
-              <small>{signatures[id]}</small>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+    <small className="wave-signature" aria-label={`波形 ${value}`}>
+      {value.split('・').map((pulse, index) => (
+        <i
+          aria-hidden="true"
+          className={pulse === '長' ? 'is-long' : 'is-short'}
+          key={`${pulse}-${index}`}
+        />
+      ))}
+    </small>
   );
 }
 
-function SignalTraceDevice({ submit }: DeviceProps) {
-  const [trace, setTrace] = useState<(string | null)[]>([null, null, null]);
-  useAutoAnswer(trace.every(Boolean) ? trace.filter(isString) : null, submit);
-  const choose = (index: number, value: string) =>
-    setTrace((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? value : item)),
+function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
+  const [activeReceive, setActiveReceive] = useState<number | null>(null);
+  const [patches, setPatches] = useState<(string | null)[]>([null, null, null]);
+  const [trace, setTrace] = useState<string[]>([]);
+  const pairingComplete = patches.every((source, index) => {
+    const receiveId = `r${index + 1}` as keyof typeof signatures;
+    return (
+      source &&
+      signatures[receiveId] === signatures[source as keyof typeof signatures]
     );
+  });
+  useAutoAnswer(
+    pairingComplete && trace.length === 3
+      ? [...patches.filter(isString), ...trace]
+      : null,
+    submit,
+  );
+  const traceSegments = [
+    ['signal', '通信実線'],
+    ['power', '電力破線'],
+    ['ring-relay', 'J-2 丸端子'],
+    ['bar-relay', 'J-3 線端子'],
+    ['echo-buffer', 'ECHO BUFFER RETURN'],
+    ['adjacent-room', 'E-02'],
+  ] as const;
+  const allowedAtStep = [
+    ['signal', 'power'],
+    ['ring-relay', 'bar-relay'],
+    ['echo-buffer', 'adjacent-room'],
+  ] as const;
   return (
-    <div className="trace-device">
-      <FacilityMap conduitLayer />
-      <div className="trace-overlay" aria-label="配線追跡操作">
-        <div>
-          <span>INTERCOM</span>
-          <button
-            type="button"
-            aria-pressed={trace[0] === 'signal'}
-            onClick={() => choose(0, 'signal')}
-          >
-            通信実線
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[0] === 'power'}
-            onClick={() => choose(0, 'power')}
-          >
-            電力破線
-          </button>
+    <div
+      className={`signal-investigation-device${failures > 0 ? ' is-trace-error' : ''}`}
+    >
+      <div className="patch-device">
+        <div className="log-columns">
+          <div className="jack-column">
+            <h3>RECEIVE</h3>
+            {(['r1', 'r2', 'r3'] as const).map((id, index) => (
+              <button
+                type="button"
+                className={activeReceive === index ? 'jack is-armed' : 'jack'}
+                aria-pressed={activeReceive === index}
+                aria-label={`${id.toUpperCase()}受信端子`}
+                key={id}
+                onClick={() => setActiveReceive(index)}
+              >
+                <i aria-hidden="true" />
+                <span>{id.toUpperCase()}</span>
+                <WaveSignature value={signatures[id]} />
+              </button>
+            ))}
+          </div>
+          <div className="patch-cords" aria-label="接続状態">
+            {patches.map((source, index) => (
+              <span
+                key={index}
+              >{`R${index + 1} ─ ${source?.toUpperCase() ?? 'OPEN'}`}</span>
+            ))}
+          </div>
+          <div className="jack-column">
+            <h3>SOURCE</h3>
+            {(['s-a', 's-b', 's-c'] as const).map((id) => (
+              <button
+                type="button"
+                className="jack"
+                aria-label={`${id.toUpperCase()}送信端子`}
+                key={id}
+                onClick={() => {
+                  if (activeReceive === null) return;
+                  setPatches((current) =>
+                    current.map((value, index) =>
+                      index === activeReceive ? id : value,
+                    ),
+                  );
+                  setActiveReceive(null);
+                }}
+              >
+                <i aria-hidden="true" />
+                <span>{id.toUpperCase()}</span>
+                <WaveSignature value={signatures[id]} />
+              </button>
+            ))}
+          </div>
         </div>
-        <div>
-          <span>JUNCTION</span>
-          <button
-            type="button"
-            aria-pressed={trace[1] === 'ring-relay'}
-            onClick={() => choose(1, 'ring-relay')}
+        {pairingComplete && (
+          <div
+            className="offset-reveal"
+            role="status"
+            aria-label="3組すべて送信は受信の20分後"
           >
-            J-2 丸端子
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[1] === 'bar-relay'}
-            onClick={() => choose(1, 'bar-relay')}
-          >
-            J-3 線端子
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[1] === 'node-relay'}
-            onClick={() => choose(1, 'node-relay')}
-          >
-            J-4 ひし形端子
-          </button>
-        </div>
-        <div>
-          <span>END</span>
-          <button
-            type="button"
-            aria-pressed={trace[2] === 'echo-buffer'}
-            onClick={() => choose(2, 'echo-buffer')}
-          >
-            ECHO BUFFER RETURN
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[2] === 'control-room'}
-            onClick={() => choose(2, 'control-room')}
-          >
-            CONTROL ROOM
-          </button>
-          <button
-            type="button"
-            aria-pressed={trace[2] === 'adjacent-room'}
-            onClick={() => choose(2, 'adjacent-room')}
-          >
-            E-02
-          </button>
-        </div>
+            <span>02:11:04 ─ 02:31:04</span>
+            <span>02:14:32 ─ 02:34:32</span>
+            <span>02:17:18 ─ 02:37:18</span>
+            <strong>+20:00 / OFFSET CONFIRMED</strong>
+          </div>
+        )}
       </div>
+      {pairingComplete && (
+        <div className="trace-device">
+          <FacilityMap conduitLayer revealRoute={false} />
+          <div className="trace-path" aria-label="INTERCOMから配線を順に追う">
+            <span>INTERCOM</span>
+            {traceSegments.map(([id, label]) => {
+              const step = trace.length;
+              const enabled =
+                step < allowedAtStep.length &&
+                allowedAtStep[step]!.includes(id as never);
+              const selected = trace.includes(id);
+              return (
+                <button
+                  type="button"
+                  key={id}
+                  disabled={!enabled || selected}
+                  aria-pressed={selected}
+                  onClick={() => setTrace((current) => [...current, id])}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className="device-eject"
+              onClick={() => setTrace([])}
+            >
+              TRACE RESET
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -595,7 +708,7 @@ function PacketRailDevice({ submit }: DeviceProps) {
   const [rail, setRail] = useState<(string | null)[]>([null, null, null]);
   const [selected, setSelected] = useState<string | null>(null);
   const complete = rail.every(isString);
-  useAutoAnswer(complete ? ['c', ...rail.filter(isString)] : null, submit);
+  const submittedSignatureRef = useRef('');
 
   const placedFragments = [
     fragments.find(({ id }) => id === 'c')!,
@@ -605,6 +718,18 @@ function PacketRailDevice({ submit }: DeviceProps) {
     const next = placedFragments[index + 1];
     return Boolean(fragment && next && fragment.right === next.left);
   });
+  const answerSignature = complete
+    ? ['c', ...rail.filter(isString)].join('|')
+    : '';
+  const jointSignature = joints.map(Number).join('');
+  const restored = complete && jointSignature === '111';
+  useEffect(() => {
+    if (!complete || restored) return;
+    const answer = answerSignature.split('|');
+    if (submittedSignatureRef.current === answerSignature) return;
+    submittedSignatureRef.current = answerSignature;
+    submit(answer);
+  }, [answerSignature, complete, restored, submit]);
 
   function placeFragment(slot: number, fragmentId: string) {
     setRail((current) =>
@@ -618,110 +743,138 @@ function PacketRailDevice({ submit }: DeviceProps) {
 
   return (
     <div className="frame-device">
-      <div className="frame-rail" aria-label="PACKET断片レール">
-        {[0, 1, 2, 3].map((slot) => {
-          const fixed = slot === 0;
-          const fragment = fixed
-            ? fragments.find(({ id }) => id === 'c')
-            : fragments.find(({ id }) => id === rail[slot - 1]);
-          return (
-            <div
-              className={`data-fragment-slot${fixed ? ' is-fixed' : ''}`}
-              key={slot}
-            >
-              <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
-              <button
-                type="button"
-                data-frame-slot={fixed ? undefined : slot - 1}
-                disabled={fixed}
-                aria-label={
-                  fixed
-                    ? '固定されたHEADER断片C'
-                    : fragment
-                      ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
-                      : `レール${slot + 1}へ${selected ? `断片${selected.toUpperCase()}を` : ''}置く`
-                }
-                onClick={() => {
-                  if (fixed) return;
-                  if (selected) placeFragment(slot - 1, selected);
-                  else if (fragment) {
+      {!restored && (
+        <>
+          <div className="frame-rail" aria-label="PACKET断片レール">
+            {[0, 1, 2, 3].map((slot) => {
+              const fixed = slot === 0;
+              const fragment = fixed
+                ? fragments.find(({ id }) => id === 'c')
+                : fragments.find(({ id }) => id === rail[slot - 1]);
+              return (
+                <div
+                  className={`data-fragment-slot${fixed ? ' is-fixed' : ''}`}
+                  key={slot}
+                >
+                  <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
+                  <button
+                    type="button"
+                    data-frame-slot={fixed ? undefined : slot - 1}
+                    disabled={fixed}
+                    aria-label={
+                      fixed
+                        ? '固定されたHEADER断片C'
+                        : fragment
+                          ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
+                          : `レール${slot + 1}へ${selected ? `断片${selected.toUpperCase()}を` : ''}置く`
+                    }
+                    onClick={() => {
+                      if (fixed) return;
+                      if (selected) placeFragment(slot - 1, selected);
+                      else if (fragment) {
+                        setSelected(fragment.id);
+                        setRail((current) =>
+                          current.map((value, index) =>
+                            index === slot - 1 ? null : value,
+                          ),
+                        );
+                      }
+                    }}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const fragmentId =
+                        event.dataTransfer.getData('text/plain');
+                      if (fragmentId) placeFragment(slot - 1, fragmentId);
+                    }}
+                  >
+                    {fragment ? (
+                      <DataFragmentGraphic fragment={fragment} />
+                    ) : (
+                      <span className="empty-fragment" aria-hidden="true" />
+                    )}
+                  </button>
+                  {slot < 3 && (
+                    <i
+                      className={`fragment-joint${joints[slot] ? ' is-connected' : complete ? ' is-broken' : ''}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="fragment-tray" aria-label="壊れたデータ片">
+            {fragments
+              .filter(({ id }) => id !== 'c')
+              .map((fragment) => (
+                <button
+                  type="button"
+                  key={fragment.id}
+                  draggable
+                  disabled={rail.includes(fragment.id)}
+                  aria-pressed={selected === fragment.id}
+                  aria-label={`断片${fragment.label}を持つ`}
+                  onClick={() => setSelected(fragment.id)}
+                  onDragStart={(event) => {
                     setSelected(fragment.id);
-                    setRail((current) =>
-                      current.map((value, index) =>
-                        index === slot - 1 ? null : value,
-                      ),
-                    );
-                  }
-                }}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const fragmentId = event.dataTransfer.getData('text/plain');
-                  if (fragmentId) placeFragment(slot - 1, fragmentId);
-                }}
-              >
-                {fragment ? (
+                    event.dataTransfer.setData('text/plain', fragment.id);
+                  }}
+                >
                   <DataFragmentGraphic fragment={fragment} />
-                ) : (
-                  <span className="empty-fragment" aria-hidden="true" />
-                )}
-              </button>
-              {slot < 3 && (
-                <i
-                  className={`fragment-joint${joints[slot] ? ' is-connected' : complete ? ' is-broken' : ''}`}
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="fragment-tray" aria-label="壊れたデータ片">
-        {fragments
-          .filter(({ id }) => id !== 'c')
-          .map((fragment) => (
+                </button>
+              ))}
             <button
               type="button"
-              key={fragment.id}
-              draggable
-              disabled={rail.includes(fragment.id)}
-              aria-pressed={selected === fragment.id}
-              aria-label={`断片${fragment.label}を持つ`}
-              onClick={() => setSelected(fragment.id)}
-              onDragStart={(event) => {
-                setSelected(fragment.id);
-                event.dataTransfer.setData('text/plain', fragment.id);
+              className="device-eject"
+              onClick={() => {
+                setRail([null, null, null]);
+                setSelected(null);
               }}
             >
-              <DataFragmentGraphic fragment={fragment} />
+              EJECT / 取り出す
             </button>
-          ))}
-        <button
-          type="button"
-          className="device-eject"
-          onClick={() => {
-            setRail([null, null, null]);
-            setSelected(null);
-          }}
+          </div>
+          <div className="frame-continuity" aria-live="polite">
+            {joints.map((connected, index) => (
+              <span
+                className={
+                  connected ? 'is-connected' : complete ? 'is-broken' : ''
+                }
+                key={index}
+              >
+                {connected ? '●' : complete ? '×' : '○'}
+              </span>
+            ))}
+            <small>
+              {complete && joints.some((joint) => !joint)
+                ? 'SIGNAL BREAK'
+                : 'CONTINUITY'}
+            </small>
+          </div>
+        </>
+      )}
+      {restored && (
+        <div
+          className="packet-restored-sequence"
+          role="status"
+          aria-live="assertive"
         >
-          EJECT / 取り出す
-        </button>
-      </div>
-      <div className="frame-continuity" aria-live="polite">
-        {joints.map((connected, index) => (
-          <span
-            className={connected ? 'is-connected' : complete ? 'is-broken' : ''}
-            key={index}
+          <strong>FRAME RESTORED</strong>
+          {packetTexts.map((text, index) => (
+            <span className={index === 3 ? 'is-future-packet' : ''} key={text}>
+              PACKET 0{index + 1} / {text}
+            </span>
+          ))}
+          <button
+            type="button"
+            className="packet-confirm"
+            onClick={() => submit(['c', ...rail.filter(isString)])}
           >
-            {connected ? '●' : complete ? '×' : '○'}
-          </span>
-        ))}
-        <small>
-          {complete && joints.some((joint) => !joint)
-            ? 'SIGNAL BREAK'
-            : 'CONTINUITY'}
-        </small>
-      </div>
+            ACCEPT FRAME / 復元内容を確認する
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -748,73 +901,29 @@ function DataFragmentGraphic({ fragment }: { fragment: FragmentDefinition }) {
   );
 }
 
-function EventScannerDevice({ submit }: DeviceProps) {
-  const [packet, setPacket] = useState<string | null>(null);
-  const [basis, setBasis] = useState<string | null>(null);
-  useAutoAnswer(packet && basis ? [packet, basis] : null, submit);
-  return (
-    <div className="scanner-device">
-      <div className="packet-cassettes" aria-label="PACKETカセット">
-        {packetTexts.map((text, index) => {
-          const id = `packet-0${index + 1}`;
-          return (
-            <button
-              type="button"
-              key={id}
-              aria-pressed={packet === id}
-              onClick={() => setPacket(id)}
-            >
-              <span>PACKET 0{index + 1}</span>
-              <small>{text}</small>
-            </button>
-          );
-        })}
-      </div>
-      <div className="scanner-bed">
-        <span>EVENT COMPARATOR</span>
-        <strong>{packet?.toUpperCase() ?? 'NO CASSETTE'}</strong>
-        <i aria-hidden="true" />
-      </div>
-      <div className="event-probes" aria-label="照合する出来事">
-        <button
-          type="button"
-          aria-pressed={basis === 'unseen-event'}
-          onClick={() => setBasis('unseen-event')}
-        >
-          未発生の操作
-        </button>
-        <button
-          type="button"
-          aria-pressed={basis === 'different-room'}
-          onClick={() => setBasis('different-room')}
-        >
-          別室の視点
-        </button>
-        <button
-          type="button"
-          aria-pressed={basis === 'clock-broken'}
-          onClick={() => setBasis('clock-broken')}
-        >
-          停止した時計
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function VoiceprintDevice({ submit }: DeviceProps) {
+function VoiceprintDevice({ failures, submit }: DeviceProps) {
   const [spacing, setSpacing] = useState(0);
   const [inverted, setInverted] = useState(false);
   const [phase, setPhase] = useState(0);
-  useAutoAnswer(
-    spacing === 1 && inverted && phase === -2
-      ? ['compress-half', 'invert', 'left-2']
-      : null,
-    submit,
-  );
+  const [matchProgress, setMatchProgress] = useState<number | null>(null);
+  const matchStartedRef = useRef(false);
+  const calibrated = spacing === 1 && inverted && phase === -2;
+  useEffect(() => {
+    if (!calibrated || matchStartedRef.current) return;
+    matchStartedRef.current = true;
+    const steps = [24, 51, 76, 93, 99.8, 100];
+    const reduced = document.documentElement.dataset.reducedMotion === 'true';
+    const timers = steps.map((value, index) =>
+      window.setTimeout(
+        () => setMatchProgress(value),
+        index * (reduced ? 60 : 420),
+      ),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [calibrated, submit]);
   const spacingLabels = ['1×', '1/2×', '2×'];
   return (
-    <div className="voiceprint-device">
+    <div className={`voiceprint-device${failures > 0 ? ' is-error' : ''}`}>
       <div className="voiceprint-screen" aria-label="声紋特徴量比較">
         <span>STAFF RECORD</span>
         <WaveBars values={[2, 4, 2, 2, 4, 2]} />
@@ -872,6 +981,40 @@ function VoiceprintDevice({ submit }: DeviceProps) {
           <output>{signed(phase)}</output>
         </label>
       </div>
+      {matchProgress !== null && (
+        <div
+          className={`voice-match-sequence${matchProgress === 100 ? ' is-match' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span>VOICE MATCH</span>
+          <strong>
+            {matchProgress.toFixed(matchProgress >= 99.8 ? 1 : 0)}%
+          </strong>
+          {matchProgress >= 99.8 && (
+            <figure>
+              <img
+                src={`${import.meta.env.BASE_URL}assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp`}
+                alt="職員カードと一致したE-01担当者の写真"
+              />
+              <figcaption>
+                {matchProgress === 100
+                  ? '100.0% / MATCH / E-01 OCCUPANT'
+                  : 'IDENTITY QUERY...'}
+              </figcaption>
+            </figure>
+          )}
+          {matchProgress === 100 && (
+            <button
+              type="button"
+              className="voice-match-confirm"
+              onClick={() => submit(['compress-half', 'invert', 'left-2'])}
+            >
+              MATCH CONFIRM / 本人一致を確認する
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -898,54 +1041,7 @@ function WaveBars({
   );
 }
 
-function ScriptRailDevice({ submit }: DeviceProps) {
-  const [rail, setRail] = useState<string[]>([]);
-  useAutoAnswer(rail.length === 4 ? rail : null, submit);
-  return (
-    <div className="script-device">
-      <div className="response-timeline" aria-label="過去側の応答記録">
-        <span>応答あり</span>
-        <span>電源調査</span>
-        <span>LOG OPEN</span>
-        <span>最終操作前</span>
-      </div>
-      <ol className="script-rail">
-        {[0, 1, 2, 3].map((slot) => (
-          <li key={slot}>
-            <small>TX {slot + 1}</small>
-            {rail[slot]
-              ? packetTexts[Number(rail[slot].slice(-2)) - 1]
-              : '――――'}
-          </li>
-        ))}
-      </ol>
-      <div className="script-strips">
-        {packetTexts.map((text, index) => {
-          const id = `packet-0${index + 1}`;
-          return (
-            <button
-              type="button"
-              key={id}
-              disabled={rail.includes(id)}
-              onClick={() => setRail((current) => [...current, id])}
-            >
-              <span>{text}</span>
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          className="device-eject"
-          onClick={() => setRail([])}
-        >
-          REWIND / 巻き戻す
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function TransmissionPatchDevice({ submit }: DeviceProps) {
+function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
   const [armedPacket, setArmedPacket] = useState<string | null>(null);
   const [windows, setWindows] = useState<(string | null)[]>([
     null,
@@ -957,35 +1053,50 @@ function TransmissionPatchDevice({ submit }: DeviceProps) {
   const routeOptions = ['control', 'echo-return', 'adjacent'] as const;
   const [delayIndex, setDelayIndex] = useState(0);
   const [routeIndex, setRouteIndex] = useState(0);
+  const packetReady = windows.every(
+    (packet, index) => packet === `packet-0${index + 1}`,
+  );
+  const delayReady = delayOptions[delayIndex] === 'minus-20';
+  const routeReady = routeOptions[routeIndex] === 'echo-return';
+  const showValidation = failures > 0;
   return (
     <div className="transmission-device">
-      <div className="transmission-windows" aria-label="四つの受信窓">
-        {[
-          '返事をする前',
-          '電源を調べる前',
-          'LOGを開いた直後',
-          '最後の操作の前',
-        ].map((label, index) => (
-          <button
-            type="button"
-            key={label}
-            aria-label={`W${index + 1} ${label}`}
-            onClick={() => {
-              if (!armedPacket) return;
-              setWindows((current) =>
-                current.map((value, itemIndex) =>
-                  itemIndex === index ? armedPacket : value,
-                ),
-              );
-              setArmedPacket(null);
-            }}
-          >
-            <small>
-              W{index + 1} / {label}
-            </small>
-            <strong>{windows[index]?.toUpperCase() ?? 'OPEN'}</strong>
-          </button>
-        ))}
+      <div
+        className={`transmission-packet-region${showValidation && !packetReady ? ' is-region-error' : ''}`}
+      >
+        <div className="transmission-windows" aria-label="四つの受信窓">
+          {[
+            '返事をする前',
+            '電源を調べる前',
+            'LOGを開いた直後',
+            '最後の操作の前',
+          ].map((label, index) => (
+            <button
+              type="button"
+              key={label}
+              aria-label={`W${index + 1} ${label}`}
+              onClick={() => {
+                if (!armedPacket) return;
+                setWindows((current) =>
+                  current.map((value, itemIndex) =>
+                    itemIndex === index ? armedPacket : value,
+                  ),
+                );
+                setArmedPacket(null);
+              }}
+            >
+              <small>
+                W{index + 1} / {label}
+              </small>
+              <strong>{windows[index]?.toUpperCase() ?? 'OPEN'}</strong>
+            </button>
+          ))}
+        </div>
+        {showValidation && (
+          <p className="transmission-validation" role="status">
+            PACKET MAP / {packetReady ? 'LOCKED' : 'RECHECK'}
+          </p>
+        )}
       </div>
       <div className="packet-plugs">
         {packetTexts.map((text, index) => {
@@ -994,54 +1105,75 @@ function TransmissionPatchDevice({ submit }: DeviceProps) {
             <button
               type="button"
               key={id}
+              aria-label={`送信断片「${text}」`}
               aria-pressed={armedPacket === id}
               onClick={() => setArmedPacket(id)}
             >
-              <span>P{index + 1}</span>
+              <span>TX STRIP</span>
               <small>{text}</small>
             </button>
           );
         })}
       </div>
       <div className="transmission-controls">
-        <button
-          type="button"
-          role="spinbutton"
-          aria-label="送信遅延ダイヤル"
-          aria-valuemin={0}
-          aria-valuemax={delayOptions.length - 1}
-          aria-valuenow={delayIndex}
-          aria-valuetext={['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
-          className="rotary-control"
-          onClick={() =>
-            setDelayIndex((value) => (value + 1) % delayOptions.length)
-          }
+        <div
+          className={`transmission-control-region${showValidation && !delayReady ? ' is-region-error' : ''}`}
         >
-          <i style={{ transform: `rotate(${delayIndex * 105 - 105}deg)` }} />
-          <span>DELAY</span>
-          <output>{['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}</output>
-        </button>
-        <button
-          type="button"
-          role="spinbutton"
-          aria-label="送信終端ダイヤル"
-          aria-valuemin={0}
-          aria-valuemax={routeOptions.length - 1}
-          aria-valuenow={routeIndex}
-          aria-valuetext={
-            ['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]
-          }
-          className="rotary-control"
-          onClick={() =>
-            setRouteIndex((value) => (value + 1) % routeOptions.length)
-          }
+          <button
+            type="button"
+            role="spinbutton"
+            aria-label="送信遅延ダイヤル"
+            aria-valuemin={0}
+            aria-valuemax={delayOptions.length - 1}
+            aria-valuenow={delayIndex}
+            aria-valuetext={['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
+            className="rotary-control"
+            onClick={() =>
+              setDelayIndex((value) => (value + 1) % delayOptions.length)
+            }
+          >
+            <i style={{ transform: `rotate(${delayIndex * 105 - 105}deg)` }} />
+            <span>DELAY</span>
+            <output>
+              {['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
+            </output>
+          </button>
+          {showValidation && (
+            <small className="transmission-validation">
+              DELAY / {delayReady ? 'LOCKED' : 'RECHECK'}
+            </small>
+          )}
+        </div>
+        <div
+          className={`transmission-control-region${showValidation && !routeReady ? ' is-region-error' : ''}`}
         >
-          <i style={{ transform: `rotate(${routeIndex * 105 - 105}deg)` }} />
-          <span>TERMINATION</span>
-          <output>
-            {['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]}
-          </output>
-        </button>
+          <button
+            type="button"
+            role="spinbutton"
+            aria-label="送信終端ダイヤル"
+            aria-valuemin={0}
+            aria-valuemax={routeOptions.length - 1}
+            aria-valuenow={routeIndex}
+            aria-valuetext={
+              ['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]
+            }
+            className="rotary-control"
+            onClick={() =>
+              setRouteIndex((value) => (value + 1) % routeOptions.length)
+            }
+          >
+            <i style={{ transform: `rotate(${routeIndex * 105 - 105}deg)` }} />
+            <span>TERMINATION</span>
+            <output>
+              {['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]}
+            </output>
+          </button>
+          {showValidation && (
+            <small className="transmission-validation">
+              ROUTE / {routeReady ? 'LOCKED' : 'RECHECK'}
+            </small>
+          )}
+        </div>
         <button
           type="button"
           className="test-pulse-lever"

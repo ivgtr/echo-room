@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -105,11 +106,13 @@ type Props = {
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
   onUiClick: () => void;
+  onPuzzleInteraction: (puzzleId: PuzzleId) => void;
   onTextBlip: () => void;
   onEventNarrativeAdvance: () => void;
 };
 
 export function GameScreen(props: Props) {
+  const { onClose, onPuzzleSubmit, onTransmit } = props;
   const powerPhase = props.reservePower
     ? 'reserve'
     : getEmergencyPowerPhase(props.activeElapsedMs);
@@ -131,8 +134,13 @@ export function GameScreen(props: Props) {
   const [inspectionPhase, setInspectionPhase] = useState<
     'idle' | 'approaching' | 'active'
   >('idle');
-  const ending =
-    props.storyStage === 'ending' || props.storyStage === 'completed';
+  const acquisitionVisible =
+    props.acquiredItems.length > 0 && !props.eventNarrative;
+  const endingSequence =
+    props.storyStage === 'ending_transmission' ||
+    props.storyStage === 'ending_replay';
+  const ending = endingSequence || props.storyStage === 'completed';
+  const doorEscape = props.storyStage === 'ending_door';
   const inspectionModalOpen =
     props.selectedHotspotId === 'hotspot_clock' ||
     props.selectedHotspotId === 'hotspot_desk' ||
@@ -144,7 +152,7 @@ export function GameScreen(props: Props) {
   const overlayOpen =
     props.intro ||
     props.powerPuzzle ||
-    props.acquiredItems.length > 0 ||
+    acquisitionVisible ||
     props.inventoryOpen ||
     props.hintOpen ||
     props.systemMenuOpen ||
@@ -157,6 +165,7 @@ export function GameScreen(props: Props) {
     !props.intro && !props.powerPuzzle && !ending;
   const availableHotspots = worldViewAssets[props.locationId].hotspots.filter(
     ({ id }) =>
+      (!doorEscape || id === 'hotspot_door') &&
       (id !== 'hotspot_breaker' ||
         !props.powerRestored ||
         props.storyStage === 'puzzle_maintenance_lock') &&
@@ -218,43 +227,49 @@ export function GameScreen(props: Props) {
     }, 380);
   }
 
-  function finishInspection() {
+  const finishInspection = useCallback(() => {
     inspectionLockedRef.current = false;
     setInspectionPhase('idle');
     setInspectionTargetId(null);
-  }
+  }, []);
 
-  function closeInspection() {
-    props.onClose();
+  const closeInspection = useCallback(() => {
+    onClose();
     finishInspection();
-  }
+  }, [finishInspection, onClose]);
 
-  function handlePuzzleSubmit(puzzleId: PuzzleId, answer: string[]) {
-    props.onPuzzleSubmit(puzzleId, answer);
-    if (isPuzzleAnswerCorrect(puzzleId, answer)) finishInspection();
-  }
+  const handlePuzzleSubmit = useCallback(
+    (puzzleId: PuzzleId, answer: string[]) => {
+      onPuzzleSubmit(puzzleId, answer);
+      if (
+        isPuzzleAnswerCorrect(puzzleId, answer) &&
+        puzzleId !== 'puzzle_transmission_window'
+      )
+        finishInspection();
+    },
+    [finishInspection, onPuzzleSubmit],
+  );
 
-  function handleTransmit() {
-    props.onTransmit();
+  const handleTransmit = useCallback(() => {
+    onTransmit();
     finishInspection();
-  }
+  }, [finishInspection, onTransmit]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (props.acquiredItems.length > 0) {
+        if (acquisitionVisible) {
           event.preventDefault();
           props.onDismissAcquisition();
+          return;
+        }
+        if (props.eventNarrative) {
+          event.preventDefault();
           return;
         }
         if (props.subtitle) {
           event.preventDefault();
           closeInspection();
-          return;
-        }
-        if (props.eventNarrative) {
-          event.preventDefault();
-          props.onEventNarrativeAdvance();
           return;
         }
         if (props.powerPuzzle || inspectionModalOpen) {
@@ -270,6 +285,8 @@ export function GameScreen(props: Props) {
       }
       if (
         overlayOpen ||
+        (event.target instanceof Element &&
+          event.target.closest('[data-puzzle-id]') !== null) ||
         (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
       ) {
         return;
@@ -370,11 +387,13 @@ export function GameScreen(props: Props) {
         }}
         onClickCapture={(event) => {
           const target = event.target;
-          if (
-            target instanceof Element &&
-            target.closest('button:not(:disabled)')
-          )
-            props.onUiClick();
+          if (!(target instanceof Element)) return;
+          const button = target.closest('button:not(:disabled)');
+          if (!button) return;
+          const device = button.closest<HTMLElement>('[data-puzzle-id]');
+          const puzzleId = device?.dataset.puzzleId as PuzzleId | undefined;
+          if (puzzleId) props.onPuzzleInteraction(puzzleId);
+          else props.onUiClick();
         }}
       >
         <WorldCanvas
@@ -392,7 +411,7 @@ export function GameScreen(props: Props) {
             />
           </div>
           <div className="hud-actions">
-            {!ending && (
+            {!ending && !doorEscape && (
               <button
                 type="button"
                 className="system-entry"
@@ -474,6 +493,11 @@ export function GameScreen(props: Props) {
             {locationCue}
           </div>
         )}
+        {doorEscape && (
+          <div className="door-escape-cue" role="status" aria-live="assertive">
+            DOOR UNLOCKED / 北壁のドアから脱出する
+          </div>
+        )}
         {!ending && props.subtitle && (
           <ModalFocusScope
             focusKey={`message-${props.subtitle}`}
@@ -536,7 +560,7 @@ export function GameScreen(props: Props) {
             {inspectionDialog}
           </ModalFocusScope>
         )}
-        {props.acquiredItems.length > 0 && !props.eventNarrative && (
+        {acquisitionVisible && (
           <ModalFocusScope
             focusKey="item-acquisition"
             returnFocusRef={inspectionReturnFocusRef}
@@ -605,7 +629,7 @@ export function GameScreen(props: Props) {
             onExit={props.onExit}
           />
         )}
-        {ending && (
+        {(endingSequence || props.storyStage === 'completed') && (
           <EndingPanel
             lineIndex={props.endingLineIndex}
             completed={props.storyStage === 'completed'}

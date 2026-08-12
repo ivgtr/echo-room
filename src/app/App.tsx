@@ -1,7 +1,7 @@
 import { useActorRef, useSelector } from '@xstate/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { soundManager } from '../audio/soundManager';
+import { soundManager, type SoundEffectId } from '../audio/soundManager';
 import { type HotspotId, type LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
 import {
@@ -37,6 +37,7 @@ import {
   selectStoryStage,
   selectTerminalMenu,
 } from '../game/selectors/gameSelectors';
+import { getEmergencyPowerPhase } from '../game/time/emergencyPower';
 import { GameScreen } from '../ui/GameScreen';
 import {
   discoveryEntry,
@@ -201,11 +202,16 @@ export function App() {
       effectsVolume: soundLevels.effects,
       environmentVolume: soundLevels.environment,
       powered: powerRestored,
+      powerPhase: reservePower
+        ? 'reserve'
+        : getEmergencyPowerPhase(activeElapsedMs),
     });
   }, [
     isPlaying,
     pageVisible,
     powerRestored,
+    activeElapsedMs,
+    reservePower,
     soundEnabled,
     soundLevels.effects,
     soundLevels.environment,
@@ -322,6 +328,7 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [saveMessage]);
 
+  const activeEventNarrative = eventNarrativeQueue[0] ?? null;
   const handleStart = useCallback(() => {
     savedProgressRef.current = false;
     lastSavedFingerprintRef.current = null;
@@ -342,8 +349,16 @@ export function App() {
     () => soundManager.playEffect('text_blip'),
     [],
   );
+  const handleEventNarrativeAdvance = useCallback(
+    () => setEventNarrativeQueue((current) => current.slice(1)),
+    [],
+  );
   const handleHotspot = useCallback(
     (hotspotId: HotspotId) => {
+      if (storyStage === 'ending_door' && hotspotId === 'hotspot_door') {
+        actorRef.send({ type: 'ENDING_DOOR_SELECTED' });
+        return;
+      }
       if (hotspotId === 'hotspot_clock')
         appendHistory([discoveryEntry('アナログ時計は02:17で止まっている。')]);
       if (hotspotId === 'hotspot_desk')
@@ -363,11 +378,7 @@ export function App() {
     (puzzleId: PuzzleId, answer: string[]) => {
       const correct = isPuzzleAnswerCorrect(puzzleId, answer);
       soundManager.playEffect(
-        correct
-          ? puzzleId === 'puzzle_power_route'
-            ? 'power_restore'
-            : 'terminal_connect'
-          : 'locker_error',
+        correct ? puzzleSuccessCue[puzzleId] : puzzleFailureCue[puzzleId],
       );
       if (correct) {
         const entries = [...getPuzzleCompletionEntries(puzzleId)];
@@ -444,7 +455,7 @@ export function App() {
       soundLevels={soundLevels}
       subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
-      eventNarrative={eventNarrativeQueue[0] ?? null}
+      eventNarrative={activeEventNarrative}
       narrativeHistory={narrativeHistory}
       archiveDocuments={archiveDocuments}
       acquiredItems={acquiredItems}
@@ -501,6 +512,8 @@ export function App() {
         actorRef.send({ type: 'TRANSMISSION_CONFIRMED' });
       }}
       onEndingAdvance={() => {
+        if (endingLineIndex === 0)
+          soundManager.playEffect('communication_noise');
         if (endingLineIndex >= 5) soundManager.playEffect('door_unlock');
         actorRef.send({ type: 'ENDING_ADVANCED' });
       }}
@@ -516,17 +529,48 @@ export function App() {
       }}
       onDismissAcquisition={() => setAcquiredItems([])}
       onUiClick={handleUiClick}
-      onTextBlip={handleTextBlip}
-      onEventNarrativeAdvance={() =>
-        setEventNarrativeQueue((current) => current.slice(1))
+      onPuzzleInteraction={(puzzleId) =>
+        soundManager.playEffect(puzzleInteractionCue[puzzleId])
       }
+      onTextBlip={handleTextBlip}
+      onEventNarrativeAdvance={handleEventNarrativeAdvance}
     />
   );
 }
 
+const puzzleInteractionCue: Record<PuzzleId, SoundEffectId> = {
+  puzzle_power_route: 'power_relay',
+  puzzle_carrier_sync: 'carrier_lock',
+  puzzle_maintenance_lock: 'locker_dial',
+  puzzle_signal_investigation: 'log_patch',
+  puzzle_packet_repair: 'packet_snap',
+  puzzle_voiceprint_calibration: 'voice_scan',
+  puzzle_transmission_window: 'transmit_charge',
+};
+
+const puzzleSuccessCue: Record<PuzzleId, SoundEffectId> = {
+  puzzle_power_route: 'power_restore',
+  puzzle_carrier_sync: 'carrier_lock',
+  puzzle_maintenance_lock: 'locker_unlock',
+  puzzle_signal_investigation: 'terminal_connect',
+  puzzle_packet_repair: 'analysis_complete',
+  puzzle_voiceprint_calibration: 'analysis_complete',
+  puzzle_transmission_window: 'transmit_charge',
+};
+
+const puzzleFailureCue: Record<PuzzleId, SoundEffectId> = {
+  puzzle_power_route: 'locker_error',
+  puzzle_carrier_sync: 'locker_error',
+  puzzle_maintenance_lock: 'locker_error',
+  puzzle_signal_investigation: 'communication_noise',
+  puzzle_packet_repair: 'communication_noise',
+  puzzle_voiceprint_calibration: 'locker_error',
+  puzzle_transmission_window: 'locker_error',
+};
+
 function deskDiscoveryText(powerRestored: boolean, stage: string) {
   if (!powerRestored)
-    return '非常電源は7 UNITまで。ドアの線はショートしている。起動順も記されている。';
+    return '保護回路が作動したら異常回線を隔離し、制御信号の上流から順に復帰させると記されている。';
   if (stage === 'puzzle_carrier_sync')
     return '同期調整メモだ。早い波は右へ、遅い波は左へ動かす。';
   return '夜間点検は、端末、通話器、ECHO BUFFER、ドアの順だ。各機器の銘板記号を使う。';

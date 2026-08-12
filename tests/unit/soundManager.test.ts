@@ -81,6 +81,7 @@ const activeState: SoundState = {
   effectsVolume: 35,
   environmentVolume: 55,
   powered: false,
+  powerPhase: 'normal',
 };
 
 const createManager = () => {
@@ -156,6 +157,13 @@ describe('SoundManager', () => {
       'analysis_complete',
       'transmission',
       'door_unlock',
+      'power_relay',
+      'carrier_lock',
+      'locker_dial',
+      'log_patch',
+      'packet_snap',
+      'voice_scan',
+      'transmit_charge',
     ]);
   });
 });

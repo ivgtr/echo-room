@@ -43,7 +43,7 @@ describe('gameMachine vertical slice', () => {
     actor.send({
       type: 'PUZZLE_SUBMITTED',
       puzzleId: 'puzzle_power_route',
-      answer: ['door', 'terminal', 'intercom', 'buffer'],
+      answer: ['terminal', 'intercom', 'buffer'],
     });
     expect(actor.getSnapshot().matches({ playing: 'powered' })).toBe(true);
     expect(actor.getSnapshot().context.completedPuzzleIds).toEqual([
@@ -63,10 +63,8 @@ describe('gameMachine vertical slice', () => {
           'puzzle_power_route',
           'puzzle_carrier_sync',
           'puzzle_maintenance_lock',
-          'puzzle_log_pairing',
-          'puzzle_signal_route',
+          'puzzle_signal_investigation',
           'puzzle_packet_repair',
-          'puzzle_temporal_anomaly',
         ],
       }),
     });

@@ -16,13 +16,13 @@ describe('InspectionEvidencePanel', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('renders the capacity and fault evidence on the desk paper', () => {
+  it('renders the isolation and upstream recovery principle on the desk paper', () => {
     render(<InspectionEvidencePanel kind="desk" onClose={vi.fn()} />);
     expect(
-      screen.getByRole('heading', { name: '非常電源配分表' }),
+      screen.getByRole('heading', { name: '補助回路復旧手順' }),
     ).toBeVisible();
-    expect(screen.getByText(/TERMINAL 2.*INTERCOM 1/)).toBeVisible();
-    expect(screen.getByText(/SHORT DETECTED/)).toBeVisible();
+    expect(screen.getByText(/異常回線を隔離/)).toBeVisible();
+    expect(screen.getByText(/SOURCE — RELAY — TERMINATOR/)).toBeVisible();
   });
 
   it('changes the desk document as the investigation advances', () => {

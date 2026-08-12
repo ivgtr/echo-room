@@ -73,18 +73,16 @@ function PowerPlan() {
     <div className="document-evidence">
       <p className="eyebrow">FACILITY E-01 / MAINTENANCE DOCUMENT</p>
       <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>EMERGENCY SYSTEM / BYPASS PLAN</p>
-        <h2 id="evidence-title">非常電源配分表</h2>
+        <p>EMERGENCY SYSTEM / RECOVERY NOTE</p>
+        <h2 id="evidence-title">補助回路復旧手順</h2>
         <div className="document-rule" aria-hidden="true" />
         <p className="document-instruction">
-          容量：<strong>7 UNIT</strong>
-          <br />
-          TERMINAL 2 / INTERCOM 1 / ECHO BUFFER 3 / DOOR 4
+          保護回路が作動した場合は、異常回線を隔離する。
         </p>
         <p className="document-annotation">
-          DOOR LINE: SHORT DETECTED
+          CONTROL BUS: SOURCE — RELAY — TERMINATOR
           <br />
-          START: TERMINAL → INTERCOM → BUFFER
+          RESTORE FROM UPSTREAM TO DOWNSTREAM
         </p>
       </article>
     </div>

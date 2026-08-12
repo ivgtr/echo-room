@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { puzzleIds, type PuzzleId } from '../../src/game/puzzles/storyPuzzles';
@@ -47,12 +47,12 @@ describe('TerminalPanel', () => {
     render(
       <TerminalPanel
         {...baseProps}
-        menuId="security"
-        stage="puzzle_signal_route"
+        menuId="log"
+        stage="puzzle_signal_investigation"
       />,
     );
-    expect(screen.getByText('通信配線トレーサー')).toBeVisible();
-    expect(screen.getByText('ECHO BUFFER RETURN ○')).toBeVisible();
+    expect(screen.getByText('通信ログ・配線調査盤')).toBeVisible();
+    expect(screen.getByText('RECEIVE')).toBeVisible();
   });
 
   it('shows diegetic status and the terminal nameplate before the locker', () => {
@@ -70,7 +70,20 @@ describe('TerminalPanel', () => {
     expect(screen.queryByText('保守ロッカー')).not.toBeInTheDocument();
   });
 
-  it('makes the red button a payoff only after puzzle ten', () => {
+  it('does not reveal the exact negative delay before communication investigation', () => {
+    const view = render(
+      <TerminalPanel
+        {...baseProps}
+        menuId="system"
+        stage="puzzle_signal_investigation"
+      />,
+    );
+    const terminal = within(view.container);
+    expect(terminal.getByText('--:--:-- / CALIBRATION ERROR')).toBeVisible();
+    expect(terminal.queryByText('-00:20:00')).not.toBeInTheDocument();
+  });
+
+  it('makes the red button a payoff only after puzzle seven', () => {
     const onTransmit = vi.fn();
     render(
       <TerminalPanel
@@ -81,7 +94,7 @@ describe('TerminalPanel', () => {
         onTransmit={onTransmit}
       />,
     );
-    expect(screen.getByText(/10 \/ 10/)).toBeVisible();
+    expect(screen.getByText(/7 \/ 7/)).toBeVisible();
     fireEvent.click(
       screen.getByRole('button', { name: '赤い送信ボタンを押す' }),
     );

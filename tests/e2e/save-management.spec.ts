@@ -26,7 +26,7 @@ test('corrupt progress is protected until confirmed deletion and settings remain
   await page.goto('/');
 
   await expect(page.getByRole('alert')).toContainText(
-    '破損データを消去するまで進行は保存されません',
+    'このデータを消すまで新しい進行は保存されません',
   );
   await expect(page.getByRole('button', { name: '続きから' })).toHaveCount(0);
   await page.getByRole('button', { name: '保存データを消去' }).click();
