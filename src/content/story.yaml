@@ -107,16 +107,6 @@ dialogues:
       text: 最後に、赤いボタンを押せ。,
     }
   - {
-      id: dialogue_no_room_question,
-      speaker: protagonist,
-      text: 隣の部屋なんてない。回線はこの部屋へ戻っている。,
-    }
-  - {
-      id: dialogue_no_room_answer,
-      speaker: future_protagonist,
-      text: 分かってる。まだ説明できない。,
-    }
-  - {
       id: dialogue_identity_question,
       speaker: protagonist,
       text: この波の形は……俺の職員記録と同じだ。,

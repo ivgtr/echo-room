@@ -263,6 +263,10 @@ export function GameScreen(props: Props) {
           props.onDismissAcquisition();
           return;
         }
+        if (props.eventNarrative) {
+          event.preventDefault();
+          return;
+        }
         if (props.subtitle) {
           event.preventDefault();
           closeInspection();

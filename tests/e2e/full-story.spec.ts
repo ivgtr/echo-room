@@ -33,6 +33,9 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
     'inert',
     '',
   );
+  await page.keyboard.press('Escape');
+  await expect(lockerMessage).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'SYSTEM' })).toHaveCount(0);
   await advanceNarratives(page, 1);
   const acquisition = page.getByRole('dialog', { name: '所持品を入手した' });
   await expect(acquisition.getByText('設備・配線図')).toBeVisible();
@@ -155,7 +158,7 @@ async function solveSignalInvestigation(page: Page) {
   await device
     .getByRole('button', { name: 'ECHO BUFFER RETURN' })
     .press('Enter');
-  await finishPuzzle(page, 5);
+  await finishPuzzle(page, 3);
 }
 
 async function solvePacketRail(page: Page) {
@@ -174,6 +177,13 @@ async function solvePacketRail(page: Page) {
       })
       .press('Enter');
   }
+  await expect(device.getByText('FRAME RESTORED')).toBeVisible();
+  await expect(device.getByText(/PACKET 04/)).toContainText(
+    '最後に、赤いボタンを押せ。',
+  );
+  await device
+    .getByRole('button', { name: 'ACCEPT FRAME / 復元内容を確認する' })
+    .press('Enter');
   await finishPuzzle(page, 2);
 }
 
@@ -185,6 +195,12 @@ async function solveVoiceprint(page: Page) {
   await device.getByRole('switch').press('Enter');
   await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
   await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
+  await expect(device.getByText('100.0% / MATCH / E-01 OCCUPANT')).toBeVisible({
+    timeout: 10_000,
+  });
+  await device
+    .getByRole('button', { name: 'MATCH CONFIRM / 本人一致を確認する' })
+    .press('Enter');
   await finishPuzzle(page, 3);
 }
 
@@ -212,12 +228,18 @@ async function solveTransmissionPatch(page: Page) {
       })
       .press('Enter');
   }
+  await device.getByRole('button', { name: 'TEST PULSE' }).press('Enter');
+  await expect(device.getByText('PACKET MAP / LOCKED')).toBeVisible();
+  await expect(device.getByText('DELAY / RECHECK')).toBeVisible();
+  await expect(device.getByText('ROUTE / RECHECK')).toBeVisible();
   await device
     .getByRole('spinbutton', { name: '送信遅延ダイヤル' })
     .press('Enter');
   await device
     .getByRole('spinbutton', { name: '送信終端ダイヤル' })
     .press('Enter');
+  await expect(device.getByText('DELAY / LOCKED')).toBeVisible();
+  await expect(device.getByText('ROUTE / LOCKED')).toBeVisible();
   await device.getByRole('button', { name: 'TEST PULSE' }).press('Enter');
   await finishPuzzle(page, 1);
 }

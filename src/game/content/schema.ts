@@ -59,7 +59,7 @@ export const gameContentSchema = z.object({
         })
         .strict(),
     )
-    .min(8),
+    .min(6),
   puzzles: z
     .array(
       z.object({

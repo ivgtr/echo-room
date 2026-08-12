@@ -94,25 +94,14 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
     puzzle_signal_investigation: [
       {
         id: 'offset_discovered',
-        kind: 'discovery',
-        text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。',
+        kind: 'monologue',
+        text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。隣の部屋なんてない。回線はこの部屋へ戻っている。',
       },
       {
         id: 'offset_warning',
         kind: 'communication',
         speaker: 'UNKNOWN',
         text: 'ログは気にするな。',
-      },
-      {
-        id: 'no_room_question',
-        kind: 'monologue',
-        text: '隣の部屋なんてない。回線はこの部屋へ戻っている。',
-      },
-      {
-        id: 'no_room_answer',
-        kind: 'communication',
-        speaker: 'UNKNOWN',
-        text: '分かってる。まだ説明できない。',
       },
       {
         id: 'damaged_packet_cue',

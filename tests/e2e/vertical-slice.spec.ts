@@ -188,6 +188,12 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await powerPuzzle
     .getByRole('button', { name: 'DOORケーブルを切り離す' })
     .press('Enter');
+  await expect(
+    powerPuzzle.getByRole('button', { name: 'DOORケーブルを切り離す' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    powerPuzzle.getByRole('button', { name: 'TERMINALブレーカー' }),
+  ).toHaveAttribute('aria-pressed', 'false');
   for (const name of [
     'TERMINALブレーカー',
     'INTERCOMブレーカー',

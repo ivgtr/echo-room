@@ -182,8 +182,13 @@ function DeviceFrame({
 function PowerRouteDevice({ failures, submit }: DeviceProps) {
   const [isolated, setIsolated] = useState<string | null>(null);
   const [sequence, setSequence] = useState<string[]>([]);
+  const [handledFailures, setHandledFailures] = useState(0);
+  const protectionTripped = failures > handledFailures;
+  const activeSequence = protectionTripped ? [] : sequence;
   useAutoAnswer(
-    isolated && sequence.length === 3 ? [isolated, ...sequence] : null,
+    isolated && sequence.length === 3 && !protectionTripped
+      ? [isolated, ...sequence]
+      : null,
     submit,
   );
   const lines = [
@@ -192,7 +197,7 @@ function PowerRouteDevice({ failures, submit }: DeviceProps) {
     ['intercom', 'INTERCOM', '1 UNIT', 'STANDBY'],
     ['buffer', 'ECHO BUFFER', '3 UNIT', 'STANDBY'],
   ] as const;
-  const loadUsed = sequence.reduce((total, id) => {
+  const loadUsed = activeSequence.reduce((total, id) => {
     const line = lines.find(([lineId]) => lineId === id);
     return total + Number(line?.[2].split(' ')[0] ?? 0);
   }, 0);
@@ -219,14 +224,11 @@ function PowerRouteDevice({ failures, submit }: DeviceProps) {
         {lines.map(([id, label, load, status]) => (
           <button
             type="button"
-            className={`power-cable${isolated === id ? ' is-unplugged' : ''}${sequence.includes(id) ? ' is-energized' : ''}${id === 'door' ? ' is-short' : ''}`}
+            className={`power-cable${isolated === id ? ' is-unplugged' : ''}${activeSequence.includes(id) ? ' is-energized' : ''}${id === 'door' ? ' is-short' : ''}`}
             aria-pressed={isolated === id}
             aria-label={`${label}ケーブルを切り離す`}
             key={id}
-            onClick={() => {
-              setIsolated((value) => (value === id ? null : id));
-              if (failures > 0) setSequence([]);
-            }}
+            onClick={() => setIsolated((value) => (value === id ? null : id))}
           >
             <b className="power-branch" aria-hidden="true" />
             <i className="cable-plug" aria-hidden="true" />
@@ -254,7 +256,7 @@ function PowerRouteDevice({ failures, submit }: DeviceProps) {
       </div>
       <div className="breaker-bank" aria-label="起動ブレーカー">
         {lines.slice(1).map(([id, label]) => {
-          const order = sequence.indexOf(id) + 1;
+          const order = activeSequence.indexOf(id) + 1;
           return (
             <button
               type="button"
@@ -263,6 +265,11 @@ function PowerRouteDevice({ failures, submit }: DeviceProps) {
               aria-label={`${label}ブレーカー`}
               key={id}
               onClick={() => {
+                if (protectionTripped) {
+                  setHandledFailures(failures);
+                  setSequence([id]);
+                  return;
+                }
                 if (order || sequence.length >= 3) return;
                 setSequence((current) => [...current, id]);
               }}
@@ -659,17 +666,12 @@ function PacketRailDevice({ submit }: DeviceProps) {
   const jointSignature = joints.map(Number).join('');
   const restored = complete && jointSignature === '111';
   useEffect(() => {
-    if (!complete) return;
+    if (!complete || restored) return;
     const answer = answerSignature.split('|');
     if (submittedSignatureRef.current === answerSignature) return;
     submittedSignatureRef.current = answerSignature;
-    if (jointSignature === '111') {
-      const reduced = document.documentElement.dataset.reducedMotion === 'true';
-      const timer = window.setTimeout(() => submit(answer), reduced ? 80 : 700);
-      return () => window.clearTimeout(timer);
-    }
     submit(answer);
-  }, [answerSignature, complete, jointSignature, submit]);
+  }, [answerSignature, complete, restored, submit]);
 
   function placeFragment(slot: number, fragmentId: string) {
     setRail((current) =>
@@ -683,110 +685,117 @@ function PacketRailDevice({ submit }: DeviceProps) {
 
   return (
     <div className="frame-device">
-      <div className="frame-rail" aria-label="PACKET断片レール">
-        {[0, 1, 2, 3].map((slot) => {
-          const fixed = slot === 0;
-          const fragment = fixed
-            ? fragments.find(({ id }) => id === 'c')
-            : fragments.find(({ id }) => id === rail[slot - 1]);
-          return (
-            <div
-              className={`data-fragment-slot${fixed ? ' is-fixed' : ''}`}
-              key={slot}
-            >
-              <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
-              <button
-                type="button"
-                data-frame-slot={fixed ? undefined : slot - 1}
-                disabled={fixed}
-                aria-label={
-                  fixed
-                    ? '固定されたHEADER断片C'
-                    : fragment
-                      ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
-                      : `レール${slot + 1}へ${selected ? `断片${selected.toUpperCase()}を` : ''}置く`
-                }
-                onClick={() => {
-                  if (fixed) return;
-                  if (selected) placeFragment(slot - 1, selected);
-                  else if (fragment) {
+      {!restored && (
+        <>
+          <div className="frame-rail" aria-label="PACKET断片レール">
+            {[0, 1, 2, 3].map((slot) => {
+              const fixed = slot === 0;
+              const fragment = fixed
+                ? fragments.find(({ id }) => id === 'c')
+                : fragments.find(({ id }) => id === rail[slot - 1]);
+              return (
+                <div
+                  className={`data-fragment-slot${fixed ? ' is-fixed' : ''}`}
+                  key={slot}
+                >
+                  <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
+                  <button
+                    type="button"
+                    data-frame-slot={fixed ? undefined : slot - 1}
+                    disabled={fixed}
+                    aria-label={
+                      fixed
+                        ? '固定されたHEADER断片C'
+                        : fragment
+                          ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
+                          : `レール${slot + 1}へ${selected ? `断片${selected.toUpperCase()}を` : ''}置く`
+                    }
+                    onClick={() => {
+                      if (fixed) return;
+                      if (selected) placeFragment(slot - 1, selected);
+                      else if (fragment) {
+                        setSelected(fragment.id);
+                        setRail((current) =>
+                          current.map((value, index) =>
+                            index === slot - 1 ? null : value,
+                          ),
+                        );
+                      }
+                    }}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const fragmentId =
+                        event.dataTransfer.getData('text/plain');
+                      if (fragmentId) placeFragment(slot - 1, fragmentId);
+                    }}
+                  >
+                    {fragment ? (
+                      <DataFragmentGraphic fragment={fragment} />
+                    ) : (
+                      <span className="empty-fragment" aria-hidden="true" />
+                    )}
+                  </button>
+                  {slot < 3 && (
+                    <i
+                      className={`fragment-joint${joints[slot] ? ' is-connected' : complete ? ' is-broken' : ''}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="fragment-tray" aria-label="壊れたデータ片">
+            {fragments
+              .filter(({ id }) => id !== 'c')
+              .map((fragment) => (
+                <button
+                  type="button"
+                  key={fragment.id}
+                  draggable
+                  disabled={rail.includes(fragment.id)}
+                  aria-pressed={selected === fragment.id}
+                  aria-label={`断片${fragment.label}を持つ`}
+                  onClick={() => setSelected(fragment.id)}
+                  onDragStart={(event) => {
                     setSelected(fragment.id);
-                    setRail((current) =>
-                      current.map((value, index) =>
-                        index === slot - 1 ? null : value,
-                      ),
-                    );
-                  }
-                }}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const fragmentId = event.dataTransfer.getData('text/plain');
-                  if (fragmentId) placeFragment(slot - 1, fragmentId);
-                }}
-              >
-                {fragment ? (
+                    event.dataTransfer.setData('text/plain', fragment.id);
+                  }}
+                >
                   <DataFragmentGraphic fragment={fragment} />
-                ) : (
-                  <span className="empty-fragment" aria-hidden="true" />
-                )}
-              </button>
-              {slot < 3 && (
-                <i
-                  className={`fragment-joint${joints[slot] ? ' is-connected' : complete ? ' is-broken' : ''}`}
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="fragment-tray" aria-label="壊れたデータ片">
-        {fragments
-          .filter(({ id }) => id !== 'c')
-          .map((fragment) => (
+                </button>
+              ))}
             <button
               type="button"
-              key={fragment.id}
-              draggable
-              disabled={rail.includes(fragment.id)}
-              aria-pressed={selected === fragment.id}
-              aria-label={`断片${fragment.label}を持つ`}
-              onClick={() => setSelected(fragment.id)}
-              onDragStart={(event) => {
-                setSelected(fragment.id);
-                event.dataTransfer.setData('text/plain', fragment.id);
+              className="device-eject"
+              onClick={() => {
+                setRail([null, null, null]);
+                setSelected(null);
               }}
             >
-              <DataFragmentGraphic fragment={fragment} />
+              EJECT / 取り出す
             </button>
-          ))}
-        <button
-          type="button"
-          className="device-eject"
-          onClick={() => {
-            setRail([null, null, null]);
-            setSelected(null);
-          }}
-        >
-          EJECT / 取り出す
-        </button>
-      </div>
-      <div className="frame-continuity" aria-live="polite">
-        {joints.map((connected, index) => (
-          <span
-            className={connected ? 'is-connected' : complete ? 'is-broken' : ''}
-            key={index}
-          >
-            {connected ? '●' : complete ? '×' : '○'}
-          </span>
-        ))}
-        <small>
-          {complete && joints.some((joint) => !joint)
-            ? 'SIGNAL BREAK'
-            : 'CONTINUITY'}
-        </small>
-      </div>
+          </div>
+          <div className="frame-continuity" aria-live="polite">
+            {joints.map((connected, index) => (
+              <span
+                className={
+                  connected ? 'is-connected' : complete ? 'is-broken' : ''
+                }
+                key={index}
+              >
+                {connected ? '●' : complete ? '×' : '○'}
+              </span>
+            ))}
+            <small>
+              {complete && joints.some((joint) => !joint)
+                ? 'SIGNAL BREAK'
+                : 'CONTINUITY'}
+            </small>
+          </div>
+        </>
+      )}
       {restored && (
         <div
           className="packet-restored-sequence"
@@ -799,6 +808,13 @@ function PacketRailDevice({ submit }: DeviceProps) {
               PACKET 0{index + 1} / {text}
             </span>
           ))}
+          <button
+            type="button"
+            className="packet-confirm"
+            onClick={() => submit(['c', ...rail.filter(isString)])}
+          >
+            ACCEPT FRAME / 復元内容を確認する
+          </button>
         </div>
       )}
     </div>
@@ -841,10 +857,7 @@ function VoiceprintDevice({ failures, submit }: DeviceProps) {
     const reduced = document.documentElement.dataset.reducedMotion === 'true';
     const timers = steps.map((value, index) =>
       window.setTimeout(
-        () => {
-          setMatchProgress(value);
-          if (value === 100) submit(['compress-half', 'invert', 'left-2']);
-        },
+        () => setMatchProgress(value),
         index * (reduced ? 60 : 420),
       ),
     );
@@ -917,7 +930,9 @@ function VoiceprintDevice({ failures, submit }: DeviceProps) {
           aria-live="polite"
         >
           <span>VOICE MATCH</span>
-          <strong>{matchProgress.toFixed(matchProgress % 1 ? 1 : 0)}%</strong>
+          <strong>
+            {matchProgress.toFixed(matchProgress >= 99.8 ? 1 : 0)}%
+          </strong>
           {matchProgress >= 99.8 && (
             <figure>
               <img
@@ -930,6 +945,15 @@ function VoiceprintDevice({ failures, submit }: DeviceProps) {
                   : 'IDENTITY QUERY...'}
               </figcaption>
             </figure>
+          )}
+          {matchProgress === 100 && (
+            <button
+              type="button"
+              className="voice-match-confirm"
+              onClick={() => submit(['compress-half', 'invert', 'left-2'])}
+            >
+              MATCH CONFIRM / 本人一致を確認する
+            </button>
           )}
         </div>
       )}
@@ -971,35 +995,50 @@ function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
   const routeOptions = ['control', 'echo-return', 'adjacent'] as const;
   const [delayIndex, setDelayIndex] = useState(0);
   const [routeIndex, setRouteIndex] = useState(0);
+  const packetReady = windows.every(
+    (packet, index) => packet === `packet-0${index + 1}`,
+  );
+  const delayReady = delayOptions[delayIndex] === 'minus-20';
+  const routeReady = routeOptions[routeIndex] === 'echo-return';
+  const showValidation = failures > 0;
   return (
-    <div className={`transmission-device${failures > 0 ? ' is-error' : ''}`}>
-      <div className="transmission-windows" aria-label="四つの受信窓">
-        {[
-          '返事をする前',
-          '電源を調べる前',
-          'LOGを開いた直後',
-          '最後の操作の前',
-        ].map((label, index) => (
-          <button
-            type="button"
-            key={label}
-            aria-label={`W${index + 1} ${label}`}
-            onClick={() => {
-              if (!armedPacket) return;
-              setWindows((current) =>
-                current.map((value, itemIndex) =>
-                  itemIndex === index ? armedPacket : value,
-                ),
-              );
-              setArmedPacket(null);
-            }}
-          >
-            <small>
-              W{index + 1} / {label}
-            </small>
-            <strong>{windows[index]?.toUpperCase() ?? 'OPEN'}</strong>
-          </button>
-        ))}
+    <div className="transmission-device">
+      <div
+        className={`transmission-packet-region${showValidation && !packetReady ? ' is-region-error' : ''}`}
+      >
+        <div className="transmission-windows" aria-label="四つの受信窓">
+          {[
+            '返事をする前',
+            '電源を調べる前',
+            'LOGを開いた直後',
+            '最後の操作の前',
+          ].map((label, index) => (
+            <button
+              type="button"
+              key={label}
+              aria-label={`W${index + 1} ${label}`}
+              onClick={() => {
+                if (!armedPacket) return;
+                setWindows((current) =>
+                  current.map((value, itemIndex) =>
+                    itemIndex === index ? armedPacket : value,
+                  ),
+                );
+                setArmedPacket(null);
+              }}
+            >
+              <small>
+                W{index + 1} / {label}
+              </small>
+              <strong>{windows[index]?.toUpperCase() ?? 'OPEN'}</strong>
+            </button>
+          ))}
+        </div>
+        {showValidation && (
+          <p className="transmission-validation" role="status">
+            PACKET MAP / {packetReady ? 'LOCKED' : 'RECHECK'}
+          </p>
+        )}
       </div>
       <div className="packet-plugs">
         {packetTexts.map((text, index) => {
@@ -1019,44 +1058,64 @@ function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
         })}
       </div>
       <div className="transmission-controls">
-        <button
-          type="button"
-          role="spinbutton"
-          aria-label="送信遅延ダイヤル"
-          aria-valuemin={0}
-          aria-valuemax={delayOptions.length - 1}
-          aria-valuenow={delayIndex}
-          aria-valuetext={['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
-          className="rotary-control"
-          onClick={() =>
-            setDelayIndex((value) => (value + 1) % delayOptions.length)
-          }
+        <div
+          className={`transmission-control-region${showValidation && !delayReady ? ' is-region-error' : ''}`}
         >
-          <i style={{ transform: `rotate(${delayIndex * 105 - 105}deg)` }} />
-          <span>DELAY</span>
-          <output>{['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}</output>
-        </button>
-        <button
-          type="button"
-          role="spinbutton"
-          aria-label="送信終端ダイヤル"
-          aria-valuemin={0}
-          aria-valuemax={routeOptions.length - 1}
-          aria-valuenow={routeIndex}
-          aria-valuetext={
-            ['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]
-          }
-          className="rotary-control"
-          onClick={() =>
-            setRouteIndex((value) => (value + 1) % routeOptions.length)
-          }
+          <button
+            type="button"
+            role="spinbutton"
+            aria-label="送信遅延ダイヤル"
+            aria-valuemin={0}
+            aria-valuemax={delayOptions.length - 1}
+            aria-valuenow={delayIndex}
+            aria-valuetext={['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
+            className="rotary-control"
+            onClick={() =>
+              setDelayIndex((value) => (value + 1) % delayOptions.length)
+            }
+          >
+            <i style={{ transform: `rotate(${delayIndex * 105 - 105}deg)` }} />
+            <span>DELAY</span>
+            <output>
+              {['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
+            </output>
+          </button>
+          {showValidation && (
+            <small className="transmission-validation">
+              DELAY / {delayReady ? 'LOCKED' : 'RECHECK'}
+            </small>
+          )}
+        </div>
+        <div
+          className={`transmission-control-region${showValidation && !routeReady ? ' is-region-error' : ''}`}
         >
-          <i style={{ transform: `rotate(${routeIndex * 105 - 105}deg)` }} />
-          <span>TERMINATION</span>
-          <output>
-            {['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]}
-          </output>
-        </button>
+          <button
+            type="button"
+            role="spinbutton"
+            aria-label="送信終端ダイヤル"
+            aria-valuemin={0}
+            aria-valuemax={routeOptions.length - 1}
+            aria-valuenow={routeIndex}
+            aria-valuetext={
+              ['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]
+            }
+            className="rotary-control"
+            onClick={() =>
+              setRouteIndex((value) => (value + 1) % routeOptions.length)
+            }
+          >
+            <i style={{ transform: `rotate(${routeIndex * 105 - 105}deg)` }} />
+            <span>TERMINATION</span>
+            <output>
+              {['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]}
+            </output>
+          </button>
+          {showValidation && (
+            <small className="transmission-validation">
+              ROUTE / {routeReady ? 'LOCKED' : 'RECHECK'}
+            </small>
+          )}
+        </div>
         <button
           type="button"
           className="test-pulse-lever"

@@ -46,6 +46,65 @@ describe('PuzzleDevice', () => {
     expect(screen.queryByText('この答えで確認する')).not.toBeInTheDocument();
   });
 
+  it('trips only the breakers after a failed power order and keeps cable isolation', async () => {
+    const onSubmit = vi.fn();
+    const view = render(
+      <PuzzleDevice
+        puzzleId="puzzle_power_route"
+        failures={0}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+    const device = within(view.container);
+    const doorCable = device.getByRole('button', {
+      name: 'DOORケーブルを切り離す',
+    });
+    fireEvent.click(doorCable);
+    for (const name of [
+      'INTERCOMブレーカー',
+      'TERMINALブレーカー',
+      'ECHO BUFFERブレーカー',
+    ])
+      fireEvent.click(device.getByRole('button', { name }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    view.rerender(
+      <PuzzleDevice
+        puzzleId="puzzle_power_route"
+        failures={1}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(doorCable).toHaveAttribute('aria-pressed', 'true');
+    for (const name of [
+      'TERMINALブレーカー',
+      'INTERCOMブレーカー',
+      'ECHO BUFFERブレーカー',
+    ])
+      expect(device.getByRole('button', { name })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+
+    for (const name of [
+      'TERMINALブレーカー',
+      'INTERCOMブレーカー',
+      'ECHO BUFFERブレーカー',
+    ])
+      fireEvent.click(device.getByRole('button', { name }));
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
+        'door',
+        'terminal',
+        'intercom',
+        'buffer',
+      ]),
+    );
+  });
+
   it('submits carrier offsets when the waveforms themselves reach the lock point', async () => {
     const onSubmit = vi.fn();
     render(
@@ -107,16 +166,22 @@ describe('PuzzleDevice', () => {
       );
     }
 
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith('puzzle_packet_repair', [
-        'c',
-        'd',
-        'a',
-        'b',
-      ]),
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('FRAME RESTORED')).toBeInTheDocument();
+    expect(screen.getByText(/PACKET 04/)).toHaveTextContent(
+      '最後に、赤いボタンを押せ。',
     );
-    expect(screen.getByText('CONTINUITY')).toBeInTheDocument();
-    expect(screen.queryByText('FRAME ERROR。')).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'ACCEPT FRAME / 復元内容を確認する',
+      }),
+    );
+    expect(onSubmit).toHaveBeenCalledWith('puzzle_packet_repair', [
+      'c',
+      'd',
+      'a',
+      'b',
+    ]);
   });
 
   it('keeps a broken packet arrangement visible for correction', async () => {
@@ -226,6 +291,88 @@ describe('PuzzleDevice', () => {
       device.getByRole('spinbutton', { name: 'ダイヤル1' }),
     ).toHaveAttribute('aria-valuenow', position);
     expect(device.getByText('LOCK / JAMMED')).toBeVisible();
+  });
+
+  it('keeps the 100.0% voice match visible until the player confirms it', () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    render(
+      <PuzzleDevice
+        embedded
+        puzzleId="puzzle_voiceprint_calibration"
+        failures={0}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('spinbutton', { name: '波の間隔ダイヤル' }),
+    );
+    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.change(screen.getByRole('slider', { name: '波の開始位置' }), {
+      target: { value: '-2' },
+    });
+    act(() => vi.runAllTimers());
+
+    expect(screen.getByText('100.0%')).toBeVisible();
+    expect(screen.getByText('100.0% / MATCH / E-01 OCCUPANT')).toBeVisible();
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'MATCH CONFIRM / 本人一致を確認する',
+      }),
+    );
+    expect(onSubmit).toHaveBeenCalledWith('puzzle_voiceprint_calibration', [
+      'compress-half',
+      'invert',
+      'left-2',
+    ]);
+  });
+
+  it('reports transmission failures by packet, delay, and route region', () => {
+    const onSubmit = vi.fn();
+    const view = render(
+      <PuzzleDevice
+        embedded
+        puzzleId="puzzle_transmission_window"
+        failures={1}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+    const device = within(view.container);
+    expect(device.getByText('PACKET MAP / RECHECK')).toBeVisible();
+    expect(device.getByText('DELAY / RECHECK')).toBeVisible();
+    expect(device.getByText('ROUTE / RECHECK')).toBeVisible();
+
+    const packetLabels = [
+      '……聞こえるか？',
+      'まず電源を戻せ。',
+      'ログは気にするな。',
+      '最後に、赤いボタンを押せ。',
+    ];
+    const windows = [
+      '返事をする前',
+      '電源を調べる前',
+      'LOGを開いた直後',
+      '最後の操作の前',
+    ];
+    for (let index = 0; index < 4; index += 1) {
+      fireEvent.click(
+        device.getByRole('button', {
+          name: `送信断片「${packetLabels[index]}」`,
+        }),
+      );
+      fireEvent.click(
+        device.getByRole('button', {
+          name: new RegExp(`W${index + 1} ${windows[index]}`),
+        }),
+      );
+    }
+    expect(device.getByText('PACKET MAP / LOCKED')).toBeVisible();
+    expect(device.getByText('DELAY / RECHECK')).toBeVisible();
+    expect(device.getByText('ROUTE / RECHECK')).toBeVisible();
   });
 
   it('announces a session-only diagnostic after inactivity', () => {

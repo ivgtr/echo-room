@@ -14,7 +14,7 @@ const rootSchema = z.object({
     .min(7),
   items: z.array(z.object({ id: z.string() })).length(3),
   documents: z.array(z.object({ id: z.string() })).min(3),
-  dialogues: z.array(z.object({ id: z.string(), text: z.string() })).min(8),
+  dialogues: z.array(z.object({ id: z.string(), text: z.string() })).min(6),
   puzzles: z
     .array(z.object({ id: z.string(), hintIds: z.array(z.string()).length(3) }))
     .length(7),

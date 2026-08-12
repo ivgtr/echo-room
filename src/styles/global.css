@@ -2496,8 +2496,7 @@ button:focus-visible {
 }
 .signal-investigation-device.is-trace-error .trace-device,
 .carrier-device.is-error .wave-rail:not(.is-locked),
-.voiceprint-device.is-error .calibration-controls,
-.transmission-device.is-error .transmission-controls {
+.voiceprint-device.is-error .calibration-controls {
   box-shadow: inset 0 0 0 2px rgb(228 91 99 / 55%);
 }
 .trace-overlay > div {
@@ -2803,6 +2802,13 @@ button:focus-visible {
   color: #fff;
   background: rgb(101 21 26 / 48%);
 }
+.packet-confirm,
+.voice-match-confirm {
+  min-height: 2.8rem;
+  border: 1px solid #8de1d8;
+  color: #dffbf7;
+  background: #102827;
+}
 
 .scanner-device {
   display: grid;
@@ -2893,6 +2899,30 @@ button:focus-visible {
   grid-template-columns: repeat(3, 1fr);
   gap: 0.6rem;
 }
+.transmission-packet-region,
+.transmission-control-region {
+  display: grid;
+  gap: 0.35rem;
+}
+.transmission-control-region > .rotary-control {
+  width: 100%;
+}
+.transmission-packet-region.is-region-error,
+.transmission-control-region.is-region-error {
+  box-shadow: inset 0 0 0 2px rgb(228 91 99 / 68%);
+}
+.transmission-validation {
+  margin: 0;
+  color: #8de1d8;
+  font:
+    0.62rem ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.is-region-error > .transmission-validation {
+  color: #f1a0a5;
+}
 .voiceprint-device .calibration-controls {
   grid-template-columns: 1fr;
 }
@@ -2924,8 +2954,20 @@ button:focus-visible {
   object-fit: cover;
 }
 .voice-match-sequence.is-match {
+  grid-template-columns: minmax(0, 1fr) auto;
   border-color: #8de1d8;
   box-shadow: 0 0 2rem rgb(88 184 176 / 28%);
+}
+.voice-match-sequence.is-match > span,
+.voice-match-sequence.is-match > strong {
+  grid-column: 1 / -1;
+}
+.voice-match-sequence.is-match figure {
+  grid-column: 1;
+}
+.voice-match-sequence.is-match .voice-match-confirm {
+  grid-column: 2;
+  min-width: 15rem;
 }
 .rotary-control,
 .toggle-control,
