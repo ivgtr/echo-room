@@ -454,12 +454,6 @@ export function GameScreen(props: Props) {
                     style={hotspotClipStyle(hotspot)}
                     onClick={() => requestHotspot(hotspot.id)}
                   />
-                  {props.storyStage === 'puzzle_maintenance_lock' &&
-                    maintenanceNameplates[hotspot.id] && (
-                      <span className="world-nameplate" aria-hidden="true">
-                        {maintenanceNameplates[hotspot.id]}
-                      </span>
-                    )}
                   <span className="hotspot-label" aria-hidden="true">
                     {hotspot.label}
                   </span>
@@ -655,13 +649,6 @@ export function GameScreen(props: Props) {
     </main>
   );
 }
-
-const maintenanceNameplates: Partial<Record<HotspotId, string>> = {
-  hotspot_terminal: 'TERMINAL ║',
-  hotspot_intercom: 'INTERCOM ○',
-  hotspot_breaker: 'ECHO BUFFER △',
-  hotspot_door: 'DOOR ◆',
-};
 
 function hotspotBoundsStyle(hotspot: WorldHotspot): CSSProperties {
   const bounds = getHotspotBounds(hotspot);

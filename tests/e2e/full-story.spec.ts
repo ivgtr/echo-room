@@ -18,6 +18,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
 
   await turnRight(page, '南壁');
   await turnRight(page, '西壁');
+  await expect(page.locator('.world-nameplate')).toHaveCount(0);
   await openHotspot(page, 'ロッカーを調べる');
   await solveLocker(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_03');
