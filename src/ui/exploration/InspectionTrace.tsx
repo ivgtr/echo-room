@@ -4,12 +4,16 @@ import {
   getHotspotBounds,
   type WorldHotspot,
 } from '../../world/assets/worldAssets';
+import {
+  getOppositeCornerPaths,
+  type InspectionTracePoint,
+} from './inspectionTraceGeometry';
 
-const TRACE_DURATION_MS = 150;
-const DIAMOND_APPEAR_MS = 100;
-const DIAMOND_FADE_MS = 50;
+const TRACE_DURATION_MS = 75;
+const DIAMOND_APPEAR_MS = 45;
+const DIAMOND_FADE_MS = 30;
 
-type Point = readonly [number, number];
+type Point = InspectionTracePoint;
 
 type Props = {
   hotspot: WorldHotspot;
@@ -52,7 +56,7 @@ export function InspectionTrace({ hotspot, motionReduced }: Props) {
       context.strokeStyle = 'rgba(111, 231, 226, 0.78)';
       context.shadowBlur = 4;
       context.shadowColor = 'rgba(111, 231, 226, 0.42)';
-      tracePolygon(context, points, traceProgress);
+      traceOutlineFromOppositeCorners(context, points, traceProgress);
       context.restore();
 
       if (diamondOpacity <= 0) return;
@@ -138,16 +142,28 @@ function getOutlinePoints(hotspot: WorldHotspot): readonly Point[] {
   });
 }
 
-function tracePolygon(
+function traceOutlineFromOppositeCorners(
+  context: CanvasRenderingContext2D,
+  points: readonly Point[],
+  progress: number,
+) {
+  if (points.length < 2 || progress <= 0) return;
+
+  const [topLeftPath, bottomRightPath] = getOppositeCornerPaths(points);
+  tracePath(context, topLeftPath, progress);
+  tracePath(context, bottomRightPath, progress);
+}
+
+function tracePath(
   context: CanvasRenderingContext2D,
   points: readonly Point[],
   progress: number,
 ) {
   const firstPoint = points[0];
-  if (!firstPoint || points.length < 2 || progress <= 0) return;
+  if (!firstPoint || points.length < 2) return;
 
-  const segments = points.map((point, index) => {
-    const next = points[(index + 1) % points.length] ?? point;
+  const segments = points.slice(0, -1).map((point, index) => {
+    const next = points[index + 1] ?? point;
     return {
       from: point,
       to: next,

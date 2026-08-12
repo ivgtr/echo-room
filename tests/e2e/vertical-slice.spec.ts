@@ -384,6 +384,7 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   await intercom.dispatchEvent('click');
   const transitionMarker = page.locator('.inspection-transition-marker');
   await expect(transitionMarker).toBeVisible();
+  await expect(transitionMarker).toHaveAttribute('data-trace-duration', '75');
   await expect
     .poll(() =>
       transitionMarker.evaluate((canvas) => {
