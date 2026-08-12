@@ -244,6 +244,7 @@ describe('PuzzleDevice', () => {
       />,
     );
 
+    expect(screen.queryByText('4 STEP')).not.toBeInTheDocument();
     for (let index = 1; index <= 4; index += 1)
       fireEvent.keyDown(
         screen.getByRole('spinbutton', { name: `ダイヤル${index}` }),

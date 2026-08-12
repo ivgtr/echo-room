@@ -409,7 +409,6 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
     <div className="locker-device">
       <div className={`lock-plate${failures > 0 ? ' is-jammed' : ''}`}>
         <span>LAST INSPECTION</span>
-        <strong>4 STEP</strong>
         <div className="symbol-dials" aria-label="四連記号錠">
           {dials.map((value, index) => {
             const symbolIndex = symbols.findIndex(([id]) => id === value);
