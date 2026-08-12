@@ -205,6 +205,10 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(powerPuzzle.getByText('CONTROL SIGNAL MISSING')).toBeVisible();
   for (const name of ['TERMINAL回路、OFF', 'INTERCOM回路、OFF'])
     await powerPuzzle.getByRole('button', { name }).press('Enter');
+  await expect(powerPuzzle.locator('.power-panel-base')).toHaveAttribute(
+    'src',
+    /gfx-close-005__intercom-powered__preview-flat\.webp/,
+  );
   await page.screenshot({ path: 'tmp/power-sequence-vfx.png' });
   await powerPuzzle
     .getByRole('button', { name: 'ECHO BUFFER回路、OFF' })

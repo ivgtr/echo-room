@@ -100,6 +100,18 @@
           "height": 941
         },
         {
+          "id": "gfx-close-005__terminal-powered",
+          "src": "/assets/images/close/gfx-close-005__terminal-powered__preview-flat.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "id": "gfx-close-005__intercom-powered",
+          "src": "/assets/images/close/gfx-close-005__intercom-powered__preview-flat.webp",
+          "width": 1672,
+          "height": 941
+        },
+        {
           "id": "gfx-close-005__lever-sprite",
           "src": "/assets/images/close/gfx-close-005__lever-sprite.webp",
           "width": 265,

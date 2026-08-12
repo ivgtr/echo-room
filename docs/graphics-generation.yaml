@@ -479,11 +479,14 @@ assets:
       movable lever sprite, and one transparent dark socket sprite. Duplicate the
       same raster sprites at fixed coordinates; use CSS only for pivot motion and
       light/fault VFX, never to draw the hardware itself.
-    state_variants: [empty_panel, lever_sprite, socket_sprite]
+    state_variants:
+      [empty_panel, terminal_powered, intercom_powered, lever_sprite, socket_sprite]
     exact_counts:
       levers: 4
     deliverables:
       - empty_panel_base
+      - camera_locked_terminal_powered_state
+      - camera_locked_intercom_powered_state
       - single_transparent_lever_sprite
       - single_transparent_status_socket_sprite
       - fixed_sprite_coordinates

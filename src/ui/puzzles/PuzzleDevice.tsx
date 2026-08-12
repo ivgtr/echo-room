@@ -275,6 +275,12 @@ function PowerRouteDevice({ submit }: DeviceProps) {
         : startedCount > 0
           ? `BOOT SEQUENCE / ${startedCount} / 3`
           : 'BOOT SEQUENCE READY';
+  const panelStateImage =
+    startedCount >= 2
+      ? 'gfx-close-005__intercom-powered__preview-flat.webp'
+      : startedCount >= 1
+        ? 'gfx-close-005__terminal-powered__preview-flat.webp'
+        : 'gfx-close-005__empty-panel__preview-flat.webp';
 
   return (
     <div
@@ -283,7 +289,7 @@ function PowerRouteDevice({ submit }: DeviceProps) {
       <div className="power-stage">
         <img
           className="power-panel-base"
-          src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-005__empty-panel__preview-flat.webp`}
+          src={`${import.meta.env.BASE_URL}assets/images/close/${panelStateImage}`}
           alt=""
           aria-hidden="true"
         />
@@ -291,10 +297,6 @@ function PowerRouteDevice({ submit }: DeviceProps) {
         <p className="power-protection" role="status" aria-live="assertive">
           {status}
         </p>
-        <div className="power-signal-vfx" aria-hidden="true">
-          <i className={startedCount >= 1 ? 'is-powered' : ''} />
-          <i className={startedCount >= 2 ? 'is-powered' : ''} />
-        </div>
         <div className="breaker-bank" aria-label="非常電源の四回路">
           {lines.map(([id, label, bayX]) => {
             const active = activeCircuits.includes(id);

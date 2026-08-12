@@ -62,8 +62,20 @@ describe('PuzzleDevice', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'TERMINAL回路、OFF' }));
     expect(screen.getByText('BOOT SEQUENCE / 1 / 3')).toBeVisible();
+    expect(view.container.querySelector('.power-panel-base')).toHaveAttribute(
+      'src',
+      expect.stringContaining(
+        'gfx-close-005__terminal-powered__preview-flat.webp',
+      ),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'INTERCOM回路、OFF' }));
     expect(screen.getByText('BOOT SEQUENCE / 2 / 3')).toBeVisible();
+    expect(view.container.querySelector('.power-panel-base')).toHaveAttribute(
+      'src',
+      expect.stringContaining(
+        'gfx-close-005__intercom-powered__preview-flat.webp',
+      ),
+    );
     fireEvent.click(
       screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
     );

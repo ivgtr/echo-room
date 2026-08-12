@@ -2163,33 +2163,6 @@ button:focus-visible {
   animation: protection-pulse 160ms steps(2, end) 3;
 }
 
-.power-signal-vfx {
-  position: absolute;
-  z-index: 2;
-  top: 31.6%;
-  left: 35.7%;
-  display: flex;
-  width: 22.6%;
-  pointer-events: none;
-}
-
-.power-signal-vfx i {
-  display: block;
-  width: 50%;
-  height: 2px;
-  background: transparent;
-  box-shadow: none;
-  transition:
-    background 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.power-signal-vfx i.is-powered {
-  background: rgb(102 231 222 / 54%);
-  box-shadow: 0 0 0.48rem rgb(76 226 216 / 72%);
-  animation: signal-energize 280ms ease-out;
-}
-
 @keyframes circuit-vfx-in {
   from {
     opacity: 0;
@@ -2225,14 +2198,6 @@ button:focus-visible {
   50% {
     opacity: 0.3;
     transform: scale(1.22);
-  }
-}
-
-@keyframes signal-energize {
-  from {
-    opacity: 0;
-    transform: scaleX(0.1);
-    transform-origin: left;
   }
 }
 
