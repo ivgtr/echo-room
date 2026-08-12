@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from 'react';
 
+import { ContextBackButton } from '../common/ContextBackButton';
 import type {
   ArchiveDocument,
   NarrativeEntry,
@@ -38,6 +39,7 @@ type Props = {
   narrativeHistory: readonly NarrativeEntry[];
   documents: readonly ArchiveDocument[];
   returnFocusRef: RefObject<HTMLElement | null>;
+  initialFocus: 'inventory' | 'hint' | null;
   onClose: () => void;
   onToggleSound: () => void;
   onSoundLevelChange: (channel: keyof SoundLevels, value: number) => void;
@@ -57,8 +59,16 @@ export function SystemMenu(props: Props) {
   const [view, setView] = useState<View>('main');
 
   useEffect(() => {
-    dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
-  }, [view]);
+    const requested = props.initialFocus
+      ? dialogRef.current?.querySelector<HTMLElement>(
+          `[data-system-entry="${props.initialFocus}"]`,
+        )
+      : null;
+    (
+      requested ??
+      dialogRef.current?.querySelector<HTMLElement>(focusableSelector)
+    )?.focus();
+  }, [props.initialFocus, view]);
 
   useEffect(
     () => () => props.returnFocusRef.current?.focus(),
@@ -136,12 +146,20 @@ export function SystemMenu(props: Props) {
               TEXT &amp; SOUND / 字幕・サウンド設定
             </button>
             {props.inventoryAvailable && (
-              <button type="button" onClick={props.onInventory}>
+              <button
+                type="button"
+                data-system-entry="inventory"
+                onClick={props.onInventory}
+              >
                 INVENTORY / 所持品
               </button>
             )}
             {props.hintAvailable && (
-              <button type="button" onClick={props.onHint}>
+              <button
+                type="button"
+                data-system-entry="hint"
+                onClick={props.onHint}
+              >
                 HINT / ヒント{props.hintUnlocked ? '（利用可能）' : ''}
               </button>
             )}
@@ -171,21 +189,19 @@ export function SystemMenu(props: Props) {
         />
       )}
 
-      <footer>
-        {view !== 'main' && (
-          <button type="button" onClick={() => setView('main')}>
-            BACK / SYSTEMへ戻る
-          </button>
-        )}
-        <button type="button" className="system-resume" onClick={props.onClose}>
-          RESUME / ゲームへ戻る
-        </button>
-        {view === 'main' && (
+      <ContextBackButton
+        destination={view === 'main' ? 'ゲームへ戻る' : 'SYSTEMへ戻る'}
+        mode={view === 'main' ? 'resume' : 'back'}
+        onClick={view === 'main' ? props.onClose : () => setView('main')}
+      />
+
+      {view === 'main' && (
+        <footer>
           <button type="button" onClick={props.onExit}>
             RETURN TO TITLE / タイトルへ戻る
           </button>
-        )}
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

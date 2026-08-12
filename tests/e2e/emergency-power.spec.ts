@@ -67,7 +67,7 @@ test('active-time warnings pause safely and reserve power survives reload', asyn
   await expect(page.getByRole('dialog', { name: '端末' })).toBeVisible();
   await page
     .getByRole('dialog', { name: '端末' })
-    .getByRole('button', { name: '装置から離れる' })
+    .getByRole('button', { name: 'BACK / 部屋に戻る' })
     .click();
 
   await page.reload();

@@ -99,10 +99,12 @@ type Props = {
   onSubtitleSettingChange: SubtitleSettingChange;
   onExit: () => void;
   onTerminalMenu: (id: TerminalMenuId) => void;
-  onInventoryToggle: () => void;
+  onInventoryOpen: () => void;
+  onInventoryClose: () => void;
   onTransmit: () => void;
   onEndingAdvance: () => void;
-  onHintToggle: () => void;
+  onHintOpen: () => void;
+  onHintClose: () => void;
   onHintReveal: () => void;
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
@@ -130,6 +132,9 @@ export function GameScreen(props: Props) {
   const inspectionTimerRef = useRef<number | null>(null);
   const inspectionLockedRef = useRef(false);
   const [locationCue, setLocationCue] = useState<string | null>(null);
+  const [systemEntryReturn, setSystemEntryReturn] = useState<
+    'inventory' | 'hint' | null
+  >(null);
   const [inspectionTargetId, setInspectionTargetId] =
     useState<HotspotId | null>(null);
   const [inspectionPhase, setInspectionPhase] = useState<
@@ -205,6 +210,7 @@ export function GameScreen(props: Props) {
 
   function toggleSystemMenu() {
     if (!props.systemMenuOpen) {
+      setSystemEntryReturn(null);
       systemReturnFocusRef.current =
         document.activeElement instanceof HTMLElement
           ? document.activeElement
@@ -262,6 +268,16 @@ export function GameScreen(props: Props) {
         if (acquisitionVisible) {
           event.preventDefault();
           props.onDismissAcquisition();
+          return;
+        }
+        if (props.inventoryOpen) {
+          event.preventDefault();
+          props.onInventoryClose();
+          return;
+        }
+        if (props.hintOpen) {
+          event.preventDefault();
+          props.onHintClose();
           return;
         }
         if (props.eventNarrative) {
@@ -581,7 +597,7 @@ export function GameScreen(props: Props) {
             <InventoryPanel
               items={props.inventory}
               onInspectMap={() => undefined}
-              onClose={props.onInventoryToggle}
+              onClose={props.onInventoryClose}
             />
           </ModalFocusScope>
         )}
@@ -595,7 +611,7 @@ export function GameScreen(props: Props) {
               stage={props.storyStage}
               level={props.hintLevel}
               onReveal={props.onHintReveal}
-              onClose={props.onHintToggle}
+              onClose={props.onHintClose}
             />
           </ModalFocusScope>
         )}
@@ -618,14 +634,21 @@ export function GameScreen(props: Props) {
             narrativeHistory={props.narrativeHistory}
             documents={props.archiveDocuments}
             returnFocusRef={systemReturnFocusRef}
+            initialFocus={systemEntryReturn}
             onClose={toggleSystemMenu}
             onToggleSound={props.onToggleSound}
             onSoundLevelChange={props.onSoundLevelChange}
             onSubtitleSettingChange={props.onSubtitleSettingChange}
             onToggleAssist={props.onToggleAssist}
             onToggleMotion={props.onToggleMotion}
-            onInventory={props.onInventoryToggle}
-            onHint={props.onHintToggle}
+            onInventory={() => {
+              setSystemEntryReturn('inventory');
+              props.onInventoryOpen();
+            }}
+            onHint={() => {
+              setSystemEntryReturn('hint');
+              props.onHintOpen();
+            }}
             onExit={props.onExit}
           />
         )}

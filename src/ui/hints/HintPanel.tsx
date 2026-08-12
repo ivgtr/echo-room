@@ -1,4 +1,5 @@
 import type { StoryStage } from '../../game/machine/gameMachine';
+import { ContextBackButton } from '../common/ContextBackButton';
 
 const hints: Partial<Record<StoryStage, [string, string, string]>> = {
   puzzle_carrier_sync: [
@@ -61,6 +62,7 @@ export function HintPanel({
       aria-modal="true"
       aria-labelledby="hint-title"
     >
+      <ContextBackButton destination="SYSTEMへ戻る" onClick={onClose} />
       <h2 id="hint-title">ヒント</h2>
       {stageHints.slice(0, level).map((hint, index) => (
         <p key={hint}>
@@ -72,9 +74,6 @@ export function HintPanel({
           次のヒントを見る
         </button>
       )}
-      <button type="button" onClick={onClose}>
-        閉じる
-      </button>
     </section>
   );
 }

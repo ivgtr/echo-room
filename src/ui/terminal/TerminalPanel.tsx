@@ -4,6 +4,7 @@ import type {
 } from '../../game/machine/gameMachine';
 import { stagePuzzle } from '../../game/machine/gameMachine';
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 import { PuzzleDevice } from '../puzzles/PuzzleDevice';
 
@@ -94,14 +95,7 @@ export function TerminalPanel(props: Props) {
           />
         )}
       </div>
-      <button
-        type="button"
-        className="terminal-back"
-        aria-label="装置から離れる"
-        onClick={props.onClose}
-      >
-        &lt; BACK
-      </button>
+      <ContextBackButton destination="部屋に戻る" onClick={props.onClose} />
     </section>
   );
 }

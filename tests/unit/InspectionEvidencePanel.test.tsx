@@ -20,7 +20,7 @@ describe('InspectionEvidencePanel', () => {
     expect(
       screen.getByText(/バッテリーの残り時間を示す時計ではない/),
     ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'BACK / 戻る' }));
+    fireEvent.click(screen.getByRole('button', { name: 'BACK / 部屋に戻る' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
@@ -85,7 +85,10 @@ describe('InspectionEvidencePanel', () => {
       screen.getByRole('heading', { name: '朝番への引き継ぎ' }),
     ).toBeVisible();
     expect(screen.getByText(/焦げ臭い回路は無理に戻さない/)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'DESK / 机に戻る' }));
+    expect(
+      screen.queryByRole('button', { name: 'BACK / 部屋に戻る' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'BACK / 机に戻る' }));
     await waitFor(() =>
       expect(
         screen.getByRole('button', {

@@ -15,6 +15,7 @@ import {
   PUZZLE_DEVICE_COPY,
   type PuzzleId,
 } from '../../game/puzzles/storyPuzzles';
+import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 
 type Props = {
@@ -145,14 +146,7 @@ function DeviceFrame({
       onKeyDownCapture={onActivity}
     >
       {!embedded && (
-        <button
-          type="button"
-          className="device-back"
-          aria-label="装置から離れる"
-          onClick={onClose}
-        >
-          &lt; BACK
-        </button>
+        <ContextBackButton destination="部屋に戻る" onClick={onClose} />
       )}
       <header className="device-identity">
         <p>{copy.eyebrow}</p>

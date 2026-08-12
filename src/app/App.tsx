@@ -497,9 +497,13 @@ export function App() {
       onTerminalMenu={(menuId) =>
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
       }
-      onInventoryToggle={() => {
+      onInventoryOpen={() => {
         setSystemMenuOpen(false);
-        setInventoryOpen((value) => !value);
+        setInventoryOpen(true);
+      }}
+      onInventoryClose={() => {
+        setInventoryOpen(false);
+        setSystemMenuOpen(true);
       }}
       onTransmit={() => {
         soundManager.playEffect('transmission');
@@ -511,9 +515,13 @@ export function App() {
         if (endingLineIndex >= 5) soundManager.playEffect('door_unlock');
         actorRef.send({ type: 'ENDING_ADVANCED' });
       }}
-      onHintToggle={() => {
+      onHintOpen={() => {
         setSystemMenuOpen(false);
-        setHintOpen((value) => !value);
+        setHintOpen(true);
+      }}
+      onHintClose={() => {
+        setHintOpen(false);
+        setSystemMenuOpen(true);
       }}
       onHintReveal={() => actorRef.send({ type: 'HINT_REQUESTED' })}
       onSystemToggle={() => {

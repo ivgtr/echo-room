@@ -295,7 +295,9 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   const terminal = page.getByRole('dialog', { name: '端末' });
   await expect(terminal.getByText('波形調整')).toBeVisible();
   await expect(saveToast).toBeHidden({ timeout: 5000 });
-  await terminal.getByRole('button', { name: '装置から離れる' }).press('Enter');
+  await terminal
+    .getByRole('button', { name: 'BACK / 部屋に戻る' })
+    .press('Enter');
   await page.reload();
   await page.getByRole('button', { name: '続きから' }).press('Enter');
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
@@ -488,11 +490,11 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   await expect(firstControl).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(
-    terminal.getByRole('button', { name: '装置から離れる' }),
+    terminal.getByRole('button', { name: 'BACK / 部屋に戻る' }),
   ).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(firstControl).toBeFocused();
-  await terminal.getByRole('button', { name: '装置から離れる' }).click();
+  await terminal.getByRole('button', { name: 'BACK / 部屋に戻る' }).click();
   await expect(terminalHotspot).toBeFocused();
   await expect(stage).toHaveAttribute('data-inspection-phase', 'idle');
 });
@@ -536,10 +538,13 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
   ).toBeVisible();
 });
 
-test('system archive and subtitle/sound settings preserve the exploration view', async ({
+test('system subviews return one level before resuming exploration', async ({
   page,
 }) => {
-  await page.addInitScript(installProgressSave, createProgressSave());
+  await page.addInitScript(
+    installProgressSave,
+    createProgressSave({ inventory: ['item_screwdriver'] }),
+  );
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
@@ -552,7 +557,24 @@ test('system archive and subtitle/sound settings preserve the exploration view',
   await expect(system.getByText('朝番への引き継ぎ')).toBeVisible();
   await expect(system.getByText('波を見るとき')).toBeVisible();
   await expect(system.getByText('戸締まり前')).toBeVisible();
+  await expect(
+    system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }),
+  ).toHaveCount(0);
   await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
+  await system.getByRole('button', { name: 'INVENTORY / 所持品' }).click();
+  const inventory = page.getByRole('dialog', { name: '所持品' });
+  await inventory.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
+  await expect(system).toBeVisible();
+  await expect(
+    system.getByRole('button', { name: 'INVENTORY / 所持品' }),
+  ).toBeFocused();
+  await system.getByRole('button', { name: /HINT \/ ヒント/ }).click();
+  const hint = page.getByRole('dialog', { name: 'ヒント' });
+  await hint.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
+  await expect(system).toBeVisible();
+  await expect(
+    system.getByRole('button', { name: /HINT \/ ヒント/ }),
+  ).toBeFocused();
   await system
     .getByRole('button', {
       name: 'TEXT & SOUND / 字幕・サウンド設定',
@@ -566,6 +588,7 @@ test('system archive and subtitle/sound settings preserve the exploration view',
   await expect(
     system.getByRole('button', { name: /MASTER \/ サウンド OFF/ }),
   ).toBeVisible();
+  await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
   await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
   await expect(page.getByRole('button', { name: 'SYSTEM' })).toBeFocused();
   await expect(stage).toHaveAttribute('data-subtitle-size', 'large');
@@ -593,6 +616,9 @@ test('system archive and subtitle/sound settings preserve the exploration view',
     .click();
   await motionSystem
     .getByRole('button', { name: 'REDUCE MOTION / 動き軽減 OFF' })
+    .click();
+  await motionSystem
+    .getByRole('button', { name: 'BACK / SYSTEMへ戻る' })
     .click();
   await motionSystem
     .getByRole('button', { name: 'RESUME / ゲームへ戻る' })

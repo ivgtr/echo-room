@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import { ContextBackButton } from '../common/ContextBackButton';
 import {
   deskEvidence,
   getDeskInterpretation,
@@ -29,24 +30,25 @@ const deskPhoto = `${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-00
 
 export function InspectionEvidencePanel(props: Props) {
   const clock = props.kind === 'clock';
+  if (!clock) {
+    return (
+      <DeskEvidenceModal
+        powerRestored={props.powerRestored}
+        completedPuzzleIds={props.completedPuzzleIds}
+        onClose={props.onClose}
+      />
+    );
+  }
+
   return (
     <section
-      className={`puzzle-modal artwork-modal evidence-modal ${clock ? 'clock-evidence-modal' : 'desk-evidence-modal'}`}
+      className="puzzle-modal artwork-modal evidence-modal clock-evidence-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="evidence-title"
     >
-      {clock ? (
-        <ClockEvidence />
-      ) : (
-        <DeskEvidence
-          powerRestored={props.powerRestored}
-          completedPuzzleIds={props.completedPuzzleIds}
-        />
-      )}
-      <button type="button" className="evidence-close" onClick={props.onClose}>
-        BACK / 戻る
-      </button>
+      <ClockEvidence />
+      <ContextBackButton destination="部屋に戻る" onClick={props.onClose} />
     </section>
   );
 }
@@ -73,12 +75,14 @@ function ClockEvidence() {
   );
 }
 
-function DeskEvidence({
+function DeskEvidenceModal({
   powerRestored,
   completedPuzzleIds,
+  onClose,
 }: {
   powerRestored: boolean;
   completedPuzzleIds: readonly PuzzleId[];
+  onClose: () => void;
 }) {
   const [selectedId, setSelectedId] = useState<DeskEvidenceId | null>(null);
   const [lifted, setLifted] = useState(false);
@@ -180,73 +184,80 @@ function DeskEvidence({
   }
 
   return (
-    <div
-      className={`desk-evidence${selected ? ' is-reading' : ''}`}
+    <section
+      className="puzzle-modal artwork-modal evidence-modal desk-evidence-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="evidence-title"
       onKeyDown={handleKeyDown}
     >
-      <header className="desk-evidence-heading">
-        <p className="eyebrow">DESK</p>
-        <h2 id="evidence-title">机の上</h2>
-      </header>
-      <div className="desk-paper-field" aria-label="机の上にある物">
-        <div className="desk-reading-shade" aria-hidden="true" />
-        {deskEvidence.map((evidence, index) => {
-          const isSelected = evidence.id === selectedId;
-          return (
-            <div
-              className={`desk-prop desk-prop-${index + 1} is-${evidence.format}${isSelected ? ' is-source' : ''}${selected && !isSelected ? ' is-set-aside' : ''}`}
-              key={evidence.id}
-              aria-hidden={selected ? true : undefined}
-            >
-              <button
-                type="button"
-                className="desk-prop-trigger"
-                aria-label={`${evidence.label}を調べる`}
-                aria-expanded={isSelected}
-                tabIndex={selected ? -1 : 0}
-                ref={(element) => {
-                  if (element) itemButtonRefs.current[evidence.id] = element;
-                }}
-                onClick={() => {
-                  selectedButtonIdRef.current = evidence.id;
-                  setLifted(false);
-                  setSelectedId(evidence.id);
-                }}
-              />
-              <DeskPropFace evidence={evidence} expanded={false} />
-            </div>
-          );
-        })}
-        {selected ? (
-          <>
-            <div
-              ref={liftedPropRef}
-              className={`desk-lifted-prop desk-lifted-prop-${selectedIndex + 1} is-${selected.format}${lifted ? ' is-lifted' : ''}`}
-              style={
-                {
-                  '--desk-lift-rotation': `${getDeskRotation(selectedIndex)}deg`,
-                } as CSSProperties
-              }
-              onTransitionEnd={handleLiftTransitionEnd}
-            >
-              <DeskPropFace evidence={selected} expanded />
-            </div>
-            <div className={`desk-reading-ui${lifted ? ' is-visible' : ''}`}>
-              <button ref={backRef} type="button" onClick={returnToDesk}>
-                DESK / 机に戻る
-              </button>
-              <p className="desk-interpretation" role="status">
-                {getDeskInterpretation(
-                  selected.id,
-                  completedPuzzleIds,
-                  powerRestored,
-                )}
-              </p>
-            </div>
-          </>
-        ) : null}
+      <div className={`desk-evidence${selected ? ' is-reading' : ''}`}>
+        <header className="desk-evidence-heading">
+          <p className="eyebrow">DESK</p>
+          <h2 id="evidence-title">机の上</h2>
+        </header>
+        <div className="desk-paper-field" aria-label="机の上にある物">
+          <div className="desk-reading-shade" aria-hidden="true" />
+          {deskEvidence.map((evidence, index) => {
+            const isSelected = evidence.id === selectedId;
+            return (
+              <div
+                className={`desk-prop desk-prop-${index + 1} is-${evidence.format}${isSelected ? ' is-source' : ''}${selected && !isSelected ? ' is-set-aside' : ''}`}
+                key={evidence.id}
+                aria-hidden={selected ? true : undefined}
+              >
+                <button
+                  type="button"
+                  className="desk-prop-trigger"
+                  aria-label={`${evidence.label}を調べる`}
+                  aria-expanded={isSelected}
+                  tabIndex={selected ? -1 : 0}
+                  ref={(element) => {
+                    if (element) itemButtonRefs.current[evidence.id] = element;
+                  }}
+                  onClick={() => {
+                    selectedButtonIdRef.current = evidence.id;
+                    setLifted(false);
+                    setSelectedId(evidence.id);
+                  }}
+                />
+                <DeskPropFace evidence={evidence} expanded={false} />
+              </div>
+            );
+          })}
+          {selected ? (
+            <>
+              <div
+                ref={liftedPropRef}
+                className={`desk-lifted-prop desk-lifted-prop-${selectedIndex + 1} is-${selected.format}${lifted ? ' is-lifted' : ''}`}
+                style={
+                  {
+                    '--desk-lift-rotation': `${getDeskRotation(selectedIndex)}deg`,
+                  } as CSSProperties
+                }
+                onTransitionEnd={handleLiftTransitionEnd}
+              >
+                <DeskPropFace evidence={selected} expanded />
+              </div>
+              <div className={`desk-reading-ui${lifted ? ' is-visible' : ''}`}>
+                <p className="desk-interpretation" role="status">
+                  {getDeskInterpretation(
+                    selected.id,
+                    completedPuzzleIds,
+                    powerRestored,
+                  )}
+                </p>
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
-    </div>
+      <ContextBackButton
+        destination={selected ? '机に戻る' : '部屋に戻る'}
+        onClick={selected ? returnToDesk : onClose}
+        {...(selected ? { buttonRef: backRef } : {})}
+      />
+    </section>
   );
 }
 

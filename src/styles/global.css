@@ -924,15 +924,11 @@ button:focus-visible {
 .system-menu footer {
   display: flex;
   gap: 1rem;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .system-menu footer button {
-  flex: 1;
-}
-
-.system-menu .system-resume {
-  border-color: #58b8b0;
+  flex: 0 1 18rem;
 }
 
 .modal-focus-scope {
@@ -999,17 +995,6 @@ button:focus-visible {
 
 .desk-evidence-modal::before {
   background: rgb(4 8 9 / 42%);
-}
-
-.evidence-modal > button {
-  justify-self: end;
-  min-width: 9rem;
-  min-height: 2.8rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid rgb(201 213 213 / 45%);
-  color: #e7efed;
-  background: rgb(5 13 14 / 92%);
-  cursor: pointer;
 }
 
 .evidence-modal {
@@ -1814,7 +1799,7 @@ button:focus-visible {
 
 .inventory-modal {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 1rem;
 }
 
@@ -2477,13 +2462,16 @@ button:focus-visible {
     sans-serif;
 }
 
-.device-back,
-.terminal-panel > .terminal-back {
+.context-back,
+.puzzle-modal .context-back,
+.terminal-modal .context-back,
+.system-menu .context-back {
   position: absolute;
-  z-index: 3;
-  top: 1rem;
-  right: 1rem;
-  min-width: 5.8rem;
+  z-index: 24;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  width: auto;
+  min-width: 9.5rem;
   min-height: 2.8rem;
   padding: 0.35rem 0.6rem;
   border: 0;
@@ -2495,6 +2483,40 @@ button:focus-visible {
     monospace;
   letter-spacing: 0.12em;
   cursor: pointer;
+  text-align: center;
+}
+
+.context-back:hover,
+.context-back:focus-visible,
+.puzzle-modal .context-back:hover,
+.puzzle-modal .context-back:focus-visible,
+.terminal-modal .context-back:hover,
+.terminal-modal .context-back:focus-visible,
+.system-menu .context-back:hover,
+.system-menu .context-back:focus-visible {
+  color: #071011;
+  background: #8de1d8;
+}
+
+@media (max-height: 640px) and (orientation: landscape) {
+  .context-back,
+  .puzzle-modal .context-back,
+  .terminal-modal .context-back,
+  .system-menu .context-back {
+    right: max(0.35rem, env(safe-area-inset-right));
+    width: 7rem;
+    min-width: 7rem;
+    min-height: 2.35rem;
+    padding: 0.25rem 0.35rem;
+    font-size: 0.62rem;
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    white-space: normal;
+  }
+
+  .context-back > span {
+    display: none;
+  }
 }
 
 .device-workarea {

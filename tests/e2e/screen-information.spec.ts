@@ -31,7 +31,10 @@ test('clock and desk compose exact story information over close-up art', async (
     'background-image',
     /gfx-close-002__blank-face__preview-flat\.webp/,
   );
-  await clock.getByRole('button', { name: 'BACK / 戻る' }).click();
+  const clockBack = clock.getByRole('button', { name: 'BACK / 部屋に戻る' });
+  const clockBackBox = await clockBack.boundingBox();
+  expect(clockBackBox).not.toBeNull();
+  await clockBack.click();
   await expect(clockHotspot).toBeFocused();
 
   await page.getByRole('button', { name: /右を向く（東側/ }).click();
@@ -65,6 +68,14 @@ test('clock and desk compose exact story information over close-up art', async (
     'background-image',
     /gfx-close-004__desk-evidence-fixed__preview-flat\.webp/,
   );
+  const deskBack = desk.getByRole('button', { name: 'BACK / 部屋に戻る' });
+  const deskBackBox = await deskBack.boundingBox();
+  expect(deskBackBox).not.toBeNull();
+  expect((deskBackBox?.x ?? 0) + (deskBackBox?.width ?? 0)).toBeCloseTo(
+    (clockBackBox?.x ?? 0) + (clockBackBox?.width ?? 0),
+    0,
+  );
+  expect(deskBackBox?.y).toBeCloseTo(clockBackBox?.y ?? 0, 0);
 
   await desk
     .getByRole('button', { name: '折り目のついた引き継ぎメモを調べる' })
@@ -86,7 +97,19 @@ test('clock and desk compose exact story information over close-up art', async (
   await expect(
     handover.getByText(/焦げ臭い回路は無理に戻さない/),
   ).toBeVisible();
-  await handover.getByRole('button', { name: 'DESK / 机に戻る' }).click();
+  const paperBack = handover.getByRole('button', {
+    name: 'BACK / 机に戻る',
+  });
+  await expect(
+    handover.getByRole('button', { name: 'BACK / 部屋に戻る' }),
+  ).toHaveCount(0);
+  const paperBackBox = await paperBack.boundingBox();
+  expect((paperBackBox?.x ?? 0) + (paperBackBox?.width ?? 0)).toBeCloseTo(
+    (deskBackBox?.x ?? 0) + (deskBackBox?.width ?? 0),
+    0,
+  );
+  expect(paperBackBox?.y).toBeCloseTo(deskBackBox?.y ?? 0, 0);
+  await paperBack.click();
 
   await desk
     .getByRole('button', { name: '書き込みのある夜勤チェック表を調べる' })
@@ -107,7 +130,7 @@ test('clock and desk compose exact story information over close-up art', async (
     fitsHeight: true,
     fitsWidth: true,
   });
-  await desk.getByRole('button', { name: 'DESK / 机に戻る' }).click();
+  await desk.getByRole('button', { name: 'BACK / 机に戻る' }).click();
 
   await page
     .getByRole('dialog', { name: '机の上' })
@@ -118,4 +141,12 @@ test('clock and desk compose exact story information over close-up art', async (
       .getByRole('dialog', { name: '机の上' })
       .getByRole('img', { name: '端末に向かう、後ろ姿の作業員' }),
   ).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(
+    desk.getByRole('button', { name: 'BACK / 部屋に戻る' }),
+  ).toBeVisible();
+  await expect(desk.getByRole('img')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(desk).toBeHidden();
+  await expect(page.getByRole('button', { name: '机を調べる' })).toBeFocused();
 });
