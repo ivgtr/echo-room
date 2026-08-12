@@ -98,9 +98,9 @@ const deviceComponents: Record<PuzzleId, ComponentType<DeviceProps>> = {
 
 const closeupImages: Partial<Record<PuzzleId, string>> = {
   puzzle_power_route:
-    'assets/images/close/gfx-close-005__all-off__preview-flat.webp',
+    'assets/images/close/gfx-close-005__circuits-off__preview-flat.webp',
   puzzle_maintenance_lock:
-    'assets/images/close/gfx-close-007__locked__preview-flat.webp',
+    'assets/images/close/gfx-close-007__symbol-reel__preview-flat.webp',
   puzzle_voiceprint_calibration:
     'assets/images/close/gfx-close-009__closed__preview-flat.webp',
 };
@@ -179,104 +179,101 @@ function DeviceFrame({
   );
 }
 
-function PowerRouteDevice({ failures, submit }: DeviceProps) {
-  const [isolated, setIsolated] = useState<string | null>(null);
-  const [sequence, setSequence] = useState<string[]>([]);
-  const [handledFailures, setHandledFailures] = useState(0);
-  const protectionTripped = failures > handledFailures;
-  const activeSequence = protectionTripped ? [] : sequence;
-  useAutoAnswer(
-    isolated && sequence.length === 3 && !protectionTripped
-      ? [isolated, ...sequence]
-      : null,
-    submit,
-  );
+function PowerRouteDevice({ submit }: DeviceProps) {
+  const [activeCircuits, setActiveCircuits] = useState<string[]>(['door']);
+  const [rejectedCircuit, setRejectedCircuit] = useState<string | null>(null);
+  const [bootStep, setBootStep] = useState(0);
   const lines = [
-    ['door', 'DOOR', '4 UNIT', 'SHORT'],
-    ['terminal', 'TERMINAL', '2 UNIT', 'STANDBY'],
-    ['intercom', 'INTERCOM', '1 UNIT', 'STANDBY'],
-    ['buffer', 'ECHO BUFFER', '3 UNIT', 'STANDBY'],
+    ['terminal', 'TERMINAL', 2],
+    ['intercom', 'INTERCOM', 1],
+    ['buffer', 'ECHO BUFFER', 3],
+    ['door', 'DOOR', 4],
   ] as const;
-  const loadUsed = activeSequence.reduce((total, id) => {
+  const healthyCircuits = ['terminal', 'intercom', 'buffer'];
+  const ready =
+    !activeCircuits.includes('door') &&
+    healthyCircuits.every((id) => activeCircuits.includes(id));
+  const loadUsed = activeCircuits.reduce((total, id) => {
     const line = lines.find(([lineId]) => lineId === id);
-    return total + Number(line?.[2].split(' ')[0] ?? 0);
+    return total + (line?.[2] ?? 0);
   }, 0);
 
+  useEffect(() => {
+    if (!ready || bootStep < 1 || bootStep > 3) return;
+    const reduced = document.documentElement.dataset.reducedMotion === 'true';
+    const delay = reduced ? 40 : 260;
+    const timer = window.setTimeout(() => {
+      const nextStep = bootStep + 1;
+      setBootStep(nextStep);
+      if (nextStep === 4) submit(['terminal', 'intercom', 'buffer']);
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [bootStep, ready, submit]);
+
+  function toggleCircuit(id: string) {
+    if (bootStep > 0) return;
+    if (id !== 'door' && activeCircuits.includes('door')) {
+      setRejectedCircuit(id);
+      submit(['short-circuit', id]);
+      window.setTimeout(() => setRejectedCircuit(null), 480);
+      return;
+    }
+    setRejectedCircuit(null);
+    const nextCircuits = activeCircuits.includes(id)
+      ? activeCircuits.filter((circuit) => circuit !== id)
+      : [...activeCircuits, id];
+    setActiveCircuits(nextCircuits);
+    if (
+      !nextCircuits.includes('door') &&
+      healthyCircuits.every((circuit) => nextCircuits.includes(circuit))
+    )
+      setBootStep(1);
+  }
+
   return (
-    <div className={`power-device${failures > 0 ? ' is-tripped' : ''}`}>
-      <div
-        className="power-meter"
+    <div
+      className={`power-device${rejectedCircuit ? ' is-rejecting' : ''}${bootStep > 0 ? ' is-booting' : ''}`}
+    >
+      <div className="power-state-layers" aria-hidden="true">
+        {healthyCircuits.map((id) =>
+          activeCircuits.includes(id) ? (
+            <i className={`power-state-layer is-${id}`} key={id} />
+          ) : null,
+        )}
+        {activeCircuits.includes('door') && (
+          <i className="power-state-layer is-door" />
+        )}
+      </div>
+      <p
+        className="power-readout"
         aria-label={`電源容量7 UNIT、使用中${loadUsed} UNIT`}
       >
-        <span>BATTERY / 7 UNIT</span>
-        <div className="battery-cells" aria-hidden="true">
-          {Array.from({ length: 7 }, (_, index) => (
-            <i className={index < loadUsed ? 'is-used' : ''} key={index} />
-          ))}
-        </div>
-        <strong>LOAD {loadUsed} / 7</strong>
-      </div>
-      <div className="power-bus" aria-hidden="true">
-        <span>DC BUS</span>
-        <i />
-      </div>
-      <div className="cable-bank" aria-label="電源配線と切り離しコネクタ">
-        {lines.map(([id, label, load, status]) => (
-          <button
-            type="button"
-            className={`power-cable${isolated === id ? ' is-unplugged' : ''}${activeSequence.includes(id) ? ' is-energized' : ''}${id === 'door' ? ' is-short' : ''}`}
-            aria-pressed={isolated === id}
-            aria-label={`${label}ケーブルを切り離す`}
-            key={id}
-            onClick={() => setIsolated((value) => (value === id ? null : id))}
-          >
-            <b className="power-branch" aria-hidden="true" />
-            <i className="cable-plug" aria-hidden="true" />
-            {id === 'door' && isolated !== id && (
-              <em className="short-spark" aria-hidden="true">
-                ⚡
-              </em>
-            )}
-            <span>{label}</span>
-            <small>
-              {load} / {status}
-            </small>
-          </button>
-        ))}
-      </div>
-      <div
-        className="control-flow"
-        aria-label="制御信号は端末から通話器、ECHO BUFFERへ流れる"
-      >
-        <span>TERMINAL</span>
-        <i aria-hidden="true">▶</i>
-        <span>INTERCOM</span>
-        <i aria-hidden="true">▶</i>
-        <span>ECHO BUFFER</span>
-      </div>
-      <div className="breaker-bank" aria-label="起動ブレーカー">
-        {lines.slice(1).map(([id, label]) => {
-          const order = activeSequence.indexOf(id) + 1;
+        CAPACITY 7 / AUX LOAD {loadUsed > 7 ? 'OVER' : loadUsed}
+      </p>
+      <p className="power-protection" role="status" aria-live="assertive">
+        {rejectedCircuit
+          ? 'DOOR LINE SHORT — SWITCH REJECTED'
+          : bootStep > 0
+            ? 'AUXILIARY SYSTEMS STARTING'
+            : activeCircuits.includes('door')
+              ? 'DOOR LINE / FAULT'
+              : 'DOOR LINE / ISOLATED'}
+      </p>
+      <div className="breaker-bank" aria-label="非常電源の四回路">
+        {lines.map(([id, label, load], index) => {
+          const active = activeCircuits.includes(id);
+          const started = id !== 'door' && bootStep > index;
           return (
             <button
               type="button"
-              className={`physical-breaker${order ? ' is-on' : ''}`}
-              aria-pressed={order > 0}
-              aria-label={`${label}ブレーカー`}
+              className={`physical-breaker${active ? ' is-on' : ''}${id === 'door' ? ' is-short' : ''}${rejectedCircuit === id ? ' is-rejected' : ''}${started ? ' is-started' : ''}`}
+              aria-pressed={active}
+              aria-label={`${label}回路、${active ? 'ON' : 'OFF'}、消費ランプ${load}個`}
+              disabled={bootStep > 0}
               key={id}
-              onClick={() => {
-                if (protectionTripped) {
-                  setHandledFailures(failures);
-                  setSequence([id]);
-                  return;
-                }
-                if (order || sequence.length >= 3) return;
-                setSequence((current) => [...current, id]);
-              }}
+              onClick={() => toggleCircuit(id)}
             >
-              <i aria-hidden="true" />
-              <span>{label}</span>
-              <output>{order ? 'ON' : 'OFF'}</output>
+              <span className="circuit-name">{label}</span>
             </button>
           );
         })}
@@ -450,15 +447,19 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
                   );
                 }}
               >
-                <small>
-                  {
-                    symbols[
-                      (symbolIndex - 1 + symbols.length) % symbols.length
-                    ]![1]
-                  }
-                </small>
-                <strong>{symbol}</strong>
-                <small>{symbols[(symbolIndex + 1) % symbols.length]![1]}</small>
+                <span className="symbol-reel-window" aria-hidden="true">
+                  <small>
+                    {
+                      symbols[
+                        (symbolIndex - 1 + symbols.length) % symbols.length
+                      ]![1]
+                    }
+                  </small>
+                  <strong key={`${index}-${value}`}>{symbol}</strong>
+                  <small>
+                    {symbols[(symbolIndex + 1) % symbols.length]![1]}
+                  </small>
+                </span>
               </button>
             );
           })}
@@ -466,10 +467,10 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
         <button
           type="button"
           className="lock-handle"
+          aria-label="LOCK HANDLE"
           onClick={() => submit(dials)}
         >
           <i aria-hidden="true" />
-          <span>LOCK HANDLE</span>
         </button>
       </div>
     </div>

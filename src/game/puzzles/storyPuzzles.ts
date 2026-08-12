@@ -20,7 +20,7 @@ export const PUZZLE_DEVICE_COPY: Record<PuzzleId, PuzzleDeviceCopy> = {
   puzzle_power_route: {
     eyebrow: 'EMERGENCY POWER / BYPASS',
     title: '非常電源切替盤',
-    incorrectFeedback: '保護回路が作動。隔離線か投入順を点検。',
+    incorrectFeedback: 'SHORT CIRCUIT。DOOR回路を点検。',
   },
   puzzle_carrier_sync: {
     eyebrow: 'ECHO BUFFER / CARRIER',
@@ -55,7 +55,7 @@ export const PUZZLE_DEVICE_COPY: Record<PuzzleId, PuzzleDeviceCopy> = {
 };
 
 const correctAnswers: Record<PuzzleId, readonly string[]> = {
-  puzzle_power_route: ['door', 'terminal', 'intercom', 'buffer'],
+  puzzle_power_route: ['terminal', 'intercom', 'buffer'],
   puzzle_carrier_sync: ['right-2', 'none', 'left-1'],
   puzzle_maintenance_lock: ['double', 'ring', 'triangle', 'node'],
   puzzle_signal_investigation: [

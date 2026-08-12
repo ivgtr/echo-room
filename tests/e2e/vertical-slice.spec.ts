@@ -176,28 +176,22 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     '[data-puzzle-id="puzzle_power_route"]:visible',
   );
   await powerPuzzle
-    .getByRole('button', { name: 'TERMINALケーブルを切り離す' })
+    .getByRole('button', { name: /TERMINAL回路、OFF/ })
     .press('Enter');
-  for (const name of [
-    'TERMINALブレーカー',
-    'INTERCOMブレーカー',
-    'ECHO BUFFERブレーカー',
-  ])
-    await powerPuzzle.getByRole('button', { name }).press('Enter');
   await expect(page.getByText('PROTECTION / TRIPPED')).toBeVisible();
   await powerPuzzle
-    .getByRole('button', { name: 'DOORケーブルを切り離す' })
+    .getByRole('button', { name: /DOOR回路、ON/ })
     .press('Enter');
   await expect(
-    powerPuzzle.getByRole('button', { name: 'DOORケーブルを切り離す' }),
-  ).toHaveAttribute('aria-pressed', 'true');
+    powerPuzzle.getByRole('button', { name: /DOOR回路、OFF/ }),
+  ).toHaveAttribute('aria-pressed', 'false');
   await expect(
-    powerPuzzle.getByRole('button', { name: 'TERMINALブレーカー' }),
+    powerPuzzle.getByRole('button', { name: /TERMINAL回路、OFF/ }),
   ).toHaveAttribute('aria-pressed', 'false');
   for (const name of [
-    'TERMINALブレーカー',
-    'INTERCOMブレーカー',
-    'ECHO BUFFERブレーカー',
+    /ECHO BUFFER回路、OFF/,
+    /TERMINAL回路、OFF/,
+    /INTERCOM回路、OFF/,
   ])
     await powerPuzzle.getByRole('button', { name }).press('Enter');
 

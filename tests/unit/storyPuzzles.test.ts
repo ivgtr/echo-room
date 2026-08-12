@@ -8,7 +8,7 @@ import {
 import { getPuzzleCompletionEntries } from '../../src/ui/narrative/narrativeArchive';
 
 const solutions: Record<PuzzleId, string[]> = {
-  puzzle_power_route: ['door', 'terminal', 'intercom', 'buffer'],
+  puzzle_power_route: ['terminal', 'intercom', 'buffer'],
   puzzle_carrier_sync: ['right-2', 'none', 'left-1'],
   puzzle_maintenance_lock: ['double', 'ring', 'triangle', 'node'],
   puzzle_signal_investigation: [

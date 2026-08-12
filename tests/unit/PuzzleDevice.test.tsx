@@ -13,7 +13,7 @@ import { PuzzleDevice } from '../../src/ui/puzzles/PuzzleDevice';
 afterEach(() => vi.useRealTimers());
 
 describe('PuzzleDevice', () => {
-  it('uses cable isolation and the physical breaker order as the power answer', async () => {
+  it('blocks auxiliary circuits until DOOR is off, then restores power in any order', async () => {
     const onSubmit = vi.fn();
     render(
       <PuzzleDevice
@@ -24,29 +24,35 @@ describe('PuzzleDevice', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'DOORケーブルを切り離す' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /TERMINAL回路、OFF/ }));
+    expect(onSubmit).toHaveBeenCalledWith('puzzle_power_route', [
+      'short-circuit',
+      'terminal',
+    ]);
+    expect(
+      screen.getByRole('button', { name: /DOOR回路、ON/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: /DOOR回路、ON/ }));
     for (const name of [
-      'TERMINALブレーカー',
-      'INTERCOMブレーカー',
-      'ECHO BUFFERブレーカー',
+      /ECHO BUFFER回路、OFF/,
+      /TERMINAL回路、OFF/,
+      /INTERCOM回路、OFF/,
     ])
       fireEvent.click(screen.getByRole('button', { name }));
-
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith('puzzle_power_route', [
-        'door',
-        'terminal',
-        'intercom',
-        'buffer',
-      ]),
+    await waitFor(
+      () =>
+        expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
+          'terminal',
+          'intercom',
+          'buffer',
+        ]),
+      { timeout: 1500 },
     );
     expect(screen.queryByText(/選択済み/)).not.toBeInTheDocument();
     expect(screen.queryByText('この答えで確認する')).not.toBeInTheDocument();
   });
 
-  it('trips only the breakers after a failed power order and keeps cable isolation', async () => {
+  it('keeps the rejected switch down while the short is active', () => {
     const onSubmit = vi.fn();
     const view = render(
       <PuzzleDevice
@@ -57,17 +63,7 @@ describe('PuzzleDevice', () => {
       />,
     );
     const device = within(view.container);
-    const doorCable = device.getByRole('button', {
-      name: 'DOORケーブルを切り離す',
-    });
-    fireEvent.click(doorCable);
-    for (const name of [
-      'INTERCOMブレーカー',
-      'TERMINALブレーカー',
-      'ECHO BUFFERブレーカー',
-    ])
-      fireEvent.click(device.getByRole('button', { name }));
-    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    fireEvent.click(device.getByRole('button', { name: /TERMINAL回路、OFF/ }));
 
     view.rerender(
       <PuzzleDevice
@@ -78,31 +74,13 @@ describe('PuzzleDevice', () => {
       />,
     );
 
-    expect(doorCable).toHaveAttribute('aria-pressed', 'true');
-    for (const name of [
-      'TERMINALブレーカー',
-      'INTERCOMブレーカー',
-      'ECHO BUFFERブレーカー',
-    ])
-      expect(device.getByRole('button', { name })).toHaveAttribute(
-        'aria-pressed',
-        'false',
-      );
-
-    for (const name of [
-      'TERMINALブレーカー',
-      'INTERCOMブレーカー',
-      'ECHO BUFFERブレーカー',
-    ])
-      fireEvent.click(device.getByRole('button', { name }));
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
-        'door',
-        'terminal',
-        'intercom',
-        'buffer',
-      ]),
-    );
+    expect(
+      device.getByRole('button', { name: /DOOR回路、ON/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      device.getByRole('button', { name: /TERMINAL回路、OFF/ }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(device.getByText('PROTECTION / TRIPPED')).toBeVisible();
   });
 
   it('submits carrier offsets when the waveforms themselves reach the lock point', async () => {

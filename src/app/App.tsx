@@ -570,7 +570,7 @@ const puzzleFailureCue: Record<PuzzleId, SoundEffectId> = {
 
 function deskDiscoveryText(powerRestored: boolean, stage: string) {
   if (!powerRestored)
-    return '非常電源は7 UNITまで。ドアの線はショートしている。起動順も記されている。';
+    return '非常電源は7 UNITまで。各回路の負荷と、ドアの線がショートしていることが記されている。';
   if (stage === 'puzzle_carrier_sync')
     return '同期調整メモだ。早い波は右へ、遅い波は左へ動かす。';
   return '夜間点検は、端末、通話器、ECHO BUFFER、ドアの順だ。各機器の銘板記号を使う。';

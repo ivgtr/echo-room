@@ -84,7 +84,7 @@ function PowerPlan() {
         <p className="document-annotation">
           DOOR LINE: SHORT DETECTED
           <br />
-          START: TERMINAL → INTERCOM → BUFFER
+          ISOLATE BEFORE RESTORING AUXILIARY CIRCUITS
         </p>
       </article>
     </div>

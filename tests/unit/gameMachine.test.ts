@@ -43,7 +43,7 @@ describe('gameMachine vertical slice', () => {
     actor.send({
       type: 'PUZZLE_SUBMITTED',
       puzzleId: 'puzzle_power_route',
-      answer: ['door', 'terminal', 'intercom', 'buffer'],
+      answer: ['terminal', 'intercom', 'buffer'],
     });
     expect(actor.getSnapshot().matches({ playing: 'powered' })).toBe(true);
     expect(actor.getSnapshot().context.completedPuzzleIds).toEqual([

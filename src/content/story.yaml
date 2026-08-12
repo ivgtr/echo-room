@@ -68,7 +68,7 @@ documents:
   - {
       id: document_power_plan,
       title: EMERGENCY BYPASS PLAN,
-      body: 容量は7 UNIT。ドアの線はショート。起動順は端末、通話器、BUFFER。,
+      body: 容量は7 UNIT。TERMINAL 2、INTERCOM 1、BUFFER 3、DOOR 4。ドアの線はショート。,
     }
   - {
       id: document_synchronization_note,
@@ -119,8 +119,8 @@ dialogues:
 puzzles:
   - id: puzzle_power_route
     kind: routing
-    correctAnswer: [door, terminal, intercom, buffer]
-    incorrectFeedback: 保護回路が切れた。負荷か起動順が合っていない。
+    correctAnswer: [terminal, intercom, buffer]
+    incorrectFeedback: SHORT CIRCUIT。DOOR回路を点検。
     effects: [{ type: unlockTerminal, menuId: system }]
     hintIds: [hint_power_1, hint_power_2, hint_power_3]
   - id: puzzle_carrier_sync
@@ -174,13 +174,13 @@ hints:
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: ドアの線を切り離し、必要な設備だけを使う。,
+      text: DOOR回路がONの間、ほかの回路は保護機構に拒否される。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: ドアの線を切る。端末、通話器、BUFFERの順。,
+      text: DOORをOFFにしてから、端末、通話器、BUFFERをONにする。順番は問わない。,
     }
   - {
       id: hint_carrier_1,
