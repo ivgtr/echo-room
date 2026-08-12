@@ -27,6 +27,7 @@ import { ModalFocusScope } from './accessibility/ModalFocusScope';
 import { IntroDialogue } from './dialogue/IntroDialogue';
 import { EndingPanel } from './ending/EndingPanel';
 import { InspectionEvidencePanel } from './evidence/InspectionEvidencePanel';
+import { InspectionTrace } from './exploration/InspectionTrace';
 import { HintPanel } from './hints/HintPanel';
 import { ItemAcquisitionNotice } from './inventory/ItemAcquisitionNotice';
 import { InventoryPanel } from './inventory/InventoryPanel';
@@ -477,10 +478,9 @@ export function GameScreen(props: Props) {
             role="status"
             aria-label={inspectionTarget.label}
           >
-            <div
-              className="inspection-transition-marker"
-              style={hotspotClipStyle(inspectionTarget)}
-              aria-hidden="true"
+            <InspectionTrace
+              hotspot={inspectionTarget}
+              motionReduced={props.motionReduced}
             />
             <span className="inspection-transition-label" aria-hidden="true">
               {inspectionTarget.label}

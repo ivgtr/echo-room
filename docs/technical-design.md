@@ -283,6 +283,7 @@ type HotspotDefinition = {
   id: HotspotId;
   label: string;
   shape: Polygon | Rectangle;
+  inspectionOutline: Polygon | Rectangle | Ellipse;
   cursor: 'inspect' | 'move' | 'use';
   visibleWhen?: Condition[];
   enabledWhen?: Condition[];
@@ -294,6 +295,7 @@ type HotspotDefinition = {
 - 座標は論理解像度に対する正規化値で持つ。
 - 矩形だけでなく多角形を利用できる。
 - ポインター向け領域は見た目より少し広くし、タッチ時の最小選択寸法を確保する。
+- 操作判定用polygonと調査開始時の演出用輪郭は同じHotspot View Model内で別に持つ。演出用輪郭は機器類の四角形、時計の円、机の台形など、対象に合う単純な形とし、判定用polygonを可視化しない。
 - キーボード操作時はフォーカス輪郭と対象名を表示する。
 - PixiJSと同じHotspot View ModelからReactのDOMオーバーレイを生成し、各対象へ名前、役割、フォーカス順を与える。
 - ReactのUIとPixiJSのホットスポットが同時に入力を受けないよう、モーダル表示中はWorld Viewの入力を停止する。

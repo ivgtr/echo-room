@@ -366,33 +366,79 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   expect(intercomLabelBox!.x + intercomLabelBox!.width).toBeLessThanOrEqual(
     stageBox!.x + stageBox!.width,
   );
-  await page.clock.install();
+  await page.evaluate(() => {
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    let inspectionTimerExtended = false;
+    window.setTimeout = ((
+      handler: TimerHandler,
+      timeout?: number,
+      ...args: unknown[]
+    ) => {
+      if (timeout === 380 && !inspectionTimerExtended) {
+        inspectionTimerExtended = true;
+        return nativeSetTimeout(handler, 3000, ...args);
+      }
+      return nativeSetTimeout(handler, timeout, ...args);
+    }) as typeof window.setTimeout;
+  });
   await intercom.dispatchEvent('click');
+  const transitionMarker = page.locator('.inspection-transition-marker');
+  await expect(transitionMarker).toBeVisible();
+  await expect
+    .poll(() =>
+      transitionMarker.evaluate((canvas) => {
+        if (!(canvas instanceof HTMLCanvasElement)) return 0;
+        const pixels = canvas
+          .getContext('2d')
+          ?.getImageData(0, 0, canvas.width, canvas.height).data;
+        if (!pixels) return 0;
+        let paintedPixels = 0;
+        for (let index = 3; index < pixels.length; index += 4) {
+          if (pixels[index] !== 0) paintedPixels += 1;
+        }
+        return paintedPixels;
+      }),
+    )
+    .toBeGreaterThan(0);
   const transitionMetrics = await page
     .locator('.inspection-transition-target')
     .evaluate((target) => {
       const marker = target.querySelector('.inspection-transition-marker');
       const label = target.querySelector('.inspection-transition-label');
-      if (!(marker instanceof HTMLElement) || !(label instanceof HTMLElement))
+      if (
+        !(marker instanceof HTMLCanvasElement) ||
+        !(label instanceof HTMLElement)
+      )
         return null;
       const markerBox = marker.getBoundingClientRect();
       const labelBox = label.getBoundingClientRect();
+      const context = marker.getContext('2d');
+      const pixels = context?.getImageData(
+        0,
+        0,
+        marker.width,
+        marker.height,
+      ).data;
+      let paintedPixels = 0;
+      if (pixels) {
+        for (let index = 3; index < pixels.length; index += 4) {
+          if (pixels[index] !== 0) paintedPixels += 1;
+        }
+      }
       return {
         markerWidth: markerBox.width,
-        labelWidth: labelBox.width,
         labelLeft: labelBox.left,
         labelRight: labelBox.right,
+        paintedPixels,
       };
     });
   expect(transitionMetrics).not.toBeNull();
-  expect(transitionMetrics!.labelWidth).toBeGreaterThan(
-    transitionMetrics!.markerWidth,
-  );
+  expect(transitionMetrics!.markerWidth).toBeGreaterThan(0);
   expect(transitionMetrics!.labelLeft).toBeGreaterThanOrEqual(stageBox!.x);
   expect(transitionMetrics!.labelRight).toBeLessThanOrEqual(
     stageBox!.x + stageBox!.width,
   );
-  await page.clock.fastForward(380);
+  expect(transitionMetrics!.paintedPixels).toBeGreaterThan(0);
   await page.getByRole('button', { name: '文章をすべて表示' }).click();
   await expect(page.locator('.narrative-text')).toHaveAttribute(
     'data-text-complete',
@@ -420,6 +466,7 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   const terminalHotspot = page.getByRole('button', {
     name: '端末を調べる',
   });
+  await page.clock.install();
   await terminalHotspot.evaluate((element) => {
     if (element instanceof HTMLElement) {
       element.click();
@@ -428,6 +475,7 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   });
   await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
   await expect(page.locator('.inspection-transition-marker')).toBeVisible();
+  await page.clock.fastForward(380);
   const terminal = page.getByRole('dialog', { name: '端末' });
   await expect(terminal).toHaveCount(1);
   await expect(stage).toHaveAttribute('data-inspection-phase', 'active');
@@ -473,9 +521,15 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.setViewportSize({ width: 844, height: 390 });
+  await page.clock.install();
   await door.dispatchEvent('click');
   await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
+  await expect(page.locator('.inspection-transition-marker')).toHaveAttribute(
+    'data-trace-duration',
+    '0',
+  );
   await expect(world).toHaveCSS('transform', 'none');
+  await page.clock.fastForward(380);
   await expect(
     page.getByText('非常ロックがかかっている。通信が終わるまで開かない。'),
   ).toBeVisible();

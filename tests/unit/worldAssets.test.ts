@@ -32,6 +32,29 @@ describe('world runtime assets', () => {
     }
   });
 
+  it('uses simple inspection outlines instead of exposing hit polygons', () => {
+    const outlines = Object.values(worldViewAssets)
+      .flatMap(({ hotspots }) => hotspots)
+      .map(({ id, inspectionOutline }) => [id, inspectionOutline.kind]);
+
+    expect(outlines).toEqual([
+      ['hotspot_clock', 'ellipse'],
+      ['hotspot_door', 'rectangle'],
+      ['hotspot_intercom', 'rectangle'],
+      ['hotspot_terminal', 'rectangle'],
+      ['hotspot_analysis_panel', 'rectangle'],
+      ['hotspot_desk', 'polygon'],
+      ['hotspot_locker', 'rectangle'],
+      ['hotspot_breaker', 'rectangle'],
+    ]);
+    const desk = worldViewAssets.location_south_wall.hotspots[0];
+    expect(
+      desk?.inspectionOutline.kind === 'polygon'
+        ? desk.inspectionOutline.points
+        : [],
+    ).toHaveLength(4);
+  });
+
   it('matches the approved west-wall object order', () => {
     const west = worldViewAssets.location_west_wall.hotspots;
     expect(
