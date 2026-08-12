@@ -13,17 +13,17 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).press('Enter');
 
-  await openHotspot(page, '壁面端末を調べる');
+  await openHotspot(page, '端末を調べる');
   await solveCarrier(page);
 
-  await turnRight(page, '南壁');
-  await turnRight(page, '西壁');
+  await turnRight(page, '南側');
+  await turnRight(page, '西側');
   await expect(page.locator('.world-nameplate')).toHaveCount(0);
   await openHotspot(page, 'ロッカーを調べる');
   await solveLocker(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_03');
   const lockerMessage = page.getByRole('dialog', { name: 'メッセージ' });
-  await expect(lockerMessage).toContainText('未確認の通信ログが3件ある');
+  await expect(lockerMessage).toContainText('未確認の通信記録が3件ある');
   const lockerMessageText = await lockerMessage.textContent();
   expect(lockerMessageText).not.toContain('MESSAGE LOG');
   expect(lockerMessageText).not.toContain('E-01 OCCUPANT');
@@ -39,31 +39,31 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await expect(page.getByRole('dialog', { name: 'SYSTEM' })).toHaveCount(0);
   await advanceNarratives(page, 1);
   const acquisition = page.getByRole('dialog', { name: '所持品を入手した' });
-  await expect(acquisition.getByText('設備・配線図')).toBeVisible();
+  await expect(acquisition.getByText('施設図')).toBeVisible();
   await acquisition
     .getByRole('button', { name: '所持品に追加' })
     .press('Enter');
 
-  await turnRight(page, '北壁');
-  await turnRight(page, '東壁');
-  await openHotspot(page, '壁面端末を調べる');
+  await turnRight(page, '北側');
+  await turnRight(page, '東側');
+  await openHotspot(page, '端末を調べる');
   await page.getByRole('button', { name: 'LOG' }).press('Enter');
   await solveSignalInvestigation(page);
 
-  await openHotspot(page, '壁面端末を調べる');
+  await openHotspot(page, '端末を調べる');
   await page.getByRole('button', { name: 'SIGNAL' }).press('Enter');
   await solvePacketRail(page);
 
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_05');
 
-  await openHotspot(page, '解析パネルを調べる');
+  await openHotspot(page, '端末横のパネルを調べる');
   await solveVoiceprint(page);
 
-  await openHotspot(page, '壁面端末を調べる');
+  await openHotspot(page, '端末を調べる');
   await solveTransmissionPatch(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_07');
 
-  const terminal = page.getByRole('dialog', { name: '壁面端末' });
+  const terminal = page.getByRole('dialog', { name: '端末' });
   await expect(terminal.getByText('確認完了：7 / 7')).toBeVisible();
   await terminal
     .getByRole('button', { name: '赤い送信ボタンを押す' })
@@ -85,7 +85,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   );
   await page.getByRole('button', { name: '通信を終える' }).press('Enter');
   await expect(page.getByText(/ドア解錠/)).toBeVisible();
-  await page.getByRole('button', { name: '鉄製ドアを調べる' }).press('Enter');
+  await page.getByRole('button', { name: 'ドアを調べる' }).press('Enter');
   await expect(page.getByText('TRANSMISSION COMPLETE')).toBeVisible();
   await expectSavedCheckpoint(page, 'checkpoint_completed');
 });
@@ -127,7 +127,9 @@ async function solveCarrier(page: Page) {
 async function solveLocker(page: Page) {
   const device = await puzzle(page);
   await device.getByRole('spinbutton', { name: 'ダイヤル1' }).press('ArrowUp');
-  await device.getByRole('button', { name: 'LOCK HANDLE' }).press('Enter');
+  await device
+    .getByRole('button', { name: 'ロッカーのハンドル' })
+    .press('Enter');
   await expect(
     device.getByRole('spinbutton', { name: 'ダイヤル1' }),
   ).toHaveAttribute('aria-valuenow', '0');
@@ -136,7 +138,9 @@ async function solveLocker(page: Page) {
     await device
       .getByRole('spinbutton', { name: `ダイヤル${index}` })
       .press('ArrowUp');
-  await device.getByRole('button', { name: 'LOCK HANDLE' }).press('Enter');
+  await device
+    .getByRole('button', { name: 'ロッカーのハンドル' })
+    .press('Enter');
   await expect(device).toBeHidden();
 }
 
@@ -221,7 +225,7 @@ async function solveTransmissionPatch(page: Page) {
   ];
   for (let index = 0; index < 4; index += 1) {
     await device
-      .getByRole('button', { name: `送信断片「${packetLabels[index]}」` })
+      .getByRole('button', { name: `送信する文「${packetLabels[index]}」` })
       .press('Enter');
     await device
       .getByRole('button', {
@@ -234,10 +238,10 @@ async function solveTransmissionPatch(page: Page) {
   await expect(device.getByText('DELAY / RECHECK')).toBeVisible();
   await expect(device.getByText('ROUTE / RECHECK')).toBeVisible();
   await device
-    .getByRole('spinbutton', { name: '送信遅延ダイヤル' })
+    .getByRole('spinbutton', { name: '時間差ダイヤル' })
     .press('Enter');
   await device
-    .getByRole('spinbutton', { name: '送信終端ダイヤル' })
+    .getByRole('spinbutton', { name: '送り先ダイヤル' })
     .press('Enter');
   await expect(device.getByText('DELAY / LOCKED')).toBeVisible();
   await expect(device.getByText('ROUTE / LOCKED')).toBeVisible();

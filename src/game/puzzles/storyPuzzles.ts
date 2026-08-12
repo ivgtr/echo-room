@@ -19,38 +19,39 @@ export type PuzzleDeviceCopy = {
 export const PUZZLE_DEVICE_COPY: Record<PuzzleId, PuzzleDeviceCopy> = {
   puzzle_power_route: {
     eyebrow: 'EMERGENCY POWER / BYPASS',
-    title: '非常電源切替盤',
-    incorrectFeedback: 'CONTROL SIGNAL MISSING。配線の上流を確認。',
+    title: '非常電源',
+    incorrectFeedback:
+      'CONTROL SIGNAL MISSING。配線の始まりに近い機器から確認。',
   },
   puzzle_carrier_sync: {
     eyebrow: 'ECHO BUFFER / CARRIER',
-    title: '搬送波同期器',
+    title: '波形調整',
     incorrectFeedback: '同期できない。開始位置が基準と合っていない。',
   },
   puzzle_maintenance_lock: {
     eyebrow: 'MAINTENANCE / SYMBOL LOCK',
-    title: '保守ロッカー錠',
-    incorrectFeedback: 'LOCKED。銘板の並びと一致していない。',
+    title: 'ロッカーの記号錠',
+    incorrectFeedback: 'LOCKED。記号の並びが合っていない。',
   },
   puzzle_signal_investigation: {
     eyebrow: 'LOG / CONDUIT INVESTIGATION',
-    title: '通信ログ・配線調査盤',
+    title: '通信記録と配線',
     incorrectFeedback: 'TRACE ERROR。波形か接続経路が一致していない。',
   },
   puzzle_packet_repair: {
     eyebrow: 'SIGNAL / FRAME RAIL',
-    title: 'PACKET復元レール',
+    title: '破損データの復元',
     incorrectFeedback: 'FRAME ERROR。断片の端がつながっていない。',
   },
   puzzle_voiceprint_calibration: {
     eyebrow: 'VOICEPRINT / CALIBRATION',
-    title: '声紋特徴量校正器',
+    title: '声紋照合',
     incorrectFeedback: 'NO MATCH。三つの特徴のどれかが記録と違う。',
   },
   puzzle_transmission_window: {
     eyebrow: 'ECHO BUFFER / TEST ROUTE',
-    title: '送信窓設定盤',
-    incorrectFeedback: 'TEST FAILED。受信窓、遅延、終端を点検。',
+    title: '送信設定',
+    incorrectFeedback: 'TEST FAILED。受信枠、時間差、送り先を確認。',
   },
 };
 

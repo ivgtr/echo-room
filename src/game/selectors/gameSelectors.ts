@@ -39,22 +39,23 @@ export const selectReservePower = (snapshot: GameSnapshot) =>
   snapshot.context.reservePower;
 
 const objectives: Partial<Record<StoryStage, string>> = {
-  puzzle_carrier_sync: 'デスクの保守メモと、端末の波の位置を見比べる。',
-  puzzle_maintenance_lock: 'デスクの夜勤メモと、部屋にある4つの銘板を調べる。',
+  puzzle_carrier_sync: '机の調整メモと、端末の波の位置を見比べる。',
+  puzzle_maintenance_lock: '机の夜勤メモと、4つの機器に刻まれた記号を調べる。',
   puzzle_signal_investigation:
     '端末のLOGで波形をつなぎ、そのまま配線の行き先を追う。',
   puzzle_packet_repair: '端末のSIGNALに残った破損データを調べる。',
-  puzzle_voiceprint_calibration: '職員カードと解析パネルの波形を見比べる。',
+  puzzle_voiceprint_calibration:
+    '職員証と、端末横のパネルに出た波形を見比べる。',
   puzzle_transmission_window:
-    '判明した時間差と回線を使い、送信予約を完成させる。',
+    '判明した時間差と回線を使い、送信の準備を整える。',
   transmission_ready: 'SYSTEMで送る内容を確認し、赤いボタンを押す。',
 };
 
 export const selectObjective = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;
   if (snapshot.matches({ playing: 'powered' }))
-    return objectives[snapshot.context.storyStage] ?? '脱出経路を確認する。';
-  return 'デスクで容量と壊れた線を調べ、ブレーカーをつなぐ。';
+    return objectives[snapshot.context.storyStage] ?? '出口を探す。';
+  return '机の紙と壊れた回路を調べ、ブレーカーを入れる。';
 };
 
 export const selectSubtitle = (snapshot: GameSnapshot) => {
@@ -63,11 +64,11 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   const stage = snapshot.context.storyStage;
   if (stage === 'puzzle_maintenance_lock') {
     if (hotspot === 'hotspot_door')
-      return 'ドアの銘板には、ひし形の「◆」が刻まれている。';
+      return 'ドアには、ひし形の「◆」が刻まれている。';
     if (hotspot === 'hotspot_intercom')
-      return '通話器の銘板には、丸い「○」が刻まれている。';
+      return 'インターホンには、丸い「○」が刻まれている。';
     if (hotspot === 'hotspot_breaker')
-      return '転送装置の回路銘板には、三角の「△」が刻まれている。';
+      return '転送装置の回路には、三角の「△」が刻まれている。';
   }
   if (hotspot === 'hotspot_door')
     return stage === 'transmission_ready'
@@ -77,7 +78,7 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
         : '非常ロックがかかっている。通信が終わるまで開かない。';
   if (hotspot === 'hotspot_intercom')
     return stage === 'puzzle_signal_investigation'
-      ? '丸い端子から、通信線が設備壁の中へ続いている。'
+      ? '丸い端子から、通信線が機械設備区画へ続いている。'
       : '音声は流れない。文章と声紋を含む通信データが届いている。';
   if (hotspot === 'hotspot_terminal' && !snapshot.context.powerRestored)
     return '端末には電源が来ていない。';
@@ -85,10 +86,10 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
     hotspot === 'hotspot_analysis_panel' &&
     stage !== 'puzzle_voiceprint_calibration'
   )
-    return '受信データと職員記録を比べる装置だ。今はまだ使えない。';
+    return '端末横のパネルだ。今はまだ開けられない。';
   if (hotspot === 'hotspot_locker' && stage !== 'puzzle_maintenance_lock')
     return snapshot.context.inventory.length > 0
-      ? '保守ロッカーは開いている。必要な物は回収済みだ。'
+      ? 'ロッカーは開いている。必要な物は回収済みだ。'
       : '数字ではなく、4つの機器記号で開ける錠だ。';
   return null;
 };

@@ -78,7 +78,7 @@ test('aligns locker controls to the close-up artwork coordinate system', async (
 
   const device = page.locator('[data-puzzle-id="puzzle_maintenance_lock"]');
   const firstDial = device.getByRole('spinbutton', { name: 'ダイヤル1' });
-  const handle = device.getByRole('button', { name: 'LOCK HANDLE' });
+  const handle = device.getByRole('button', { name: 'ロッカーのハンドル' });
   await expect(firstDial).toBeVisible();
   await firstDial.focus();
   const [deviceBox, dialBox, handleBox] = await Promise.all([
@@ -129,10 +129,10 @@ test('keeps one canvas while crossfading all four room views', async ({
   });
 
   for (const [buttonName, viewName] of [
-    [/右を向く（東壁/, '東壁'],
-    [/右を向く（南壁/, '南壁'],
-    [/右を向く（西壁/, '西壁'],
-    [/右を向く（北壁/, '北壁'],
+    [/右を向く（東側/, '東側'],
+    [/右を向く（南側/, '南側'],
+    [/右を向く（西側/, '西側'],
+    [/右を向く（北側/, '北側'],
   ] as const) {
     await world.evaluate((element) => {
       element.dataset.sawTransition = 'false';
@@ -189,7 +189,7 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     element.dataset.persistenceMarker = 'before-power';
   });
   const doorHotspot = page.getByRole('button', {
-    name: '鉄製ドアを調べる',
+    name: 'ドアを調べる',
   });
   await doorHotspot.focus();
   await page.keyboard.press('Escape');
@@ -204,10 +204,10 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     'true',
   );
   await expect(
-    system.getByText('デスクで容量と壊れた線を調べ、ブレーカーをつなぐ。'),
+    system.getByText('机の紙と壊れた回路を調べ、ブレーカーを入れる。'),
   ).toBeVisible();
   const archiveEntry = system.getByRole('button', {
-    name: 'ARCHIVE / 会話履歴・資料再読',
+    name: 'ARCHIVE / 会話履歴・資料',
   });
   await expect(archiveEntry).toBeFocused();
   await page.keyboard.press('Shift+Tab');
@@ -237,7 +237,7 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await page.keyboard.press('ArrowLeft');
   await page
     .getByLabel('調査対象')
-    .getByRole('button', { name: 'ブレーカーパネルを調べる' })
+    .getByRole('button', { name: 'ブレーカーを調べる' })
     .press('Enter');
 
   const powerPuzzle = page.locator(
@@ -291,9 +291,9 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   const saveToast = page.getByText('自動保存しました');
   await expect(saveToast).toBeVisible();
   await dismissEventNarrative(page);
-  await page.getByRole('button', { name: '壁面端末を調べる' }).press('Enter');
-  const terminal = page.getByRole('dialog', { name: '壁面端末' });
-  await expect(terminal.getByText('搬送波同期器')).toBeVisible();
+  await page.getByRole('button', { name: '端末を調べる' }).press('Enter');
+  const terminal = page.getByRole('dialog', { name: '端末' });
+  await expect(terminal.getByText('波形調整')).toBeVisible();
   await expect(saveToast).toBeHidden({ timeout: 5000 });
   await terminal.getByRole('button', { name: '装置から離れる' }).press('Enter');
   await page.reload();
@@ -301,13 +301,13 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(saveToast).toHaveCount(0);
   await expect(
-    page.getByText('デスクの保守メモと、端末の波の位置を見比べる。'),
+    page.getByText('机の調整メモと、端末の波の位置を見比べる。'),
   ).toBeHidden();
   await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   await expect(
     page
       .getByRole('dialog', { name: 'SYSTEM' })
-      .getByText('デスクの保守メモと、端末の波の位置を見比べる。'),
+      .getByText('机の調整メモと、端末の波の位置を見比べる。'),
   ).toBeVisible();
 });
 
@@ -326,7 +326,7 @@ test('read introduction can be skipped without losing its archive', async ({
   await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   const system = page.getByRole('dialog', { name: 'SYSTEM' });
   await system
-    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
+    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料' })
     .press('Enter');
   await expect(system.getByText('……聞こえるか？')).toBeVisible();
   await expect(system.getByText('まず電源を戻せ。')).toBeVisible();
@@ -343,10 +343,10 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   await expect(page.getByRole('button', { name: 'タイトルへ' })).toHaveCount(0);
   await expect(page.getByLabel('調査対象')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: '鉄製ドアを調べる' }),
+    page.getByRole('button', { name: 'ドアを調べる' }),
   ).toBeVisible();
   await expect(
-    page.getByRole('button', { name: '鉄製ドアを調べる' }),
+    page.getByRole('button', { name: 'ドアを調べる' }),
   ).not.toHaveCSS('clip-path', 'none');
   await page.setViewportSize({ width: 304, height: 296 });
   const intercom = page.getByRole('button', {
@@ -400,7 +400,7 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   );
   await page.getByRole('button', { name: 'メッセージを閉じる' }).click();
   const doorBox = await page
-    .getByRole('button', { name: '鉄製ドアを調べる' })
+    .getByRole('button', { name: 'ドアを調べる' })
     .boundingBox();
   expect(doorBox).not.toBeNull();
   await page.mouse.click(doorBox!.x + 2, doorBox!.y + 2);
@@ -418,7 +418,7 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
   const terminalHotspot = page.getByRole('button', {
-    name: '壁面端末を調べる',
+    name: '端末を調べる',
   });
   await terminalHotspot.evaluate((element) => {
     if (element instanceof HTMLElement) {
@@ -428,13 +428,13 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   });
   await expect(stage).toHaveAttribute('data-inspection-phase', 'approaching');
   await expect(page.locator('.inspection-transition-marker')).toBeVisible();
-  const terminal = page.getByRole('dialog', { name: '壁面端末' });
+  const terminal = page.getByRole('dialog', { name: '端末' });
   await expect(terminal).toHaveCount(1);
   await expect(stage).toHaveAttribute('data-inspection-phase', 'active');
   const worldCanvas = page.getByTestId('world-canvas').locator('canvas');
-  await expect(worldCanvas).toHaveAttribute('aria-label', /東壁/);
+  await expect(worldCanvas).toHaveAttribute('aria-label', /東側/);
   await page.keyboard.press('ArrowRight');
-  await expect(worldCanvas).toHaveAttribute('aria-label', /東壁/);
+  await expect(worldCanvas).toHaveAttribute('aria-label', /東側/);
   const firstControl = terminal.getByRole('button', { name: 'SYSTEM' });
   await expect(firstControl).toBeFocused();
   await page.keyboard.press('Shift+Tab');
@@ -456,7 +456,7 @@ test('reduced motion uses a crossfade and hotspot alignment survives resize', as
   await page.setViewportSize({ width: 1000, height: 700 });
   const stage = page.locator('.logical-stage');
   const world = page.getByTestId('world-canvas');
-  const door = page.getByRole('button', { name: '鉄製ドアを調べる' });
+  const door = page.getByRole('button', { name: 'ドアを調べる' });
   await expect(door).toBeVisible();
   const stageBox = await stage.boundingBox();
   const doorBox = await door.boundingBox();
@@ -491,7 +491,7 @@ test('system archive and subtitle/sound settings preserve the exploration view',
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   const system = page.getByRole('dialog', { name: 'SYSTEM' });
   await system
-    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
+    .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料' })
     .click();
   await expect(system.getByText('……聞こえるか？')).toBeVisible();
   await expect(system.getByText('AUXILIARY BUS RECOVERY')).toBeVisible();
@@ -609,21 +609,19 @@ test.describe('touch input', () => {
     });
     await expect(
       page.getByTestId('world-canvas').locator('canvas'),
-    ).toHaveAttribute('aria-label', /西壁/);
+    ).toHaveAttribute('aria-label', /西側/);
     const breaker = page
       .getByLabel('調査対象')
-      .getByRole('button', { name: 'ブレーカーパネルを調べる' });
+      .getByRole('button', { name: 'ブレーカーを調べる' });
     await breaker.tap();
-    await expect(
-      page.getByRole('heading', { name: '非常電源切替' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '非常電源' })).toBeVisible();
   });
 
   test('touch moves the carrier waveforms themselves', async ({ page }) => {
     await page.addInitScript(installProgressSave, createProgressSave());
     await page.goto('/');
     await page.getByRole('button', { name: '続きから' }).tap();
-    await page.getByRole('button', { name: '壁面端末を調べる' }).tap();
+    await page.getByRole('button', { name: '端末を調べる' }).tap();
 
     const device = page.locator('[data-puzzle-id="puzzle_carrier_sync"]');
     await device.getByRole('slider', { name: 'CHANNEL A' }).tap();

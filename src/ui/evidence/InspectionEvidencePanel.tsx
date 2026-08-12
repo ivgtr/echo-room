@@ -37,7 +37,7 @@ function ClockEvidence() {
   return (
     <div className="clock-evidence">
       <p className="eyebrow">WALL CLOCK / STOPPED</p>
-      <h2 id="evidence-title">停止したアナログ時計</h2>
+      <h2 id="evidence-title">止まった時計</h2>
       <div className="clock-dial-composite" aria-hidden="true">
         <span className="clock-mark clock-mark-12">12</span>
         <span className="clock-mark clock-mark-3">3</span>
@@ -74,11 +74,9 @@ function PowerPlan() {
       <p className="eyebrow">FACILITY E-01 / MAINTENANCE DOCUMENT</p>
       <article className="document-sheet" aria-labelledby="evidence-title">
         <p>EMERGENCY SYSTEM / RECOVERY NOTE</p>
-        <h2 id="evidence-title">補助回路復旧手順</h2>
+        <h2 id="evidence-title">停電時の復旧手順</h2>
         <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">
-          保護回路が作動した場合は、異常回線を隔離する。
-        </p>
+        <p className="document-instruction">異常が出ている回路を切る。</p>
         <p className="document-annotation">
           CONTROL BUS: SOURCE — RELAY — TERMINATOR
           <br />
@@ -95,7 +93,7 @@ function SynchronizationNote() {
       <p className="eyebrow">ECHO BUFFER / SERVICE NOTE</p>
       <article className="document-sheet" aria-labelledby="evidence-title">
         <p>CARRIER START POSITION</p>
-        <h2 id="evidence-title">同期調整メモ</h2>
+        <h2 id="evidence-title">波形調整メモ</h2>
         <div className="document-rule" aria-hidden="true" />
         <p className="document-instruction">
           基準より先に出る波：<strong>DELAY / 右へ</strong>
@@ -119,7 +117,7 @@ function MaintenanceOrder() {
         <p className="document-instruction">
           夜勤の終わりはいつも同じ。
           <br />
-          端末の記録を閉じ、通話器を戻す。
+          端末の記録を閉じ、インターホンを戻す。
           <br />
           転送装置の残りを確認して、最後にドアを見る。
         </p>

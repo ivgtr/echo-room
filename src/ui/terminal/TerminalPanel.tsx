@@ -60,7 +60,7 @@ export function TerminalPanel(props: Props) {
     >
       <header>
         <p className="eyebrow">ECHO BUFFER / OPERATIONS TERMINAL</p>
-        <h2 id="terminal-title">壁面端末</h2>
+        <h2 id="terminal-title">端末</h2>
       </header>
       <nav className="terminal-menu" aria-label="端末メニュー">
         {(Object.keys(menuLabels) as TerminalMenuId[]).map((id) => (
@@ -164,7 +164,7 @@ function TerminalMenuContent({
         <p>
           {completedPuzzleIds.includes('puzzle_signal_investigation')
             ? '確認済み：E-01の通信線は、隣室ではなくECHO BUFFER RETURNへ戻る。'
-            : '職員カードを使えば、部屋の図と配線図を重ねて見られる。'}
+            : '職員証を使えば、部屋の図と配線図を重ねて見られる。'}
         </p>
       </div>
     );

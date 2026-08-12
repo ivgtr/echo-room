@@ -115,11 +115,11 @@ export function SystemMenu(props: Props) {
             className="system-objective"
             aria-labelledby="objective-title"
           >
-            <h3 id="objective-title">CURRENT OBJECTIVE / 現在目的</h3>
+            <h3 id="objective-title">CURRENT OBJECTIVE / 現在の目的</h3>
             <p>{props.objective}</p>
           </section>
           <section className="system-power" aria-labelledby="power-title">
-            <h3 id="power-title">EMERGENCY SYSTEM / 非常システム</h3>
+            <h3 id="power-title">EMERGENCY SYSTEM / 非常電源</h3>
             <EmergencyPowerStatus
               activeElapsedMs={props.activeElapsedMs}
               powerRestored={props.powerRestored}
@@ -130,7 +130,7 @@ export function SystemMenu(props: Props) {
           </section>
           <div className="system-menu-actions">
             <button type="button" onClick={() => setView('archive')}>
-              ARCHIVE / 会話履歴・資料再読
+              ARCHIVE / 会話履歴・資料
             </button>
             <button type="button" onClick={() => setView('settings')}>
               TEXT &amp; SOUND / 字幕・サウンド設定
@@ -215,7 +215,7 @@ function ArchiveView({
         )}
       </section>
       <section aria-labelledby="document-archive-title">
-        <h3 id="document-archive-title">DOCUMENT / 資料再読</h3>
+        <h3 id="document-archive-title">DOCUMENT / 資料</h3>
         {documents.length === 0 ? (
           <p>まだ確認できる資料はない。</p>
         ) : (

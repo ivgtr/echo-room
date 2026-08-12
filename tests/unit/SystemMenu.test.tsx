@@ -57,7 +57,7 @@ describe('SystemMenu', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'ARCHIVE / 会話履歴・資料再読',
+        name: 'ARCHIVE / 会話履歴・資料',
       }),
     );
     expect(screen.getByText('……聞こえるか？')).toBeVisible();

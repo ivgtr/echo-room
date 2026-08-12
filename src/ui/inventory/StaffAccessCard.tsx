@@ -1,9 +1,6 @@
 export function StaffAccessCard() {
   return (
-    <div
-      className="staff-access-card"
-      aria-label="施設E-01 職員用アクセスカード"
-    >
+    <div className="staff-access-card" aria-label="施設E-01の職員証">
       <header>
         <span>UNDERGROUND RESEARCH FACILITY</span>
         <strong>STAFF ACCESS</strong>

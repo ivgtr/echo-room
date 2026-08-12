@@ -18,6 +18,7 @@
 - UIQ-03は完了。独白・通信・発見を共通Narrative UIへ整理し、取得演出、所持品トレイと対象使用、SYSTEMの会話履歴・資料再読・字幕・系統別音量設定を実装した。
 - UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。2026-08-11に代表画面の利用者承認を得た。
 - UIQ-05は完了。独白・通信・発見・終盤通信を全画面決定操作へ統一して進行ボタンを撤去し、ロッカーの直接的な点検表を日常的な夜勤メモへ変更した。地の文・メモ・ヒントの機器ID風表記を自然な日本語へ整理し、ロッカー操作領域を接写原画の正規化座標へ一致させた。
+- UIQ-06は完了。探索対象、所持品、資料、7装置の名称を一般的な日本語へ統一し、表示文、読み上げ名、目的、ヒント、正本を同じ呼称へ更新した。内部ID、保存schema、判定ロジックは変更していない。
 - P4-03は完了。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード、主人公写真、4 PACKET・送信先・4枠を正確なHTML/CSSと本番rasterで統合した。
 - 主人公は32歳前後の日本人男性、短い黒髪、設備保守・運用担当、濃灰の作業着に確定した。氏名や不要な経歴は設定せず、同一写真原本を職員証と声紋特徴量照合へ使用する。
 - P5-01は完了。主要7体験の完了IDを進行schema v4へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。旧schemaの互換層は持たない。
@@ -70,6 +71,7 @@
 | UIQ-03 | completed | 独白・通信・発見を用途別の共通Narrative UIへ整理し、SIGNAL・話者・通信表示を統一。所持品取得演出、必要時トレイ、対象へのカード・ドライバー使用、SYSTEMのARCHIVE・字幕・系統別音量設定を実装 | Node 24で`npm run check`成功（11 files/23 tests）、`npm run test:e2e`成功（Chromium 8件: 無音、字幕拡大・背景・速度、背景復帰、archive、mouse・touch・keyboard所持品、全編）、1280×720通信・ARCHIVE・設定を目視確認 | アクティブ時間と非常演出はUIQ-04、履歴のcheckpoint永続化はP5-01で継続 |
 | UIQ-04 | completed | `BATTERY 00:19:48`から実プレイ時間を計測し、10分以下LOW、5分以下CRITICALと電圧低下、00:00のRESERVEを文字と背景で段階表示。SYSTEM内へ停止中の残量と目的を併記し、SYSTEM・browser非表示中の停止、保存復元、00:00後の進行継続、動き軽減を実装。2026-08-11に代表画面の利用者承認を取得 | Node 24で`npm run check`成功（13 files/29 tests）、Chromium E2E 9件（固定時計、pause、visibility、保存復元、reduced-motion、予備電源から全編、keyboard、touch）、1280×720のSYSTEM・critical・reserveを目視確認 | なし |
 | UIQ-05 | completed | Narrativeを全画面click・touch・Enter・Spaceへ単一移行し、画面上の進行ボタンを削除。夜間点検表を日常的な夜勤メモへ変更し、本文の機器ID風表記と端末に露出したasset IDを整理。ロッカーの4ダイヤルとハンドルを1672×941原画の正規化座標へ一致 | Node 24で`npm run check`成功（18 files/69 tests、content・asset validation、production build）。Chromium E2E 13件（keyboard全編、全画面進行、ロッカー座標、資料、resize、reduced-motion、touch）成功。1280×720のNarrativeとフォーカス中ロッカーを目視確認 | なし |
+| UIQ-06 | completed | 探索対象をドア、時計、机、ロッカー、端末、ブレーカー、インターホン、所持品をドライバー、職員証、施設図へ統一。7装置の見出し、資料名、目的、ヒント、読み上げ名から内部設計風の複合名称を削除 | Node 24で`npm run check`成功（18 files/69 tests、content・asset validation、production build）。Chromium E2E 14件（keyboard全編、資料、全画面進行、ロッカー座標、探索、reload、resize、reduced-motion、touch）成功 | なし |
 | P3B-01 | completed | LOG照合と配線追跡、PACKET復元と未来情報、会話順と最終送信をそれぞれ統合し、旧ID・Stage・UI・hintを削除して7体験・schema v4へ単一移行 | 7問正誤・content・save unit、keyboard全編E2E | なし |
 | P3B-02 | completed | 謎解き後の独白・通信・発見を、テキスト表示後にプレイヤーが進める単一NarrativePanelへ統合。presentation分類、自動送りtimer、非操作cueを削除し、ロッカー完了後は会話、所持品取得、探索復帰の順で遷移する。通信調査後は5件から3件へ統合し、会話中Escapeは無効化。誤答入力保持、電源のブレーカー側再試行、最終送信のPACKET・DELAY・ROUTE別反応、60秒無操作・90秒滞在の診断通知も実装 | 単一Narrative契約unit、誤答保持・電源再試行・送信領域別表示unit、ロッカーEscape・通信調査3件・全編E2E、診断timer unit | なし |
 | P3B-03 | completed | 機器銘板、装置別cue、電源4段階の映像・環境音、VOICE MATCH専用照合、冒頭通信再演、世界内ドア脱出を実装。PACKET 04復元結果とVOICE MATCH 100.0%はtimerで閉じず、プレイヤー確認まで保持する | `npm run check`、Chromium 14件、PACKET 04・VOICE MATCH 100.0%・解錠ドアを1280×720で目視確認 | なし |

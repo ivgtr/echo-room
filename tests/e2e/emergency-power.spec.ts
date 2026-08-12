@@ -62,11 +62,11 @@ test('active-time warnings pause safely and reserve power survives reload', asyn
   await expect(hud.getByText('00:00:00')).toBeVisible();
   await expect(hud.getByRole('status')).toContainText('予備電源稼働中');
 
-  await page.getByRole('button', { name: '壁面端末を調べる' }).click();
+  await page.getByRole('button', { name: '端末を調べる' }).click();
   await page.clock.fastForward(400);
-  await expect(page.getByRole('dialog', { name: '壁面端末' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '端末' })).toBeVisible();
   await page
-    .getByRole('dialog', { name: '壁面端末' })
+    .getByRole('dialog', { name: '端末' })
     .getByRole('button', { name: '装置から離れる' })
     .click();
 

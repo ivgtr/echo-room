@@ -464,7 +464,7 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
     <div className="locker-device">
       <div className={`lock-plate${failures > 0 ? ' is-jammed' : ''}`}>
         <span>LAST INSPECTION</span>
-        <div className="symbol-dials" aria-label="四連記号錠">
+        <div className="symbol-dials" aria-label="4つの記号ダイヤル">
           {dials.map((value, index) => {
             const symbolIndex = symbols.findIndex(([id]) => id === value);
             const symbol = symbols[symbolIndex]?.[1];
@@ -525,7 +525,7 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
         <button
           type="button"
           className="lock-handle"
-          aria-label="LOCK HANDLE"
+          aria-label="ロッカーのハンドル"
           onClick={() => submit(dials)}
         >
           <i aria-hidden="true" />
@@ -663,7 +663,10 @@ function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
       {pairingComplete && (
         <div className="trace-device">
           <FacilityMap conduitLayer revealRoute={false} />
-          <div className="trace-path" aria-label="INTERCOMから配線を順に追う">
+          <div
+            className="trace-path"
+            aria-label="インターホンから配線を順に追う"
+          >
             <span>INTERCOM</span>
             {traceSegments.map(([id, label]) => {
               const step = trace.length;
@@ -745,7 +748,7 @@ function PacketRailDevice({ submit }: DeviceProps) {
     <div className="frame-device">
       {!restored && (
         <>
-          <div className="frame-rail" aria-label="PACKET断片レール">
+          <div className="frame-rail" aria-label="壊れたデータの並べ替え">
             {[0, 1, 2, 3].map((slot) => {
               const fixed = slot === 0;
               const fragment = fixed
@@ -924,7 +927,7 @@ function VoiceprintDevice({ failures, submit }: DeviceProps) {
   const spacingLabels = ['1×', '1/2×', '2×'];
   return (
     <div className={`voiceprint-device${failures > 0 ? ' is-error' : ''}`}>
-      <div className="voiceprint-screen" aria-label="声紋特徴量比較">
+      <div className="voiceprint-screen" aria-label="声紋の比較">
         <span>STAFF RECORD</span>
         <WaveBars values={[2, 4, 2, 2, 4, 2]} />
         <output>間隔 1-2-1 / 上-下-上 / 開始 0</output>
@@ -995,7 +998,7 @@ function VoiceprintDevice({ failures, submit }: DeviceProps) {
             <figure>
               <img
                 src={`${import.meta.env.BASE_URL}assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp`}
-                alt="職員カードと一致したE-01担当者の写真"
+                alt="職員証と一致したE-01担当者の写真"
               />
               <figcaption>
                 {matchProgress === 100
@@ -1064,7 +1067,7 @@ function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
       <div
         className={`transmission-packet-region${showValidation && !packetReady ? ' is-region-error' : ''}`}
       >
-        <div className="transmission-windows" aria-label="四つの受信窓">
+        <div className="transmission-windows" aria-label="4つの受信枠">
           {[
             '返事をする前',
             '電源を調べる前',
@@ -1105,7 +1108,7 @@ function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
             <button
               type="button"
               key={id}
-              aria-label={`送信断片「${text}」`}
+              aria-label={`送信する文「${text}」`}
               aria-pressed={armedPacket === id}
               onClick={() => setArmedPacket(id)}
             >
@@ -1122,7 +1125,7 @@ function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
           <button
             type="button"
             role="spinbutton"
-            aria-label="送信遅延ダイヤル"
+            aria-label="時間差ダイヤル"
             aria-valuemin={0}
             aria-valuemax={delayOptions.length - 1}
             aria-valuenow={delayIndex}
@@ -1150,7 +1153,7 @@ function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
           <button
             type="button"
             role="spinbutton"
-            aria-label="送信終端ダイヤル"
+            aria-label="送り先ダイヤル"
             aria-valuemin={0}
             aria-valuemax={routeOptions.length - 1}
             aria-valuenow={routeIndex}

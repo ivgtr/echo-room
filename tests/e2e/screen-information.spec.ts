@@ -22,10 +22,10 @@ test('clock and desk compose exact story information over close-up art', async (
 }) => {
   await enterRoom(page);
   const clockHotspot = page.getByRole('button', {
-    name: 'アナログ時計を調べる',
+    name: '時計を調べる',
   });
   await clockHotspot.click();
-  const clock = page.getByRole('dialog', { name: '停止したアナログ時計' });
+  const clock = page.getByRole('dialog', { name: '止まった時計' });
   await expect(clock.getByText('02:17')).toBeVisible();
   await expect(clock).toHaveCSS(
     'background-image',
@@ -34,13 +34,13 @@ test('clock and desk compose exact story information over close-up art', async (
   await clock.getByRole('button', { name: '閉じる' }).click();
   await expect(clockHotspot).toBeFocused();
 
-  await page.getByRole('button', { name: /右を向く（東壁/ }).click();
-  await page.getByRole('button', { name: /右を向く（南壁/ }).click();
-  await page.getByRole('button', { name: 'デスクの紙を調べる' }).click();
+  await page.getByRole('button', { name: /右を向く（東側/ }).click();
+  await page.getByRole('button', { name: /右を向く（南側/ }).click();
+  await page.getByRole('button', { name: '机の紙を調べる' }).click();
   const document = page.getByRole('dialog', {
-    name: '補助回路復旧手順',
+    name: '停電時の復旧手順',
   });
-  await expect(document.getByText(/異常回線を隔離/)).toBeVisible();
+  await expect(document.getByText(/異常が出ている回路を切る/)).toBeVisible();
   await expect(document.getByText(/SOURCE — RELAY — TERMINATOR/)).toBeVisible();
   await expect(document).toHaveCSS(
     'background-image',

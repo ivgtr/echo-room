@@ -19,9 +19,9 @@ describe('InspectionEvidencePanel', () => {
   it('renders the isolation and upstream recovery principle on the desk paper', () => {
     render(<InspectionEvidencePanel kind="desk" onClose={vi.fn()} />);
     expect(
-      screen.getByRole('heading', { name: '補助回路復旧手順' }),
+      screen.getByRole('heading', { name: '停電時の復旧手順' }),
     ).toBeVisible();
-    expect(screen.getByText(/異常回線を隔離/)).toBeVisible();
+    expect(screen.getByText(/異常が出ている回路を切る/)).toBeVisible();
     expect(screen.getByText(/SOURCE — RELAY — TERMINATOR/)).toBeVisible();
   });
 
@@ -34,7 +34,7 @@ describe('InspectionEvidencePanel', () => {
         onClose={vi.fn()}
       />,
     );
-    expect(screen.getByRole('heading', { name: '同期調整メモ' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: '波形調整メモ' })).toBeVisible();
     expect(screen.getByText(/DELAY \/ 右へ/)).toBeVisible();
 
     rerender(
@@ -48,7 +48,9 @@ describe('InspectionEvidencePanel', () => {
     expect(
       screen.getByRole('heading', { name: '夜勤の覚え書き' }),
     ).toBeVisible();
-    expect(screen.getByText(/端末の記録を閉じ、通話器を戻す/)).toBeVisible();
+    expect(
+      screen.getByText(/端末の記録を閉じ、インターホンを戻す/),
+    ).toBeVisible();
     expect(screen.queryByText(/ロッカーには/)).not.toBeInTheDocument();
   });
 });

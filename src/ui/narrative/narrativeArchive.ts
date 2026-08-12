@@ -52,7 +52,7 @@ export const powerRestoredEntry: NarrativeEntry = {
   id: 'system_power_restored',
   kind: 'system',
   speaker: 'FACILITY SYSTEM',
-  text: '非常電源がつながった。壁面端末と転送装置が起動する。',
+  text: '非常電源がつながった。端末と転送装置が起動する。',
 };
 
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
@@ -88,7 +88,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'log_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: '壁面端末に、未確認の通信ログが3件ある。',
+        text: '端末に、未確認の通信記録が3件ある。',
       },
     ],
     puzzle_signal_investigation: [
@@ -166,13 +166,13 @@ export function discoveryEntry(text: string): NarrativeEntry {
 const powerPlan: ArchiveDocument = {
   id: 'document_power_plan',
   title: 'AUXILIARY BUS RECOVERY',
-  body: '保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。',
+  body: '異常が出ている回路を切る。電源は、上の配線を始まりに近い機器から順にたどって戻す。',
 };
 
 const maintenanceSheet: ArchiveDocument = {
   id: 'document_maintenance_order',
   title: 'NIGHT SHIFT NOTE',
-  body: '夜勤の終わりはいつも同じ。端末の記録を閉じ、通話器を戻す。転送装置の残りを確認して、最後にドアを見る。',
+  body: '夜勤の終わりはいつも同じ。端末の記録を閉じ、インターホンを戻す。転送装置の残りを確認して、最後にドアを見る。',
 };
 
 const synchronizationNote: ArchiveDocument = {

@@ -313,7 +313,7 @@ assets:
       - standard_wide_layers
 
   - id: gfx-wide-003
-    label: 南壁・デスク側
+    label: 南壁・机側
     category: world_wide
     stage: 2
     priority: blocker
@@ -385,7 +385,7 @@ assets:
       - preview_flat
 
   - id: gfx-close-001
-    label: 鉄製ドア接写
+    label: ドア接写
     category: world_closeup
     stage: 3
     priority: required
@@ -408,7 +408,7 @@ assets:
       - preview_states
 
   - id: gfx-close-002
-    label: アナログ時計接写
+    label: 時計接写
     category: world_closeup
     stage: 3
     priority: required
@@ -441,7 +441,7 @@ assets:
     deliverables: *closeup_deliverables
 
   - id: gfx-close-004
-    label: デスク接写
+    label: 机接写
     category: world_closeup
     stage: 3
     priority: required
@@ -457,7 +457,7 @@ assets:
     deliverables: *closeup_deliverables
 
   - id: gfx-close-005
-    label: ブレーカーパネル接写
+    label: ブレーカー接写
     category: world_closeup
     stage: 3
     priority: blocker
@@ -528,7 +528,7 @@ assets:
     deliverables: *closeup_deliverables
 
   - id: gfx-close-008
-    label: 壁面端末接写
+    label: 端末接写
     category: world_closeup
     stage: 3
     priority: blocker
@@ -551,7 +551,7 @@ assets:
       - preview_states
 
   - id: gfx-close-009
-    label: 端末横解析パネル接写
+    label: 端末横パネル接写
     category: world_closeup
     stage: 3
     priority: required
@@ -654,7 +654,7 @@ assets:
       - alpha_mask
 
   - id: gfx-item-002
-    label: 職員用カード外装
+    label: 職員証外装
     category: inventory_item
     stage: 3
     priority: required
