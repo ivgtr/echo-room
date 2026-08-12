@@ -1,24 +1,26 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type RefObject,
-} from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
+import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import {
   deskEvidence,
+  getDeskInterpretation,
   type DeskEvidence as DeskEvidenceItem,
   type DeskEvidenceId,
 } from './deskEvidence';
 
-type Props = {
-  kind: 'clock' | 'desk';
-  onClose: () => void;
-};
+type Props =
+  | { kind: 'clock'; onClose: () => void }
+  | {
+      kind: 'desk';
+      onClose: () => void;
+      powerRestored: boolean;
+      completedPuzzleIds: readonly PuzzleId[];
+    };
 
-export function InspectionEvidencePanel({ kind, onClose }: Props) {
-  const clock = kind === 'clock';
+const deskPhoto = `${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp`;
+
+export function InspectionEvidencePanel(props: Props) {
+  const clock = props.kind === 'clock';
   return (
     <section
       className={`puzzle-modal artwork-modal evidence-modal ${clock ? 'clock-evidence-modal' : 'desk-evidence-modal'}`}
@@ -26,8 +28,15 @@ export function InspectionEvidencePanel({ kind, onClose }: Props) {
       aria-modal="true"
       aria-labelledby="evidence-title"
     >
-      {clock ? <ClockEvidence /> : <DeskEvidence />}
-      <button type="button" className="evidence-close" onClick={onClose}>
+      {clock ? (
+        <ClockEvidence />
+      ) : (
+        <DeskEvidence
+          powerRestored={props.powerRestored}
+          completedPuzzleIds={props.completedPuzzleIds}
+        />
+      )}
+      <button type="button" className="evidence-close" onClick={props.onClose}>
         BACK / 戻る
       </button>
     </section>
@@ -56,17 +65,23 @@ function ClockEvidence() {
   );
 }
 
-function DeskEvidence() {
+function DeskEvidence({
+  powerRestored,
+  completedPuzzleIds,
+}: {
+  powerRestored: boolean;
+  completedPuzzleIds: readonly PuzzleId[];
+}) {
   const [selectedId, setSelectedId] = useState<DeskEvidenceId | null>(null);
   const selected = deskEvidence.find(({ id }) => id === selectedId) ?? null;
   const selectedButtonIdRef = useRef<DeskEvidenceId | null>(null);
   const itemButtonRefs = useRef<
     Partial<Record<DeskEvidenceId, HTMLButtonElement>>
   >({});
-  const detailBackRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (selected) detailBackRef.current?.focus();
+    if (selected) backRef.current?.focus();
   }, [selected]);
 
   function returnToDesk() {
@@ -85,27 +100,29 @@ function DeskEvidence() {
   }
 
   return (
-    <div className="desk-evidence" onKeyDown={handleKeyDown}>
-      {selected ? (
-        <DeskEvidenceDetail
-          evidence={selected}
-          backRef={detailBackRef}
-          onBack={returnToDesk}
-        />
-      ) : (
-        <>
-          <header className="desk-evidence-heading">
-            <p className="eyebrow">DESK / PERSONAL NOTES</p>
-            <h2 id="evidence-title">机の上</h2>
-            <p>仕事のメモや私物が、片づけられないまま残っている。</p>
-          </header>
-          <div className="desk-paper-field" aria-label="机の上にある物">
-            {deskEvidence.map((evidence, index) => (
+    <div
+      className={`desk-evidence${selected ? ' is-reading' : ''}`}
+      onKeyDown={handleKeyDown}
+    >
+      <header className="desk-evidence-heading">
+        <p className="eyebrow">DESK</p>
+        <h2 id="evidence-title">机の上</h2>
+      </header>
+      <div className="desk-paper-field" aria-label="机の上にある物">
+        <div className="desk-reading-shade" aria-hidden="true" />
+        {deskEvidence.map((evidence, index) => {
+          const isSelected = evidence.id === selectedId;
+          return (
+            <div
+              className={`desk-prop desk-prop-${index + 1} is-${evidence.format}${isSelected ? ' is-selected' : ''}${selected && !isSelected ? ' is-set-aside' : ''}`}
+              key={evidence.id}
+            >
               <button
                 type="button"
-                className={`desk-paper desk-paper-${index + 1} is-${evidence.kind}`}
-                key={evidence.id}
-                aria-label={`${evidence.label}を読む`}
+                className="desk-prop-trigger"
+                aria-label={`${evidence.label}を調べる`}
+                aria-expanded={isSelected}
+                tabIndex={selected ? -1 : 0}
                 ref={(element) => {
                   if (element) itemButtonRefs.current[evidence.id] = element;
                 }}
@@ -113,60 +130,122 @@ function DeskEvidence() {
                   selectedButtonIdRef.current = evidence.id;
                   setSelectedId(evidence.id);
                 }}
-              >
-                {evidence.kind === 'photo' ? (
-                  <img
-                    src={`${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp`}
-                    alt=""
-                  />
-                ) : (
-                  <>
-                    <span>{evidence.title}</span>
-                    <i aria-hidden="true">読む</i>
-                  </>
-                )}
-              </button>
-            ))}
+              />
+              <DeskPropFace evidence={evidence} expanded={isSelected} />
+            </div>
+          );
+        })}
+        {selected ? (
+          <div className="desk-reading-ui">
+            <button ref={backRef} type="button" onClick={returnToDesk}>
+              DESK / 机に戻る
+            </button>
+            <p className="desk-interpretation" role="status">
+              {getDeskInterpretation(
+                selected.id,
+                completedPuzzleIds,
+                powerRestored,
+              )}
+            </p>
           </div>
-        </>
-      )}
+        ) : null}
+      </div>
     </div>
   );
 }
 
-function DeskEvidenceDetail({
+function DeskPropFace({
   evidence,
-  backRef,
-  onBack,
+  expanded,
 }: {
   evidence: DeskEvidenceItem;
-  backRef: RefObject<HTMLButtonElement | null>;
-  onBack: () => void;
+  expanded: boolean;
 }) {
+  if (evidence.format === 'photo') {
+    return (
+      <figure className="desk-prop-face desk-photo-face">
+        <img
+          src={deskPhoto}
+          alt={expanded ? '端末に向かう、後ろ姿の作業員' : ''}
+        />
+        <figcaption className="desk-prop-full">
+          <h3>{evidence.title}</h3>
+          <p>{evidence.body}</p>
+        </figcaption>
+      </figure>
+    );
+  }
+
   return (
-    <div className={`desk-evidence-detail is-${evidence.kind}`}>
-      <button ref={backRef} type="button" onClick={onBack}>
-        DESK / 机に戻る
-      </button>
-      {evidence.kind === 'photo' ? (
-        <figure className="desk-photo-detail">
-          <img
-            src={`${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp`}
-            alt="端末に向かう、後ろ姿の作業員"
-          />
-          <figcaption>
-            <h2 id="evidence-title">{evidence.title}</h2>
-            <p>{evidence.body}</p>
-          </figcaption>
-        </figure>
+    <article className="desk-prop-face">
+      <DeskPaperPreview evidence={evidence} />
+      <div className="desk-prop-full">
+        <p>{evidence.body}</p>
+      </div>
+    </article>
+  );
+}
+
+function DeskPaperPreview({ evidence }: { evidence: DeskEvidenceItem }) {
+  if (evidence.format === 'handover') {
+    return (
+      <>
+        <p className="paper-form-label">夜間勤務 / 引継事項</p>
+        <h3>{evidence.title}</h3>
+        <span className="paper-rule" aria-hidden="true" />
+        {evidence.previewLines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </>
+    );
+  }
+  if (evidence.format === 'graph') {
+    return (
+      <>
+        <h3>{evidence.title}</h3>
+        <div className="paper-wave" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        {evidence.previewLines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </>
+    );
+  }
+  if (evidence.format === 'checklist') {
+    return (
+      <>
+        <p className="paper-form-label">夜勤終了チェック</p>
+        <h3>{evidence.title}</h3>
+        <ul>
+          {evidence.previewLines.map((line) => (
+            <li key={line}>
+              <span aria-hidden="true">✓</span>
+              {line}
+            </li>
+          ))}
+        </ul>
+      </>
+    );
+  }
+  return (
+    <>
+      <h3>{evidence.title}</h3>
+      {evidence.format === 'torn' ? (
+        <ul>
+          {evidence.previewLines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
       ) : (
-        <article className="document-sheet" aria-labelledby="evidence-title">
-          <p>{evidence.kind === 'note' ? 'PERSONAL NOTE' : 'SHIFT RECORD'}</p>
-          <h2 id="evidence-title">{evidence.title}</h2>
-          <div className="document-rule" aria-hidden="true" />
-          <p className="document-instruction">{evidence.body}</p>
-        </article>
+        evidence.previewLines.map((line) => <p key={line}>{line}</p>)
       )}
-    </div>
+    </>
   );
 }

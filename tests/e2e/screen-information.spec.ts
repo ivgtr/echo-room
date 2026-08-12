@@ -41,43 +41,46 @@ test('clock and desk compose exact story information over close-up art', async (
     name: '机の上',
   });
   await expect(
-    desk.getByRole('button', { name: '折り目のついた引き継ぎメモを読む' }),
+    desk.getByRole('button', { name: '折り目のついた引き継ぎメモを調べる' }),
   ).toBeVisible();
   await expect(
-    desk.getByRole('button', { name: '波形の走り書きを読む' }),
+    desk.getByRole('button', {
+      name: '方眼紙に書かれた波形の走り書きを調べる',
+    }),
   ).toBeVisible();
   await expect(
-    desk.getByRole('button', { name: '夜勤の覚え書きを読む' }),
+    desk.getByRole('button', { name: '書き込みのある夜勤チェック表を調べる' }),
   ).toBeVisible();
   await expect(
-    desk.getByRole('button', { name: '交代勤務の伝言を読む' }),
+    desk.getByRole('button', { name: '交代勤務の小さな付箋を調べる' }),
   ).toBeVisible();
   await expect(
-    desk.getByRole('button', { name: '小さな買い物メモを読む' }),
+    desk.getByRole('button', { name: '端が破れた買い物メモを調べる' }),
   ).toBeVisible();
   await expect(
-    desk.getByRole('button', { name: '伏せかけの作業写真を読む' }),
+    desk.getByRole('button', { name: 'メモの下からのぞく作業写真を調べる' }),
   ).toBeVisible();
+  await expect(desk.getByText('読む')).toHaveCount(0);
   await expect(desk).toHaveCSS(
     'background-image',
     /gfx-close-004__desk-evidence-fixed__preview-flat\.webp/,
   );
 
   await desk
-    .getByRole('button', { name: '折り目のついた引き継ぎメモを読む' })
+    .getByRole('button', { name: '折り目のついた引き継ぎメモを調べる' })
     .click();
-  const handover = page.getByRole('dialog', { name: '朝番への引き継ぎ' });
+  const handover = page.getByRole('dialog', { name: '机の上' });
   await expect(
     handover.getByText(/焦げ臭い回路は無理に戻さない/),
   ).toBeVisible();
   await handover.getByRole('button', { name: 'DESK / 机に戻る' }).click();
   await page
     .getByRole('dialog', { name: '机の上' })
-    .getByRole('button', { name: '伏せかけの作業写真を読む' })
+    .getByRole('button', { name: 'メモの下からのぞく作業写真を調べる' })
     .click();
   await expect(
     page
-      .getByRole('dialog', { name: '作業中の写真' })
+      .getByRole('dialog', { name: '机の上' })
       .getByRole('img', { name: '端末に向かう、後ろ姿の作業員' }),
   ).toBeVisible();
 });

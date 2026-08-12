@@ -331,7 +331,12 @@ export function GameScreen(props: Props) {
   ) : props.selectedHotspotId === 'hotspot_clock' ? (
     <InspectionEvidencePanel kind="clock" onClose={closeInspection} />
   ) : props.selectedHotspotId === 'hotspot_desk' ? (
-    <InspectionEvidencePanel kind="desk" onClose={closeInspection} />
+    <InspectionEvidencePanel
+      kind="desk"
+      powerRestored={props.powerRestored}
+      completedPuzzleIds={props.completedPuzzleIds}
+      onClose={closeInspection}
+    />
   ) : props.powerRestored &&
     props.selectedHotspotId === 'hotspot_terminal' &&
     !ending ? (
