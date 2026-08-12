@@ -21,9 +21,11 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await openHotspot(page, 'ロッカーを調べる');
   await solveLocker(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_03');
-  await expect(page.locator('.narrative-cue')).toContainText(
-    '未確認の通信ログが3件ある',
-  );
+  const lockerMessage = page.locator('.narrative-cue');
+  await expect(lockerMessage).toContainText('未確認の通信ログが3件ある');
+  const lockerMessageText = await lockerMessage.textContent();
+  expect(lockerMessageText).not.toContain('MESSAGE LOG');
+  expect(lockerMessageText).not.toContain('E-01 OCCUPANT');
   await expect(
     page.getByRole('dialog', { name: '所持品を入手した' }),
   ).toBeHidden();

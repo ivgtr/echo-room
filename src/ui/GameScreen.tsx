@@ -558,26 +558,19 @@ export function GameScreen(props: Props) {
         )}
         {props.eventNarrative && !eventNarrativeBlocking && (
           <section
-            className={`narrative-cue is-${props.eventNarrative.presentation ?? 'ambient'}`}
+            className={`narrative-cue is-${props.eventNarrative.presentation ?? 'ambient'} is-${props.eventNarrative.kind}`}
+            data-narrative-kind={props.eventNarrative.kind}
             role="status"
             aria-live="polite"
             aria-atomic="true"
           >
-            <header>
-              <span>
-                {props.eventNarrative.speaker ??
-                  (props.eventNarrative.kind === 'system'
-                    ? 'FACILITY SYSTEM'
-                    : 'E-01 OCCUPANT')}
-              </span>
-              <small>
-                {props.eventNarrative.kind === 'system'
-                  ? 'SYSTEM MESSAGE'
-                  : 'MESSAGE LOG'}
-              </small>
-            </header>
-            <p>{props.eventNarrative.text}</p>
-            <i aria-hidden="true">▸</i>
+            {props.eventNarrative.kind === 'communication' && (
+              <p className="narrative-signal">SIGNAL // ACTIVE</p>
+            )}
+            {props.eventNarrative.speaker && (
+              <span className="speaker">{props.eventNarrative.speaker}</span>
+            )}
+            <p className="narrative-text">{props.eventNarrative.text}</p>
           </section>
         )}
         {inspectionDialog && (

@@ -685,78 +685,69 @@ button:focus-visible {
   }
 }
 
-.narrative-cue,
-.door-escape-cue {
+.narrative-cue {
   position: absolute;
   z-index: 18;
-  right: clamp(1rem, 3vw, 2.5rem);
-  bottom: clamp(1rem, 4vh, 2.5rem);
+  right: max(5%, env(safe-area-inset-right));
+  bottom: max(4%, env(safe-area-inset-bottom));
+  left: max(5%, env(safe-area-inset-left));
   display: grid;
-  width: min(35rem, 82%);
-  padding: 0.85rem 1rem 1rem;
-  border: 1px solid rgb(88 184 176 / 58%);
-  border-left: 3px solid #58b8b0;
+  min-height: 16%;
+  padding: clamp(0.8rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+  border: 0;
+  border-left: 2px solid #58b8b0;
   color: #e7efed;
-  background:
-    linear-gradient(90deg, rgb(88 184 176 / 8%), transparent 42%),
-    rgb(5 13 14 / 94%);
-  box-shadow:
-    0 12px 36px rgb(0 0 0 / 48%),
-    inset 0 0 0 1px rgb(255 255 255 / 3%);
-  gap: 0.5rem;
+  background: rgb(5 9 10 / 88%);
+  box-shadow: 0 14px 50px rgb(0 0 0 / 45%);
+  align-content: center;
   pointer-events: none;
   animation: narrative-in 180ms ease-out both;
 }
 
-.narrative-cue.is-subtitle {
-  border-left-color: #d5d1c4;
+.narrative-cue.is-communication {
+  border-left-color: #6fe7e2;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      rgb(111 231 226 / 4%) 4px
+    ),
+    rgb(5 13 14 / 94%);
 }
 
-.narrative-cue header {
-  display: flex;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid rgb(88 184 176 / 24%);
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-}
-
-.narrative-cue header span {
+.narrative-cue .speaker {
+  display: block;
+  margin-bottom: 0.35rem;
   color: #6fe7e2;
   font:
-    0.68rem ui-monospace,
+    clamp(0.7rem, 1vw, 0.88rem) ui-monospace,
     monospace;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
 }
 
-.narrative-cue header small {
-  color: #66817e;
-  font:
-    0.58rem ui-monospace,
-    monospace;
-  letter-spacing: 0.1em;
-}
-
-.narrative-cue p {
+.narrative-cue .narrative-text {
   margin: 0;
-  font-size: clamp(0.9rem, 1.45vw, 1.12rem);
-  line-height: 1.55;
-}
-
-.narrative-cue > i {
-  position: absolute;
-  right: 0.8rem;
-  bottom: 0.3rem;
-  color: #8de1d8;
-  font-style: normal;
+  font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+  line-height: 1.65;
 }
 
 .door-escape-cue {
+  position: absolute;
+  z-index: 18;
   right: 50%;
   bottom: 8%;
+  display: grid;
+  max-width: min(34rem, 78%);
+  padding: 0.75rem 1rem;
+  border-left: 2px solid #d5d1c4;
+  color: #e7efed;
+  background: rgb(5 13 14 / 88%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 38%);
+  gap: 0.2rem;
   transform: translateX(50%);
-  border-left-color: #d5d1c4;
   letter-spacing: 0.08em;
+  pointer-events: none;
+  animation: narrative-in 180ms ease-out both;
 }
 
 .system-menu {
