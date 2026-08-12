@@ -57,10 +57,20 @@ describe('seven-puzzle story progression', () => {
     });
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
     expect(actor.getSnapshot().context.storyStage).toBe('puzzle_carrier_sync');
-    for (const [puzzleId, answer] of solutions)
+    for (const [puzzleId, answer] of solutions.slice(0, -1))
       actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
+    actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_terminal' });
+    const [finalPuzzleId, finalAnswer] = solutions.at(-1)!;
+    actor.send({
+      type: 'PUZZLE_SUBMITTED',
+      puzzleId: finalPuzzleId,
+      answer: finalAnswer,
+    });
     expect(actor.getSnapshot().context.completedPuzzleIds).toHaveLength(7);
     expect(actor.getSnapshot().context.storyStage).toBe('transmission_ready');
+    expect(actor.getSnapshot().context.selectedHotspotId).toBe(
+      'hotspot_terminal',
+    );
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
     expect(actor.getSnapshot().context.storyStage).toBe('ending_transmission');
     for (let index = 0; index < 6; index += 1)

@@ -136,6 +136,8 @@ export function GameScreen(props: Props) {
   >('idle');
   const eventNarrativeBlocking =
     props.eventNarrative?.presentation === 'dramatic';
+  const acquisitionVisible =
+    props.acquiredItems.length > 0 && !props.eventNarrative;
   const endingSequence =
     props.storyStage === 'ending_transmission' ||
     props.storyStage === 'ending_replay';
@@ -152,7 +154,7 @@ export function GameScreen(props: Props) {
   const overlayOpen =
     props.intro ||
     props.powerPuzzle ||
-    props.acquiredItems.length > 0 ||
+    acquisitionVisible ||
     props.inventoryOpen ||
     props.hintOpen ||
     props.systemMenuOpen ||
@@ -193,16 +195,6 @@ export function GameScreen(props: Props) {
       systemButtonRef.current?.focus();
     introWasOpenRef.current = props.intro;
   }, [props.intro]);
-
-  useEffect(() => {
-    if (!props.eventNarrative || eventNarrativeBlocking) return;
-    const timer = window.setTimeout(props.onEventNarrativeAdvance, 2800);
-    return () => window.clearTimeout(timer);
-  }, [
-    eventNarrativeBlocking,
-    props.eventNarrative,
-    props.onEventNarrativeAdvance,
-  ]);
 
   function turn(offset: -1 | 1) {
     const next = getRotatedView(props.locationId, offset);
@@ -268,7 +260,7 @@ export function GameScreen(props: Props) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (props.acquiredItems.length > 0) {
+        if (acquisitionVisible) {
           event.preventDefault();
           props.onDismissAcquisition();
           return;
@@ -296,6 +288,8 @@ export function GameScreen(props: Props) {
       }
       if (
         overlayOpen ||
+        (event.target instanceof Element &&
+          event.target.closest('[data-puzzle-id]') !== null) ||
         (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
       ) {
         return;
@@ -563,17 +557,28 @@ export function GameScreen(props: Props) {
           </ModalFocusScope>
         )}
         {props.eventNarrative && !eventNarrativeBlocking && (
-          <div
+          <section
             className={`narrative-cue is-${props.eventNarrative.presentation ?? 'ambient'}`}
             role="status"
             aria-live="polite"
             aria-atomic="true"
           >
-            {props.eventNarrative.speaker && (
-              <strong>{props.eventNarrative.speaker}</strong>
-            )}
-            <span>{props.eventNarrative.text}</span>
-          </div>
+            <header>
+              <span>
+                {props.eventNarrative.speaker ??
+                  (props.eventNarrative.kind === 'system'
+                    ? 'FACILITY SYSTEM'
+                    : 'E-01 OCCUPANT')}
+              </span>
+              <small>
+                {props.eventNarrative.kind === 'system'
+                  ? 'SYSTEM MESSAGE'
+                  : 'MESSAGE LOG'}
+              </small>
+            </header>
+            <p>{props.eventNarrative.text}</p>
+            <i aria-hidden="true">▸</i>
+          </section>
         )}
         {inspectionDialog && (
           <ModalFocusScope
@@ -588,7 +593,7 @@ export function GameScreen(props: Props) {
             {inspectionDialog}
           </ModalFocusScope>
         )}
-        {props.acquiredItems.length > 0 && !props.eventNarrative && (
+        {acquisitionVisible && (
           <ModalFocusScope
             focusKey="item-acquisition"
             returnFocusRef={inspectionReturnFocusRef}

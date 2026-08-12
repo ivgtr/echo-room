@@ -328,6 +328,22 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [saveMessage]);
 
+  const activeEventNarrative = eventNarrativeQueue[0] ?? null;
+  const activeEventNarrativeId = activeEventNarrative?.id;
+  const activeEventNarrativePresentation = activeEventNarrative?.presentation;
+  useEffect(() => {
+    if (
+      !activeEventNarrativeId ||
+      activeEventNarrativePresentation === 'dramatic'
+    )
+      return;
+    const timer = window.setTimeout(
+      () => setEventNarrativeQueue((current) => current.slice(1)),
+      2800,
+    );
+    return () => window.clearTimeout(timer);
+  }, [activeEventNarrativeId, activeEventNarrativePresentation]);
+
   const handleStart = useCallback(() => {
     savedProgressRef.current = false;
     lastSavedFingerprintRef.current = null;
@@ -346,6 +362,10 @@ export function App() {
   );
   const handleTextBlip = useCallback(
     () => soundManager.playEffect('text_blip'),
+    [],
+  );
+  const handleEventNarrativeAdvance = useCallback(
+    () => setEventNarrativeQueue((current) => current.slice(1)),
     [],
   );
   const handleHotspot = useCallback(
@@ -450,7 +470,7 @@ export function App() {
       soundLevels={soundLevels}
       subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
-      eventNarrative={eventNarrativeQueue[0] ?? null}
+      eventNarrative={activeEventNarrative}
       narrativeHistory={narrativeHistory}
       archiveDocuments={archiveDocuments}
       acquiredItems={acquiredItems}
@@ -528,9 +548,7 @@ export function App() {
         soundManager.playEffect(puzzleInteractionCue[puzzleId])
       }
       onTextBlip={handleTextBlip}
-      onEventNarrativeAdvance={() =>
-        setEventNarrativeQueue((current) => current.slice(1))
-      }
+      onEventNarrativeAdvance={handleEventNarrativeAdvance}
     />
   );
 }

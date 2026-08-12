@@ -692,29 +692,63 @@ button:focus-visible {
   right: clamp(1rem, 3vw, 2.5rem);
   bottom: clamp(1rem, 4vh, 2.5rem);
   display: grid;
-  max-width: min(34rem, 78%);
-  padding: 0.75rem 1rem;
-  border-left: 2px solid #58b8b0;
+  width: min(35rem, 82%);
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid rgb(88 184 176 / 58%);
+  border-left: 3px solid #58b8b0;
   color: #e7efed;
-  background: rgb(5 13 14 / 88%);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 38%);
-  gap: 0.2rem;
+  background:
+    linear-gradient(90deg, rgb(88 184 176 / 8%), transparent 42%),
+    rgb(5 13 14 / 94%);
+  box-shadow:
+    0 12px 36px rgb(0 0 0 / 48%),
+    inset 0 0 0 1px rgb(255 255 255 / 3%);
+  gap: 0.5rem;
   pointer-events: none;
   animation: narrative-in 180ms ease-out both;
 }
 
 .narrative-cue.is-subtitle {
-  right: 50%;
-  width: min(42rem, 82%);
-  transform: translateX(50%);
+  border-left-color: #d5d1c4;
 }
 
-.narrative-cue strong {
+.narrative-cue header {
+  display: flex;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgb(88 184 176 / 24%);
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.narrative-cue header span {
   color: #6fe7e2;
   font:
     0.68rem ui-monospace,
     monospace;
   letter-spacing: 0.12em;
+}
+
+.narrative-cue header small {
+  color: #66817e;
+  font:
+    0.58rem ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+}
+
+.narrative-cue p {
+  margin: 0;
+  font-size: clamp(0.9rem, 1.45vw, 1.12rem);
+  line-height: 1.55;
+}
+
+.narrative-cue > i {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.3rem;
+  color: #8de1d8;
+  font-style: normal;
 }
 
 .door-escape-cue {

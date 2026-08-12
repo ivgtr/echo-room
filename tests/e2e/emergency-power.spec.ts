@@ -17,9 +17,7 @@ test('active-time warnings pause safely and reserve power survives reload', asyn
   const stage = page.locator('.logical-stage');
   const hud = page.locator('.status-cluster');
   await expect(stage).toHaveAttribute('data-power-phase', 'normal');
-  await page.clock.pauseAt(
-    (await page.evaluate(() => Date.now())) + 1_000,
-  );
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1_000);
 
   await page.clock.fastForward(30_000);
   await expect(stage).toHaveAttribute('data-power-phase', 'low');

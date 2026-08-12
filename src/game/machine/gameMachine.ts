@@ -226,7 +226,11 @@ export const gameMachine = setup({
         event.puzzleId === 'puzzle_maintenance_lock'
           ? ['item_screwdriver', 'item_staff_card', 'item_floor_map']
           : context.inventory,
-      selectedHotspotId: null,
+      selectedHotspotId: ({ context, event }) =>
+        event.type === 'PUZZLE_SUBMITTED' &&
+        event.puzzleId === 'puzzle_transmission_window'
+          ? context.selectedHotspotId
+          : null,
       terminalMenuId: 'system',
       hintLevel: 0,
     }),

@@ -223,7 +223,10 @@ function PowerRouteDevice({ failures, submit }: DeviceProps) {
             aria-pressed={isolated === id}
             aria-label={`${label}ケーブルを切り離す`}
             key={id}
-            onClick={() => setIsolated((value) => (value === id ? null : id))}
+            onClick={() => {
+              setIsolated((value) => (value === id ? null : id));
+              if (failures > 0) setSequence([]);
+            }}
           >
             <b className="power-branch" aria-hidden="true" />
             <i className="cable-plug" aria-hidden="true" />
