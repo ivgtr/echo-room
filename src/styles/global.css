@@ -189,8 +189,8 @@ button:focus-visible {
 }
 
 .logical-stage.is-inspection-approaching .canvas-host {
-  transition-duration: 320ms;
-  transition-delay: 60ms;
+  transition-duration: 295ms;
+  transition-delay: 85ms;
 }
 
 .logical-stage.world-input-locked .canvas-host {

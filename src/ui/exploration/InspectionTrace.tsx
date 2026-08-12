@@ -9,9 +9,9 @@ import {
   type InspectionTracePoint,
 } from './inspectionTraceGeometry';
 
-const TRACE_DURATION_MS = 75;
-const DIAMOND_APPEAR_MS = 45;
-const DIAMOND_FADE_MS = 30;
+const TRACE_DURATION_MS = 110;
+const DIAMOND_APPEAR_MS = 70;
+const DIAMOND_FADE_MS = 40;
 
 type Point = InspectionTracePoint;
 
