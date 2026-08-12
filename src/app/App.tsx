@@ -362,12 +362,10 @@ export function App() {
       if (hotspotId === 'hotspot_clock')
         appendHistory([discoveryEntry('時計は02:17で止まっている。')]);
       if (hotspotId === 'hotspot_desk')
-        appendHistory([
-          discoveryEntry(deskDiscoveryText(powerRestored, storyStage)),
-        ]);
+        appendHistory([discoveryEntry(deskDiscoveryText())]);
       actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId });
     },
-    [actorRef, appendHistory, powerRestored, storyStage],
+    [actorRef, appendHistory, storyStage],
   );
   const handleView = useCallback(
     (nextLocationId: LocationId) =>
@@ -390,11 +388,7 @@ export function App() {
     [actorRef, appendHistory],
   );
 
-  const archiveDocuments = getArchiveDocuments(
-    powerRestored,
-    storyStage,
-    inventory,
-  );
+  const archiveDocuments = getArchiveDocuments(powerRestored, inventory);
 
   if (!environmentSupported) return <UnsupportedScreen />;
   if (!isPlaying)
@@ -568,12 +562,8 @@ const puzzleFailureCue: Record<PuzzleId, SoundEffectId> = {
   puzzle_transmission_window: 'locker_error',
 };
 
-function deskDiscoveryText(powerRestored: boolean, stage: string) {
-  if (!powerRestored)
-    return '異常が出ている回路を切り、上の配線を始まりに近い機器から順にたどって電源を戻す、とある。';
-  if (stage === 'puzzle_carrier_sync')
-    return '波形調整メモだ。早い波は右へ、遅い波は左へ動かす。';
-  return '夜勤の覚え書きだ。端末の記録を閉じ、インターホンを戻し、転送装置を確認してから最後にドアを見る、とある。';
+function deskDiscoveryText() {
+  return '仕事のメモや私物が、片づけられないまま散らばっている。';
 }
 
 function progressFingerprint(progress: SavedProgress) {

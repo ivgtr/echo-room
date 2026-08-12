@@ -1,33 +1,34 @@
-import type { StoryStage } from '../../game/machine/gameMachine';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type RefObject,
+} from 'react';
+
+import {
+  deskEvidence,
+  type DeskEvidence as DeskEvidenceItem,
+  type DeskEvidenceId,
+} from './deskEvidence';
 
 type Props = {
   kind: 'clock' | 'desk';
-  powerRestored?: boolean;
-  stage?: StoryStage;
   onClose: () => void;
 };
 
-export function InspectionEvidencePanel({
-  kind,
-  powerRestored = false,
-  stage = 'puzzle_carrier_sync',
-  onClose,
-}: Props) {
+export function InspectionEvidencePanel({ kind, onClose }: Props) {
   const clock = kind === 'clock';
   return (
     <section
-      className={`puzzle-modal artwork-modal evidence-modal ${clock ? 'clock-evidence-modal' : 'power-test-evidence-modal'}`}
+      className={`puzzle-modal artwork-modal evidence-modal ${clock ? 'clock-evidence-modal' : 'desk-evidence-modal'}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="evidence-title"
     >
-      {clock ? (
-        <ClockEvidence />
-      ) : (
-        <DeskEvidence powerRestored={powerRestored} stage={stage} />
-      )}
-      <button type="button" onClick={onClose}>
-        閉じる
+      {clock ? <ClockEvidence /> : <DeskEvidence />}
+      <button type="button" className="evidence-close" onClick={onClose}>
+        BACK / 戻る
       </button>
     </section>
   );
@@ -55,74 +56,117 @@ function ClockEvidence() {
   );
 }
 
-function DeskEvidence({
-  powerRestored,
-  stage,
+function DeskEvidence() {
+  const [selectedId, setSelectedId] = useState<DeskEvidenceId | null>(null);
+  const selected = deskEvidence.find(({ id }) => id === selectedId) ?? null;
+  const selectedButtonIdRef = useRef<DeskEvidenceId | null>(null);
+  const itemButtonRefs = useRef<
+    Partial<Record<DeskEvidenceId, HTMLButtonElement>>
+  >({});
+  const detailBackRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (selected) detailBackRef.current?.focus();
+  }, [selected]);
+
+  function returnToDesk() {
+    const buttonId = selectedButtonIdRef.current;
+    setSelectedId(null);
+    window.requestAnimationFrame(() => {
+      if (buttonId) itemButtonRefs.current[buttonId]?.focus();
+    });
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Escape' || !selected) return;
+    event.preventDefault();
+    event.stopPropagation();
+    returnToDesk();
+  }
+
+  return (
+    <div className="desk-evidence" onKeyDown={handleKeyDown}>
+      {selected ? (
+        <DeskEvidenceDetail
+          evidence={selected}
+          backRef={detailBackRef}
+          onBack={returnToDesk}
+        />
+      ) : (
+        <>
+          <header className="desk-evidence-heading">
+            <p className="eyebrow">DESK / PERSONAL NOTES</p>
+            <h2 id="evidence-title">机の上</h2>
+            <p>仕事のメモや私物が、片づけられないまま残っている。</p>
+          </header>
+          <div className="desk-paper-field" aria-label="机の上にある物">
+            {deskEvidence.map((evidence, index) => (
+              <button
+                type="button"
+                className={`desk-paper desk-paper-${index + 1} is-${evidence.kind}`}
+                key={evidence.id}
+                aria-label={`${evidence.label}を読む`}
+                ref={(element) => {
+                  if (element) itemButtonRefs.current[evidence.id] = element;
+                }}
+                onClick={() => {
+                  selectedButtonIdRef.current = evidence.id;
+                  setSelectedId(evidence.id);
+                }}
+              >
+                {evidence.kind === 'photo' ? (
+                  <img
+                    src={`${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp`}
+                    alt=""
+                  />
+                ) : (
+                  <>
+                    <span>{evidence.title}</span>
+                    <i aria-hidden="true">読む</i>
+                  </>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function DeskEvidenceDetail({
+  evidence,
+  backRef,
+  onBack,
 }: {
-  powerRestored: boolean;
-  stage: StoryStage;
+  evidence: DeskEvidenceItem;
+  backRef: RefObject<HTMLButtonElement | null>;
+  onBack: () => void;
 }) {
-  if (powerRestored && stage === 'puzzle_carrier_sync')
-    return <SynchronizationNote />;
-  if (powerRestored) return <MaintenanceOrder />;
-  return <PowerPlan />;
-}
-
-function PowerPlan() {
   return (
-    <div className="document-evidence">
-      <p className="eyebrow">FACILITY E-01 / MAINTENANCE DOCUMENT</p>
-      <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>EMERGENCY SYSTEM / RECOVERY NOTE</p>
-        <h2 id="evidence-title">停電時の復旧手順</h2>
-        <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">異常が出ている回路を切る。</p>
-        <p className="document-annotation">
-          CONTROL BUS: SOURCE — RELAY — TERMINATOR
-          <br />
-          RESTORE FROM UPSTREAM TO DOWNSTREAM
-        </p>
-      </article>
-    </div>
-  );
-}
-
-function SynchronizationNote() {
-  return (
-    <div className="document-evidence">
-      <p className="eyebrow">ECHO BUFFER / SERVICE NOTE</p>
-      <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>CARRIER START POSITION</p>
-        <h2 id="evidence-title">波形調整メモ</h2>
-        <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">
-          基準より先に出る波：<strong>DELAY / 右へ</strong>
-          <br />
-          基準より後に出る波：<strong>ADVANCE / 左へ</strong>
-        </p>
-        <p className="document-annotation">波が出る位置を0に合わせること。</p>
-      </article>
-    </div>
-  );
-}
-
-function MaintenanceOrder() {
-  return (
-    <div className="document-evidence">
-      <p className="eyebrow">NIGHT SHIFT / PERSONAL NOTE</p>
-      <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>BEFORE LEAVING</p>
-        <h2 id="evidence-title">夜勤の覚え書き</h2>
-        <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">
-          夜勤の終わりはいつも同じ。
-          <br />
-          端末の記録を閉じ、インターホンを戻す。
-          <br />
-          転送装置の残りを確認して、最後にドアを見る。
-        </p>
-        <p className="document-annotation">今日も忘れないように。</p>
-      </article>
+    <div className={`desk-evidence-detail is-${evidence.kind}`}>
+      <button ref={backRef} type="button" onClick={onBack}>
+        DESK / 机に戻る
+      </button>
+      {evidence.kind === 'photo' ? (
+        <figure className="desk-photo-detail">
+          <img
+            src={`${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp`}
+            alt="端末に向かう、後ろ姿の作業員"
+          />
+          <figcaption>
+            <h2 id="evidence-title">{evidence.title}</h2>
+            <p>{evidence.body}</p>
+          </figcaption>
+        </figure>
+      ) : (
+        <article className="document-sheet" aria-labelledby="evidence-title">
+          <p>{evidence.kind === 'note' ? 'PERSONAL NOTE' : 'SHIFT RECORD'}</p>
+          <h2 id="evidence-title">{evidence.title}</h2>
+          <div className="document-rule" aria-hidden="true" />
+          <p className="document-instruction">{evidence.body}</p>
+        </article>
+      )}
     </div>
   );
 }

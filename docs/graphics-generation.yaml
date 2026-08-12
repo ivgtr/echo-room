@@ -325,14 +325,15 @@ assets:
       runtime: [1920, 1080]
       aspect_ratio: "16:9"
     prompt: >-
-      Face the south wall. Show a functional metal research desk with one blank
-      off-white emergency-test sheet, a restrained chair and a small number of
-      believable lab objects. Keep the surface uncluttered so the paper is a clear
-      investigation target. Preserve east and west wall edge cues. Add the approved
+      Face the south wall. Show a functional metal research desk with five varied
+      off-white work notes and one small landscape work photograph spread across
+      the usable surface. Keep them grouped as one clear investigation target
+      without making any single sheet dominant. Preserve east and west wall edge
+      cues. Add the approved
       noninteractive desk lamp, closed tool case, rolling side cart, low waste bin
       and bundled data cable. Keep the slightly displaced chair and closed tool case
       readable as optional atmosphere inspection targets, not puzzle containers.
-    states_derived: [paper_present, paper_taken]
+    states_derived: [desk_evidence_fixed]
     deliverables:
       - standard_wide_layers
 
@@ -450,10 +451,12 @@ assets:
     prompt_parts: [world, camera_closeup, light_powered, reference_lock, negative]
     canvas: *closeup_canvas
     prompt: >-
-      Inspect the same metal desk from standing first-person view. A single blank
-      off-white sheet is the main focus, with enough clean flat area to overlay the
-      emergency power test text. Keep the few surrounding objects unchanged.
-    state_variants: [paper_present, paper_taken]
+      Inspect the same metal desk from standing first-person view. Five varied
+      off-white work notes and one small landscape work photograph are spread in a
+      readable cluster. Leave every paper face blank for exact HTML text overlays,
+      keep each silhouette individually selectable, and keep surrounding objects
+      unchanged. The layout never changes with story progress.
+    state_variants: [desk_evidence_fixed]
     deliverables: *closeup_deliverables
 
   - id: gfx-close-005
@@ -774,6 +777,29 @@ assets:
     exact_text_added_manually:
       - 緊急時は「送信側の時刻」を使用する。
     deliverables: *document_deliverables
+
+  - id: gfx-doc-005
+    label: 机上の作業写真
+    category: document
+    stage: 4
+    priority: required
+    method: reference_guided_generation
+    references: [gfx-item-003, gfx-close-008]
+    prompt_parts: [world, reference_lock, negative]
+    canvas:
+      source_minimum: [1024, 768]
+      runtime: [1024, 768]
+      aspect_ratio: "4:3"
+      transparent_background: false
+    prompt: >-
+      Create a mundane workplace snapshot of the approved protagonist operating
+      the approved terminal. Show one person entirely from behind in the same dark
+      gray maintenance uniform. Do not show his face, profile, reflection, name,
+      badge text, date, timestamp or readable terminal text. Use restrained cool
+      facility light and slight photographic handling grain. It should only become
+      meaningful in retrospect and must not reveal the protagonist identity alone.
+    deliverables:
+      - runtime_document
 
   - id: gfx-ui-001
     label: 端末画面ベゼル

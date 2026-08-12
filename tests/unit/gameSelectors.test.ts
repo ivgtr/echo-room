@@ -16,7 +16,7 @@ describe('exploration messaging selectors', () => {
     }
 
     expect(selectObjective(actor.getSnapshot())).toContain(
-      '机の紙と壊れた回路',
+      '机のメモと壊れた回路',
     );
     expect(selectSubtitle(actor.getSnapshot())).toBeNull();
   });

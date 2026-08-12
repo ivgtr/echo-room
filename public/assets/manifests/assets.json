@@ -82,14 +82,8 @@
           "height": 941
         },
         {
-          "id": "gfx-close-004__paper-present",
-          "src": "/assets/images/close/gfx-close-004__paper-present__preview-flat.webp",
-          "width": 1672,
-          "height": 941
-        },
-        {
-          "id": "gfx-close-004__paper-taken",
-          "src": "/assets/images/close/gfx-close-004__paper-taken__preview-flat.webp",
+          "id": "gfx-close-004__desk-evidence-fixed",
+          "src": "/assets/images/close/gfx-close-004__desk-evidence-fixed__preview-flat.webp",
           "width": 1672,
           "height": 941
         },
@@ -188,6 +182,12 @@
           "src": "/assets/images/close/gfx-close-012__threshold__preview-flat.webp",
           "width": 1672,
           "height": 941
+        },
+        {
+          "id": "gfx-doc-005__desk-photo",
+          "src": "/assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp",
+          "width": 1024,
+          "height": 768
         }
       ]
     },

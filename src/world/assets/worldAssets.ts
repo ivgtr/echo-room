@@ -143,7 +143,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
     hotspots: [
       {
         id: 'hotspot_desk',
-        label: '机の紙を調べる',
+        label: '机を調べる',
         polygon: [
           [590, 527],
           [1260, 527],

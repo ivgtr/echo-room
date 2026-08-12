@@ -312,6 +312,8 @@ function buildScene(
   background.height = LOGICAL_HEIGHT;
   container.addChild(background);
 
+  if (locationId === 'location_south_wall') addDeskClutter(container);
+
   for (const hotspot of asset.hotspots) {
     const target = new Graphics({
       label: hotspot.id,
@@ -330,6 +332,48 @@ function buildScene(
     powerRestored,
     container,
   };
+}
+
+function addDeskClutter(container: Container) {
+  const clutter = new Container({ label: 'desk-evidence-clutter' });
+  const papers = [
+    [862, 646, 76, 40, -0.08, '#8f8b7d'],
+    [930, 641, 60, 36, 0.04, '#827d68'],
+    [992, 646, 78, 42, 0.08, '#918c7c'],
+    [900, 666, 62, 34, 0.07, '#817b65'],
+    [964, 665, 56, 32, -0.07, '#8a836e'],
+  ] as const;
+
+  for (const [x, y, width, height, rotation, color] of papers) {
+    const shadow = new Graphics()
+      .roundRect(-width / 2 + 3, -height / 2 + 4, width, height, 2)
+      .fill({ color: '#050708', alpha: 0.42 });
+    const paper = new Graphics()
+      .roundRect(-width / 2, -height / 2, width, height, 2)
+      .fill({ color, alpha: 0.88 })
+      .moveTo(-width * 0.34, -height * 0.2)
+      .lineTo(width * 0.34, -height * 0.2)
+      .stroke({ color: '#625f55', width: 1, alpha: 0.44 });
+    const item = new Container({ x, y, rotation, eventMode: 'none' });
+    item.addChild(shadow, paper);
+    clutter.addChild(item);
+  }
+
+  const photo = new Container({
+    x: 1030,
+    y: 659,
+    rotation: 0.06,
+    eventMode: 'none',
+  });
+  photo.addChild(
+    new Graphics()
+      .rect(-35, -24, 70, 48)
+      .fill({ color: '#928d7e', alpha: 0.9 })
+      .rect(-31, -20, 62, 39)
+      .fill({ color: '#1b2222', alpha: 0.9 }),
+  );
+  clutter.addChild(photo);
+  container.addChild(clutter);
 }
 
 function easeInOut(value: number) {

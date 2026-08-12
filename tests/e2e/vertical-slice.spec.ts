@@ -204,7 +204,7 @@ test('keyboard-capable route restores power and resumes after reload', async ({
     'true',
   );
   await expect(
-    system.getByText('机の紙と壊れた回路を調べ、ブレーカーを入れる。'),
+    system.getByText('机のメモと壊れた回路を調べ、ブレーカーを入れる。'),
   ).toBeVisible();
   const archiveEntry = system.getByRole('button', {
     name: 'ARCHIVE / 会話履歴・資料',
@@ -301,13 +301,13 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(saveToast).toHaveCount(0);
   await expect(
-    page.getByText('机の調整メモと、端末の波の位置を見比べる。'),
+    page.getByText('机の走り書きと、端末の波の位置を見比べる。'),
   ).toBeHidden();
   await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   await expect(
     page
       .getByRole('dialog', { name: 'SYSTEM' })
-      .getByText('机の調整メモと、端末の波の位置を見比べる。'),
+      .getByText('机の走り書きと、端末の波の位置を見比べる。'),
   ).toBeVisible();
 });
 
@@ -549,7 +549,9 @@ test('system archive and subtitle/sound settings preserve the exploration view',
     .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料' })
     .click();
   await expect(system.getByText('……聞こえるか？')).toBeVisible();
-  await expect(system.getByText('AUXILIARY BUS RECOVERY')).toBeVisible();
+  await expect(system.getByText('朝番への引き継ぎ')).toBeVisible();
+  await expect(system.getByText('波を見るとき')).toBeVisible();
+  await expect(system.getByText('戸締まり前')).toBeVisible();
   await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
   await system
     .getByRole('button', {

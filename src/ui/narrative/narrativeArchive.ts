@@ -1,6 +1,7 @@
-import type { ItemId, StoryStage } from '../../game/machine/gameMachine';
+import type { ItemId } from '../../game/machine/gameMachine';
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import type { SavedProgress } from '../../game/save/saveManager';
+import { archivedDeskDocuments } from '../evidence/deskEvidence';
 
 export type NarrativeKind =
   'monologue' | 'communication' | 'discovery' | 'system';
@@ -163,24 +164,6 @@ export function discoveryEntry(text: string): NarrativeEntry {
   };
 }
 
-const powerPlan: ArchiveDocument = {
-  id: 'document_power_plan',
-  title: 'AUXILIARY BUS RECOVERY',
-  body: '異常が出ている回路を切る。電源は、上の配線を始まりに近い機器から順にたどって戻す。',
-};
-
-const maintenanceSheet: ArchiveDocument = {
-  id: 'document_maintenance_order',
-  title: 'NIGHT SHIFT NOTE',
-  body: '夜勤の終わりはいつも同じ。端末の記録を閉じ、インターホンを戻す。転送装置の残りを確認して、最後にドアを見る。',
-};
-
-const synchronizationNote: ArchiveDocument = {
-  id: 'document_synchronization_note',
-  title: 'CARRIER START POSITION',
-  body: '基準より先に出る波は右へ、後に出る波は左へ動かし、開始位置を0に合わせる。',
-};
-
 const floorMap: ArchiveDocument = {
   id: 'document_floor_map',
   title: 'FACILITY / CONDUIT MAP',
@@ -189,13 +172,10 @@ const floorMap: ArchiveDocument = {
 
 export function getArchiveDocuments(
   powerRestored: boolean,
-  _stage: StoryStage,
   inventory: readonly ItemId[],
 ) {
   const documents: ArchiveDocument[] = [];
-  if (powerRestored) documents.push(powerPlan, synchronizationNote);
-  if (powerRestored && _stage !== 'puzzle_carrier_sync')
-    documents.push(maintenanceSheet);
+  if (powerRestored) documents.push(...archivedDeskDocuments);
   if (inventory.includes('item_floor_map')) documents.push(floorMap);
   return documents;
 }

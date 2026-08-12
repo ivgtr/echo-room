@@ -39,8 +39,9 @@ export const selectReservePower = (snapshot: GameSnapshot) =>
   snapshot.context.reservePower;
 
 const objectives: Partial<Record<StoryStage, string>> = {
-  puzzle_carrier_sync: '机の調整メモと、端末の波の位置を見比べる。',
-  puzzle_maintenance_lock: '机の夜勤メモと、4つの機器に刻まれた記号を調べる。',
+  puzzle_carrier_sync: '机の走り書きと、端末の波の位置を見比べる。',
+  puzzle_maintenance_lock:
+    '机の戸締まりメモと、4つの機器に刻まれた記号を調べる。',
   puzzle_signal_investigation:
     '端末のLOGで波形をつなぎ、そのまま配線の行き先を追う。',
   puzzle_packet_repair: '端末のSIGNALに残った破損データを調べる。',
@@ -55,7 +56,7 @@ export const selectObjective = (snapshot: GameSnapshot) => {
   if (!snapshot.matches('playing')) return null;
   if (snapshot.matches({ playing: 'powered' }))
     return objectives[snapshot.context.storyStage] ?? '出口を探す。';
-  return '机の紙と壊れた回路を調べ、ブレーカーを入れる。';
+  return '机のメモと壊れた回路を調べ、ブレーカーを入れる。';
 };
 
 export const selectSubtitle = (snapshot: GameSnapshot) => {

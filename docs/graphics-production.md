@@ -178,7 +178,7 @@
 |---|---|---|---|
 | 北壁 | 左下の空調service unit、天井cable tray、扉前の細い排水溝、壁際の低い密閉utility canister、配管support | 扉枠の新しい擦過痕、battery筐体下の結露跡 | 扉、時計、intercom、空表示筐体 |
 | 東壁 | 低い整備stool、床置きcable reel、壁面cooling manifold、蓋付きparts tray、配管support | cradleに戻されていないcalibration probe、端末下の新しい焦げ跡 | blank terminal、閉じた解析panel |
-| 南壁 | desk lamp、工具case、rolling side cart、低いwaste bin、束ねたdata cable、椅子 | 閉じた工具case、事故で少しずれた椅子 | desk上のblank paper |
+| 南壁 | desk lamp、工具case、rolling side cart、低いwaste bin、束ねたdata cable、椅子 | 閉じた工具case、事故で少しずれた椅子 | desk上の複数の紙と伏せかけの写真 |
 | 西壁 | 壁掛けhose reel、折り畳みstep、低いutility dolly、保護glove、床drain | locker前の短い擦過跡、breakerの破れたinspection seal | lockerと空4桁窓、4-lever breaker |
 
 - free-standing objectは通路中央を塞がず、視点回転時に隣接壁のedge cueと矛盾させない。
@@ -354,7 +354,7 @@ Do not redesign the room or the machine.
 |---|---|---|---|
 | GFX-WIDE-001 | 北壁 | ドア、時計、インターホン | 基準となる正面視点 |
 | GFX-WIDE-002 | 東壁 | 端末、端末横のパネル | 電源OFFを基礎状態とする |
-| GFX-WIDE-003 | 南壁 | 机、紙、椅子、配線 | 紙を取得前の状態 |
+| GFX-WIDE-003 | 南壁 | 机、複数の紙、写真、椅子、配線 | 机上物は全進行で固定 |
 | GFX-WIDE-004 | 西壁 | ブレーカー、ロッカー | ロッカー閉状態 |
 | GFX-WIDE-005 | 北壁終幕 | 開いたドアと白い光 | WIDE-001の編集差分 |
 
@@ -367,7 +367,7 @@ Do not redesign the room or the machine.
 | GFX-CLOSE-001 | ドア | 閉、ロック解除、少し開く |
 | GFX-CLOSE-002 | 時計 | 02:17で停止。文字盤数字は後工程で重ねる |
 | GFX-CLOSE-003 | インターホン | 通信なし、受信中ランプ |
-| GFX-CLOSE-004 | 机 | 紙あり、紙取得後 |
+| GFX-CLOSE-004 | 机 | 三つの手掛かり、二つの日常メモ、作業写真を固定配置 |
 | GFX-CLOSE-005 | ブレーカー | 4レバーOFF、操作可能状態 |
 | GFX-CLOSE-006 | ロッカー | 閉、開、内容物あり、回収後 |
 | GFX-CLOSE-007 | ロッカー電子錠 | 空の表示窓、数字はDOMで重ねる |
@@ -389,6 +389,7 @@ Do not redesign the room or the machine.
 | GFX-DOC-002 | 非常電源テスト用紙 | 紙textureを生成し、本文は後合成 |
 | GFX-DOC-003 | 緊急時メモ | 紙textureと手書き線の雰囲気を作り、本文は後合成 |
 | GFX-DOC-004 | ECHO研究概要 | 端末DOMとして制作。画像生成なし |
+| GFX-DOC-005 | 作業中の写真 | 主人公と同じ作業着の人物を背後から写し、顔、氏名、時刻を見せない |
 
 ### 7.5 UI外装と演出素材
 
