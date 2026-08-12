@@ -274,7 +274,7 @@ function PowerRouteDevice({ submit }: DeviceProps) {
         ? 'ONLINE'
         : startedCount > 0
           ? `BOOT SEQUENCE / ${startedCount} / 3`
-          : 'PROTECTION CLEAR';
+          : 'BOOT SEQUENCE READY';
 
   return (
     <div
@@ -317,6 +317,9 @@ function PowerRouteDevice({ submit }: DeviceProps) {
                   alt=""
                   aria-hidden="true"
                 />
+                <span className="circuit-status-label" aria-hidden="true">
+                  STATUS
+                </span>
                 <span className="breaker-sockets" aria-hidden="true">
                   <span className="breaker-socket">
                     <img

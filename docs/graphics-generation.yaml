@@ -472,6 +472,8 @@ assets:
       mark the fourth circuit only with a small recent soot trace without changing
       its geometry. In the upper recessed strip, add subtle physical control wiring
       that links the first three bays as source, relay and terminated endpoint.
+      End the fourth-bay branch at a small heat-damaged disconnected terminal so
+      its exclusion is observable without changing the breaker body.
       Use no arrows, numbers, readable text or glowing baked-in lines.
       Generate one immutable base without levers or sockets, one transparent
       movable lever sprite, and one transparent dark socket sprite. Duplicate the

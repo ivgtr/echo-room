@@ -33,6 +33,9 @@ describe('PuzzleDevice', () => {
     expect(leverSources).toHaveLength(4);
     expect(new Set(leverSources)).toHaveLength(1);
     expect(view.container.querySelectorAll('.breaker-socket')).toHaveLength(4);
+    expect(
+      view.container.querySelectorAll('.circuit-status-label'),
+    ).toHaveLength(4);
 
     fireEvent.click(screen.getByRole('button', { name: 'TERMINAL回路、OFF' }));
     expect(onSubmit).toHaveBeenCalledWith('puzzle_power_route', [
@@ -43,7 +46,7 @@ describe('PuzzleDevice', () => {
       screen.getByRole('button', { name: 'DOOR回路、ON' }),
     ).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'DOOR回路、ON' }));
-    expect(screen.getByText('PROTECTION CLEAR')).toBeVisible();
+    expect(screen.getByText('BOOT SEQUENCE READY')).toBeVisible();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),

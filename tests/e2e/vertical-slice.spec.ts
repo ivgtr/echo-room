@@ -197,7 +197,8 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   await expect(
     powerPuzzle.getByRole('button', { name: 'TERMINAL回路、OFF' }),
   ).toHaveAttribute('aria-pressed', 'false');
-  await expect(powerPuzzle.getByText('PROTECTION CLEAR')).toBeVisible();
+  await expect(powerPuzzle.getByText('BOOT SEQUENCE READY')).toBeVisible();
+  await page.screenshot({ path: 'tmp/power-sequence-ready.png' });
   await powerPuzzle
     .getByRole('button', { name: 'ECHO BUFFER回路、OFF' })
     .press('Enter');
