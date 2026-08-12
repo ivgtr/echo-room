@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { locationIds } from '../../src/game/domain/ids';
 import {
   getHotspotBounds,
+  getInspectionBounds,
   getWorldImage,
   worldViewAssets,
 } from '../../src/world/assets/worldAssets';
@@ -32,27 +33,17 @@ describe('world runtime assets', () => {
     }
   });
 
-  it('uses simple inspection outlines instead of exposing hit polygons', () => {
-    const outlines = Object.values(worldViewAssets)
-      .flatMap(({ hotspots }) => hotspots)
-      .map(({ id, inspectionOutline }) => [id, inspectionOutline.kind]);
-
-    expect(outlines).toEqual([
-      ['hotspot_clock', 'ellipse'],
-      ['hotspot_door', 'rectangle'],
-      ['hotspot_intercom', 'rectangle'],
-      ['hotspot_terminal', 'rectangle'],
-      ['hotspot_analysis_panel', 'rectangle'],
-      ['hotspot_desk', 'polygon'],
-      ['hotspot_locker', 'rectangle'],
-      ['hotspot_breaker', 'rectangle'],
-    ]);
-    const desk = worldViewAssets.location_south_wall.hotspots[0];
-    expect(
-      desk?.inspectionOutline.kind === 'polygon'
-        ? desk.inspectionOutline.points
-        : [],
-    ).toHaveLength(4);
+  it('uses rectangular inspection bounds without exposing hit polygons', () => {
+    const hotspots = Object.values(worldViewAssets).flatMap(
+      ({ hotspots }) => hotspots,
+    );
+    for (const hotspot of hotspots) {
+      const bounds = getInspectionBounds(hotspot);
+      expect(bounds.width).toBeGreaterThan(0);
+      expect(bounds.height).toBeGreaterThan(0);
+    }
+    const clock = hotspots.find(({ id }) => id === 'hotspot_clock');
+    expect(clock?.inspectionBounds).toEqual([326, 128, 510, 306]);
   });
 
   it('matches the approved west-wall object order', () => {

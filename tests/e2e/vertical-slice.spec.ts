@@ -387,6 +387,10 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   const transitionMarker = page.locator('.inspection-transition-marker');
   await expect(transitionMarker).toBeVisible();
   await expect(transitionMarker).toHaveAttribute('data-trace-duration', '110');
+  await expect(transitionMarker).toHaveAttribute(
+    'data-outline-shape',
+    'rectangle',
+  );
   await expect
     .poll(() =>
       transitionMarker.evaluate((canvas) => {

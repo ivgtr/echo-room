@@ -18,6 +18,7 @@ import {
   type PuzzleId,
 } from '../game/puzzles/storyPuzzles';
 import {
+  getInspectionBounds,
   getHotspotBounds,
   worldViewAssets,
   type WorldHotspot,
@@ -490,14 +491,11 @@ export function GameScreen(props: Props) {
         {inspectionPhase === 'approaching' && inspectionTarget && (
           <div
             className="inspection-transition-target"
-            style={hotspotBoundsStyle(inspectionTarget)}
+            style={inspectionBoundsStyle(inspectionTarget)}
             role="status"
             aria-label={inspectionTarget.label}
           >
-            <InspectionTrace
-              hotspot={inspectionTarget}
-              motionReduced={props.motionReduced}
-            />
+            <InspectionTrace motionReduced={props.motionReduced} />
             <span className="inspection-transition-label" aria-hidden="true">
               {inspectionTarget.label}
             </span>
@@ -683,6 +681,16 @@ function hotspotBoundsStyle(hotspot: WorldHotspot): CSSProperties {
   };
 }
 
+function inspectionBoundsStyle(hotspot: WorldHotspot): CSSProperties {
+  const bounds = getInspectionBounds(hotspot);
+  return {
+    left: `${(bounds.x / 1920) * 100}%`,
+    top: `${(bounds.y / 1080) * 100}%`,
+    width: `${(bounds.width / 1920) * 100}%`,
+    height: `${(bounds.height / 1080) * 100}%`,
+  };
+}
+
 function hotspotClipStyle(hotspot: WorldHotspot): CSSProperties {
   const bounds = getHotspotBounds(hotspot);
   const clipPath = hotspot.polygon
@@ -696,7 +704,7 @@ function hotspotClipStyle(hotspot: WorldHotspot): CSSProperties {
 
 function inspectionStageStyle(hotspot: WorldHotspot | null) {
   if (!hotspot) return undefined;
-  const bounds = getHotspotBounds(hotspot);
+  const bounds = getInspectionBounds(hotspot);
   return {
     '--inspection-x': `${((bounds.x + bounds.width / 2) / 1920) * 100}%`,
     '--inspection-y': `${((bounds.y + bounds.height / 2) / 1080) * 100}%`,

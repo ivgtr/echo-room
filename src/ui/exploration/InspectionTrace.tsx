@@ -1,10 +1,6 @@
 import { useEffect, useRef } from 'react';
 
 import {
-  getHotspotBounds,
-  type WorldHotspot,
-} from '../../world/assets/worldAssets';
-import {
   getOppositeCornerPaths,
   type InspectionTracePoint,
 } from './inspectionTraceGeometry';
@@ -16,11 +12,10 @@ const DIAMOND_FADE_MS = 40;
 type Point = InspectionTracePoint;
 
 type Props = {
-  hotspot: WorldHotspot;
   motionReduced: boolean;
 };
 
-export function InspectionTrace({ hotspot, motionReduced }: Props) {
+export function InspectionTrace({ motionReduced }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -30,7 +25,6 @@ export function InspectionTrace({ hotspot, motionReduced }: Props) {
     const context = canvas.getContext('2d');
     if (!context) return;
 
-    const bounds = getHotspotBounds(hotspot);
     const cssWidth = canvas.clientWidth;
     const cssHeight = canvas.clientHeight;
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -38,14 +32,13 @@ export function InspectionTrace({ hotspot, motionReduced }: Props) {
     canvas.height = Math.max(1, Math.round(cssHeight * pixelRatio));
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    const outlinePoints = getOutlinePoints(hotspot);
-    const points = outlinePoints.map(([x, y]) => {
-      const inset = 1;
-      return [
-        inset + ((x - bounds.x) / bounds.width) * (cssWidth - inset * 2),
-        inset + ((y - bounds.y) / bounds.height) * (cssHeight - inset * 2),
-      ] as Point;
-    });
+    const inset = 1;
+    const points: readonly Point[] = [
+      [inset, inset],
+      [cssWidth - inset, inset],
+      [cssWidth - inset, cssHeight - inset],
+      [inset, cssHeight - inset],
+    ];
 
     const draw = (traceProgress: number, diamondOpacity: number) => {
       context.clearRect(0, 0, cssWidth, cssHeight);
@@ -103,43 +96,17 @@ export function InspectionTrace({ hotspot, motionReduced }: Props) {
     animationFrame = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [hotspot, motionReduced]);
+  }, [motionReduced]);
 
   return (
     <canvas
       ref={canvasRef}
       className="inspection-transition-marker"
       data-trace-duration={motionReduced ? 0 : TRACE_DURATION_MS}
+      data-outline-shape="rectangle"
       aria-hidden="true"
     />
   );
-}
-
-function getOutlinePoints(hotspot: WorldHotspot): readonly Point[] {
-  const outline = hotspot.inspectionOutline;
-  if (outline.kind === 'polygon') return outline.points;
-
-  const [left, top, right, bottom] = outline.bounds;
-  if (outline.kind === 'rectangle') {
-    return [
-      [left, top],
-      [right, top],
-      [right, bottom],
-      [left, bottom],
-    ];
-  }
-
-  const centerX = (left + right) / 2;
-  const centerY = (top + bottom) / 2;
-  const radiusX = (right - left) / 2;
-  const radiusY = (bottom - top) / 2;
-  return Array.from({ length: 48 }, (_, index) => {
-    const angle = -Math.PI / 2 + (index / 48) * Math.PI * 2;
-    return [
-      centerX + Math.cos(angle) * radiusX,
-      centerY + Math.sin(angle) * radiusY,
-    ] as Point;
-  });
 }
 
 function traceOutlineFromOppositeCorners(

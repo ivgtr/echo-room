@@ -6,15 +6,7 @@ export type WorldHotspot = {
   id: HotspotId;
   label: string;
   polygon: ReadonlyArray<readonly [number, number]>;
-  inspectionOutline:
-    | {
-        kind: 'rectangle' | 'ellipse';
-        bounds: readonly [number, number, number, number];
-      }
-    | {
-        kind: 'polygon';
-        points: ReadonlyArray<readonly [number, number]>;
-      };
+  inspectionBounds: readonly [number, number, number, number];
 };
 
 type WorldViewAsset = {
@@ -46,10 +38,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [337, 260],
           [318, 196],
         ],
-        inspectionOutline: {
-          kind: 'ellipse',
-          bounds: [318, 86, 515, 300],
-        },
+        inspectionBounds: [326, 128, 510, 306],
       },
       {
         id: 'hotspot_door',
@@ -64,10 +53,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [686, 868],
           [686, 274],
         ],
-        inspectionOutline: {
-          kind: 'rectangle',
-          bounds: [686, 206, 1218, 936],
-        },
+        inspectionBounds: [686, 206, 1218, 936],
       },
       {
         id: 'hotspot_intercom',
@@ -82,10 +68,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [1228, 624],
           [1228, 380],
         ],
-        inspectionOutline: {
-          kind: 'rectangle',
-          bounds: [1228, 348, 1436, 658],
-        },
+        inspectionBounds: [1228, 348, 1436, 658],
       },
     ],
   },
@@ -109,10 +92,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [682, 704],
           [682, 358],
         ],
-        inspectionOutline: {
-          kind: 'rectangle',
-          bounds: [682, 302, 1228, 762],
-        },
+        inspectionBounds: [682, 302, 1228, 762],
       },
       {
         id: 'hotspot_analysis_panel',
@@ -127,10 +107,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [1229, 635],
           [1229, 390],
         ],
-        inspectionOutline: {
-          kind: 'rectangle',
-          bounds: [1229, 360, 1444, 666],
-        },
+        inspectionBounds: [1229, 360, 1444, 666],
       },
     ],
   },
@@ -152,15 +129,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [542, 921],
           [484, 704],
         ],
-        inspectionOutline: {
-          kind: 'polygon',
-          points: [
-            [590, 527],
-            [1260, 527],
-            [1308, 921],
-            [542, 921],
-          ],
-        },
+        inspectionBounds: [542, 527, 1308, 921],
       },
     ],
   },
@@ -184,10 +153,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [278, 886],
           [278, 150],
         ],
-        inspectionOutline: {
-          kind: 'rectangle',
-          bounds: [278, 112, 584, 922],
-        },
+        inspectionBounds: [278, 112, 584, 922],
       },
       {
         id: 'hotspot_breaker',
@@ -202,10 +168,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [1264, 618],
           [1264, 308],
         ],
-        inspectionOutline: {
-          kind: 'rectangle',
-          bounds: [1264, 262, 1654, 666],
-        },
+        inspectionBounds: [1264, 262, 1654, 666],
       },
     ],
   },
@@ -230,5 +193,10 @@ export function getHotspotBounds(hotspot: WorldHotspot) {
   const top = Math.min(...ys);
   const right = Math.max(...xs);
   const bottom = Math.max(...ys);
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+export function getInspectionBounds(hotspot: WorldHotspot) {
+  const [left, top, right, bottom] = hotspot.inspectionBounds;
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
