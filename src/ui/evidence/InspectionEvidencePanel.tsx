@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type TransitionEvent,
+} from 'react';
 
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import {
@@ -73,23 +81,95 @@ function DeskEvidence({
   completedPuzzleIds: readonly PuzzleId[];
 }) {
   const [selectedId, setSelectedId] = useState<DeskEvidenceId | null>(null);
+  const [lifted, setLifted] = useState(false);
   const selected = deskEvidence.find(({ id }) => id === selectedId) ?? null;
+  const selectedIndex = selected
+    ? deskEvidence.findIndex(({ id }) => id === selected.id)
+    : -1;
   const selectedButtonIdRef = useRef<DeskEvidenceId | null>(null);
   const itemButtonRefs = useRef<
     Partial<Record<DeskEvidenceId, HTMLButtonElement>>
   >({});
   const backRef = useRef<HTMLButtonElement>(null);
+  const liftedPropRef = useRef<HTMLDivElement>(null);
+  const returnTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (selected) backRef.current?.focus();
   }, [selected]);
 
-  function returnToDesk() {
+  useLayoutEffect(() => {
+    if (!selected) return;
+    const source = itemButtonRefs.current[selected.id];
+    const target = liftedPropRef.current;
+    if (!source || !target) return;
+
+    const sourceRect = source.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetWidth = targetRect.width || 1;
+    const targetHeight = targetRect.height || 1;
+    target.style.setProperty(
+      '--desk-lift-x',
+      `${sourceRect.left - targetRect.left}px`,
+    );
+    target.style.setProperty(
+      '--desk-lift-y',
+      `${sourceRect.top - targetRect.top}px`,
+    );
+    target.style.setProperty(
+      '--desk-lift-scale-x',
+      `${sourceRect.width / targetWidth || 1}`,
+    );
+    target.style.setProperty(
+      '--desk-lift-scale-y',
+      `${sourceRect.height / targetHeight || 1}`,
+    );
+
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => setLifted(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+    };
+  }, [selected]);
+
+  useEffect(
+    () => () => {
+      if (returnTimerRef.current !== null) {
+        window.clearTimeout(returnTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  function finishReturnToDesk() {
+    if (returnTimerRef.current !== null) {
+      window.clearTimeout(returnTimerRef.current);
+      returnTimerRef.current = null;
+    }
     const buttonId = selectedButtonIdRef.current;
     setSelectedId(null);
     window.requestAnimationFrame(() => {
       if (buttonId) itemButtonRefs.current[buttonId]?.focus();
     });
+  }
+
+  function returnToDesk() {
+    if (!selected || returnTimerRef.current !== null) return;
+    setLifted(false);
+    returnTimerRef.current = window.setTimeout(finishReturnToDesk, 320);
+  }
+
+  function handleLiftTransitionEnd(event: TransitionEvent<HTMLDivElement>) {
+    if (
+      !lifted &&
+      event.target === event.currentTarget &&
+      event.propertyName === 'transform'
+    ) {
+      finishReturnToDesk();
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -114,8 +194,9 @@ function DeskEvidence({
           const isSelected = evidence.id === selectedId;
           return (
             <div
-              className={`desk-prop desk-prop-${index + 1} is-${evidence.format}${isSelected ? ' is-selected' : ''}${selected && !isSelected ? ' is-set-aside' : ''}`}
+              className={`desk-prop desk-prop-${index + 1} is-${evidence.format}${isSelected ? ' is-source' : ''}${selected && !isSelected ? ' is-set-aside' : ''}`}
               key={evidence.id}
+              aria-hidden={selected ? true : undefined}
             >
               <button
                 type="button"
@@ -128,30 +209,51 @@ function DeskEvidence({
                 }}
                 onClick={() => {
                   selectedButtonIdRef.current = evidence.id;
+                  setLifted(false);
                   setSelectedId(evidence.id);
                 }}
               />
-              <DeskPropFace evidence={evidence} expanded={isSelected} />
+              <DeskPropFace evidence={evidence} expanded={false} />
             </div>
           );
         })}
         {selected ? (
-          <div className="desk-reading-ui">
-            <button ref={backRef} type="button" onClick={returnToDesk}>
-              DESK / 机に戻る
-            </button>
-            <p className="desk-interpretation" role="status">
-              {getDeskInterpretation(
-                selected.id,
-                completedPuzzleIds,
-                powerRestored,
-              )}
-            </p>
-          </div>
+          <>
+            <div
+              ref={liftedPropRef}
+              className={`desk-lifted-prop desk-lifted-prop-${selectedIndex + 1} is-${selected.format}${lifted ? ' is-lifted' : ''}`}
+              style={
+                {
+                  '--desk-lift-rotation': `${getDeskRotation(selectedIndex)}deg`,
+                } as CSSProperties
+              }
+              onTransitionEnd={handleLiftTransitionEnd}
+            >
+              <DeskPropFace evidence={selected} expanded />
+            </div>
+            <div className={`desk-reading-ui${lifted ? ' is-visible' : ''}`}>
+              <button ref={backRef} type="button" onClick={returnToDesk}>
+                DESK / 机に戻る
+              </button>
+              <p className="desk-interpretation" role="status">
+                {getDeskInterpretation(
+                  selected.id,
+                  completedPuzzleIds,
+                  powerRestored,
+                )}
+              </p>
+            </div>
+          </>
         ) : null}
       </div>
     </div>
   );
+}
+
+const deskRotations = [-6, 3, 7, 4, -5, 5] as const;
+
+function getDeskRotation(index: number) {
+  return deskRotations[index] ?? 0;
 }
 
 function DeskPropFace({
@@ -168,10 +270,12 @@ function DeskPropFace({
           src={deskPhoto}
           alt={expanded ? '端末に向かう、後ろ姿の作業員' : ''}
         />
-        <figcaption className="desk-prop-full">
-          <h3>{evidence.title}</h3>
-          <p>{evidence.body}</p>
-        </figcaption>
+        {expanded ? (
+          <figcaption className="desk-prop-full">
+            <h3>{evidence.title}</h3>
+            <p>{evidence.body}</p>
+          </figcaption>
+        ) : null}
       </figure>
     );
   }
@@ -179,9 +283,13 @@ function DeskPropFace({
   return (
     <article className="desk-prop-face">
       <DeskPaperPreview evidence={evidence} />
-      <div className="desk-prop-full">
-        <p>{evidence.body}</p>
-      </div>
+      {expanded &&
+      evidence.format !== 'checklist' &&
+      evidence.format !== 'torn' ? (
+        <div className="desk-prop-full">
+          <p>{evidence.body}</p>
+        </div>
+      ) : null}
     </article>
   );
 }

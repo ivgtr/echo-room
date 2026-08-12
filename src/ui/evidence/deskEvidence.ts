@@ -46,7 +46,12 @@ export const deskEvidence: readonly DeskEvidence[] = [
     title: '戸締まり前',
     label: '書き込みのある夜勤チェック表',
     format: 'checklist',
-    previewLines: ['端末の記録', 'インターホン', '転送装置', 'ドア'],
+    previewLines: [
+      '端末の記録を閉じる',
+      'インターホンを戻す',
+      '転送装置の残りを確認',
+      '最後にドアを見る',
+    ],
     body: '夜勤の終わりはいつも同じ。端末の記録を閉じ、インターホンを戻す。転送装置の残りを確認して、最後にドアを見る。',
   },
   {

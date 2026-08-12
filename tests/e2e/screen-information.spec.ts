@@ -70,10 +70,45 @@ test('clock and desk compose exact story information over close-up art', async (
     .getByRole('button', { name: '折り目のついた引き継ぎメモを調べる' })
     .click();
   const handover = page.getByRole('dialog', { name: '机の上' });
+  const liftedPaper = handover.locator('.desk-lifted-prop');
+  const initialPaperLayout = await liftedPaper.evaluate((element) => ({
+    width: (element as HTMLElement).offsetWidth,
+    height: (element as HTMLElement).offsetHeight,
+  }));
+  await expect(liftedPaper).toHaveClass(/is-lifted/);
+  await expect(liftedPaper).toHaveCSS('transition-property', 'transform');
+  expect(
+    await liftedPaper.evaluate((element) => ({
+      width: (element as HTMLElement).offsetWidth,
+      height: (element as HTMLElement).offsetHeight,
+    })),
+  ).toEqual(initialPaperLayout);
   await expect(
     handover.getByText(/焦げ臭い回路は無理に戻さない/),
   ).toBeVisible();
   await handover.getByRole('button', { name: 'DESK / 机に戻る' }).click();
+
+  await desk
+    .getByRole('button', { name: '書き込みのある夜勤チェック表を調べる' })
+    .click();
+  await expect(desk.locator('.desk-lifted-prop')).toHaveClass(/is-lifted/);
+  const paperOverflow = await desk
+    .locator('.desk-lifted-prop .desk-prop-face')
+    .evaluate((element) => {
+      const paper = element as HTMLElement;
+      return {
+        overflow: getComputedStyle(paper).overflow,
+        fitsHeight: paper.scrollHeight <= paper.clientHeight + 1,
+        fitsWidth: paper.scrollWidth <= paper.clientWidth + 1,
+      };
+    });
+  expect(paperOverflow).toEqual({
+    overflow: 'hidden',
+    fitsHeight: true,
+    fitsWidth: true,
+  });
+  await desk.getByRole('button', { name: 'DESK / 机に戻る' }).click();
+
   await page
     .getByRole('dialog', { name: '机の上' })
     .getByRole('button', { name: 'メモの下からのぞく作業写真を調べる' })
