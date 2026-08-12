@@ -1,6 +1,7 @@
-import type { ItemId, StoryStage } from '../../game/machine/gameMachine';
+import type { ItemId } from '../../game/machine/gameMachine';
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import type { SavedProgress } from '../../game/save/saveManager';
+import { archivedDeskDocuments } from '../evidence/deskEvidence';
 
 export type NarrativeKind =
   'monologue' | 'communication' | 'discovery' | 'system';
@@ -52,7 +53,7 @@ export const powerRestoredEntry: NarrativeEntry = {
   id: 'system_power_restored',
   kind: 'system',
   speaker: 'FACILITY SYSTEM',
-  text: '非常電源がつながった。壁面端末とECHO BUFFERが起動する。',
+  text: '非常電源がつながった。端末と転送装置が起動する。',
 };
 
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
@@ -88,7 +89,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'log_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: '壁面端末に、未確認の通信ログが3件ある。',
+        text: '端末に、未確認の通信記録が3件ある。',
       },
     ],
     puzzle_signal_investigation: [
@@ -107,7 +108,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'damaged_packet_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: 'SIGNALに、破損したPACKETが残っている。',
+        text: '端末のSIGNALに、破損した通信データが残っている。',
       },
     ],
     puzzle_packet_repair: [
@@ -120,7 +121,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'voiceprint_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: 'PACKET 04に、照合できる声紋データが残っている。',
+        text: '4番目の通信データに、照合できる声紋が残っている。',
       },
     ],
     puzzle_voiceprint_calibration: [
@@ -163,24 +164,6 @@ export function discoveryEntry(text: string): NarrativeEntry {
   };
 }
 
-const powerPlan: ArchiveDocument = {
-  id: 'document_power_plan',
-  title: 'AUXILIARY BUS RECOVERY',
-  body: '保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。',
-};
-
-const maintenanceSheet: ArchiveDocument = {
-  id: 'document_maintenance_order',
-  title: 'MAINTENANCE ORDER',
-  body: '点検順：端末、通話器、ECHO BUFFER、ドア。それぞれを機器の記号に置き換える。',
-};
-
-const synchronizationNote: ArchiveDocument = {
-  id: 'document_synchronization_note',
-  title: 'CARRIER START POSITION',
-  body: '基準より先に出る波は右へ、後に出る波は左へ動かし、開始位置を0に合わせる。',
-};
-
 const floorMap: ArchiveDocument = {
   id: 'document_floor_map',
   title: 'FACILITY / CONDUIT MAP',
@@ -189,13 +172,10 @@ const floorMap: ArchiveDocument = {
 
 export function getArchiveDocuments(
   powerRestored: boolean,
-  _stage: StoryStage,
   inventory: readonly ItemId[],
 ) {
   const documents: ArchiveDocument[] = [];
-  if (powerRestored) documents.push(powerPlan, synchronizationNote);
-  if (powerRestored && _stage !== 'puzzle_carrier_sync')
-    documents.push(maintenanceSheet);
+  if (powerRestored) documents.push(...archivedDeskDocuments);
   if (inventory.includes('item_floor_map')) documents.push(floorMap);
   return documents;
 }

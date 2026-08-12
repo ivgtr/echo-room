@@ -26,7 +26,7 @@ describe('NarrativePanel text reveal', () => {
       <NarrativePanel
         kind="communication"
         text="AB。"
-        actionLabel="次へ"
+        advanceLabel="次の文章へ"
         onAdvance={vi.fn()}
         textSpeed="normal"
         motionReduced={false}
@@ -35,7 +35,14 @@ describe('NarrativePanel text reveal', () => {
     );
     const text = container.querySelector('.narrative-text');
     const reveal = container.querySelector('.narrative-reveal');
+    const advanceSurface = screen.getByRole('button', {
+      name: '文章をすべて表示',
+    });
 
+    expect(advanceSurface).toHaveClass('narrative-advance-surface');
+    expect(
+      container.querySelector('.narrative-actions'),
+    ).not.toBeInTheDocument();
     expect(text).toHaveAttribute('data-text-complete', 'false');
     expect(reveal).toHaveTextContent('');
     act(() => vi.advanceTimersByTime(50));
@@ -47,6 +54,27 @@ describe('NarrativePanel text reveal', () => {
     expect(onTextBlip).toHaveBeenCalledOnce();
   });
 
+  it('keeps the skip action separate from the full-screen advance surface', () => {
+    const onAdvance = vi.fn();
+    const onSkip = vi.fn();
+    render(
+      <NarrativePanel
+        kind="communication"
+        text="既読の通信"
+        advanceLabel="次の文章へ"
+        onAdvance={onAdvance}
+        secondaryAction={{ label: '既読会話をスキップ', onSelect: onSkip }}
+        textSpeed="normal"
+        motionReduced
+        onTextBlip={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '既読会話をスキップ' }));
+    expect(onSkip).toHaveBeenCalledOnce();
+    expect(onAdvance).not.toHaveBeenCalled();
+  });
+
   it('uses the first early activation to complete text and the next to advance', () => {
     vi.useFakeTimers();
     const onAdvance = vi.fn();
@@ -54,7 +82,7 @@ describe('NarrativePanel text reveal', () => {
       <NarrativePanel
         kind="monologue"
         text="まだ表示中の文章"
-        actionLabel="次へ"
+        advanceLabel="次の文章へ"
         onAdvance={onAdvance}
         textSpeed="slow"
         motionReduced={false}
@@ -62,12 +90,12 @@ describe('NarrativePanel text reveal', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '次へ' }));
+    fireEvent.click(screen.getByRole('button', { name: '文章をすべて表示' }));
     expect(onAdvance).not.toHaveBeenCalled();
     expect(container.querySelector('.narrative-reveal')).toHaveTextContent(
       'まだ表示中の文章',
     );
-    fireEvent.click(screen.getByRole('button', { name: '次へ' }));
+    fireEvent.click(screen.getByRole('button', { name: '次の文章へ' }));
     expect(onAdvance).toHaveBeenCalledOnce();
   });
 
@@ -77,7 +105,7 @@ describe('NarrativePanel text reveal', () => {
       <NarrativePanel
         kind="discovery"
         text="全文を表示する。"
-        actionLabel="閉じる"
+        advanceLabel="メッセージを閉じる"
         onAdvance={vi.fn()}
         textSpeed="normal"
         motionReduced

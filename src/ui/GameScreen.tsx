@@ -18,6 +18,7 @@ import {
   type PuzzleId,
 } from '../game/puzzles/storyPuzzles';
 import {
+  getInspectionBounds,
   getHotspotBounds,
   worldViewAssets,
   type WorldHotspot,
@@ -27,6 +28,7 @@ import { ModalFocusScope } from './accessibility/ModalFocusScope';
 import { IntroDialogue } from './dialogue/IntroDialogue';
 import { EndingPanel } from './ending/EndingPanel';
 import { InspectionEvidencePanel } from './evidence/InspectionEvidencePanel';
+import { InspectionTrace } from './exploration/InspectionTrace';
 import { HintPanel } from './hints/HintPanel';
 import { ItemAcquisitionNotice } from './inventory/ItemAcquisitionNotice';
 import { InventoryPanel } from './inventory/InventoryPanel';
@@ -98,10 +100,12 @@ type Props = {
   onSubtitleSettingChange: SubtitleSettingChange;
   onExit: () => void;
   onTerminalMenu: (id: TerminalMenuId) => void;
-  onInventoryToggle: () => void;
+  onInventoryOpen: () => void;
+  onInventoryClose: () => void;
   onTransmit: () => void;
   onEndingAdvance: () => void;
-  onHintToggle: () => void;
+  onHintOpen: () => void;
+  onHintClose: () => void;
   onHintReveal: () => void;
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
@@ -129,6 +133,9 @@ export function GameScreen(props: Props) {
   const inspectionTimerRef = useRef<number | null>(null);
   const inspectionLockedRef = useRef(false);
   const [locationCue, setLocationCue] = useState<string | null>(null);
+  const [systemEntryReturn, setSystemEntryReturn] = useState<
+    'inventory' | 'hint' | null
+  >(null);
   const [inspectionTargetId, setInspectionTargetId] =
     useState<HotspotId | null>(null);
   const [inspectionPhase, setInspectionPhase] = useState<
@@ -204,6 +211,7 @@ export function GameScreen(props: Props) {
 
   function toggleSystemMenu() {
     if (!props.systemMenuOpen) {
+      setSystemEntryReturn(null);
       systemReturnFocusRef.current =
         document.activeElement instanceof HTMLElement
           ? document.activeElement
@@ -261,6 +269,16 @@ export function GameScreen(props: Props) {
         if (acquisitionVisible) {
           event.preventDefault();
           props.onDismissAcquisition();
+          return;
+        }
+        if (props.inventoryOpen) {
+          event.preventDefault();
+          props.onInventoryClose();
+          return;
+        }
+        if (props.hintOpen) {
+          event.preventDefault();
+          props.onHintClose();
           return;
         }
         if (props.eventNarrative) {
@@ -333,7 +351,7 @@ export function GameScreen(props: Props) {
     <InspectionEvidencePanel
       kind="desk"
       powerRestored={props.powerRestored}
-      stage={props.storyStage}
+      completedPuzzleIds={props.completedPuzzleIds}
       onClose={closeInspection}
     />
   ) : props.powerRestored &&
@@ -473,15 +491,11 @@ export function GameScreen(props: Props) {
         {inspectionPhase === 'approaching' && inspectionTarget && (
           <div
             className="inspection-transition-target"
-            style={hotspotBoundsStyle(inspectionTarget)}
+            style={inspectionBoundsStyle(inspectionTarget)}
             role="status"
             aria-label={inspectionTarget.label}
           >
-            <div
-              className="inspection-transition-marker"
-              style={hotspotClipStyle(inspectionTarget)}
-              aria-hidden="true"
-            />
+            <InspectionTrace motionReduced={props.motionReduced} />
             <span className="inspection-transition-label" aria-hidden="true">
               {inspectionTarget.label}
             </span>
@@ -495,7 +509,7 @@ export function GameScreen(props: Props) {
         )}
         {doorEscape && (
           <div className="door-escape-cue" role="status" aria-live="assertive">
-            DOOR UNLOCKED / 北壁のドアから脱出する
+            ドア解錠 / 北壁のドアから脱出する
           </div>
         )}
         {!ending && props.subtitle && (
@@ -507,7 +521,7 @@ export function GameScreen(props: Props) {
             <NarrativePanel
               kind="discovery"
               text={props.subtitle}
-              actionLabel="閉じる"
+              advanceLabel="メッセージを閉じる"
               onAdvance={closeInspection}
               textSpeed={props.subtitleSettings.speed}
               motionReduced={props.motionReduced}
@@ -538,7 +552,7 @@ export function GameScreen(props: Props) {
                 ? { speaker: props.eventNarrative.speaker }
                 : {})}
               text={props.eventNarrative.text}
-              actionLabel="続ける"
+              advanceLabel="次の文章へ"
               onAdvance={props.onEventNarrativeAdvance}
               autoFocus
               textSpeed={props.subtitleSettings.speed}
@@ -581,7 +595,7 @@ export function GameScreen(props: Props) {
             <InventoryPanel
               items={props.inventory}
               onInspectMap={() => undefined}
-              onClose={props.onInventoryToggle}
+              onClose={props.onInventoryClose}
             />
           </ModalFocusScope>
         )}
@@ -595,7 +609,7 @@ export function GameScreen(props: Props) {
               stage={props.storyStage}
               level={props.hintLevel}
               onReveal={props.onHintReveal}
-              onClose={props.onHintToggle}
+              onClose={props.onHintClose}
             />
           </ModalFocusScope>
         )}
@@ -618,14 +632,21 @@ export function GameScreen(props: Props) {
             narrativeHistory={props.narrativeHistory}
             documents={props.archiveDocuments}
             returnFocusRef={systemReturnFocusRef}
+            initialFocus={systemEntryReturn}
             onClose={toggleSystemMenu}
             onToggleSound={props.onToggleSound}
             onSoundLevelChange={props.onSoundLevelChange}
             onSubtitleSettingChange={props.onSubtitleSettingChange}
             onToggleAssist={props.onToggleAssist}
             onToggleMotion={props.onToggleMotion}
-            onInventory={props.onInventoryToggle}
-            onHint={props.onHintToggle}
+            onInventory={() => {
+              setSystemEntryReturn('inventory');
+              props.onInventoryOpen();
+            }}
+            onHint={() => {
+              setSystemEntryReturn('hint');
+              props.onHintOpen();
+            }}
             onExit={props.onExit}
           />
         )}
@@ -660,6 +681,16 @@ function hotspotBoundsStyle(hotspot: WorldHotspot): CSSProperties {
   };
 }
 
+function inspectionBoundsStyle(hotspot: WorldHotspot): CSSProperties {
+  const bounds = getInspectionBounds(hotspot);
+  return {
+    left: `${(bounds.x / 1920) * 100}%`,
+    top: `${(bounds.y / 1080) * 100}%`,
+    width: `${(bounds.width / 1920) * 100}%`,
+    height: `${(bounds.height / 1080) * 100}%`,
+  };
+}
+
 function hotspotClipStyle(hotspot: WorldHotspot): CSSProperties {
   const bounds = getHotspotBounds(hotspot);
   const clipPath = hotspot.polygon
@@ -673,7 +704,7 @@ function hotspotClipStyle(hotspot: WorldHotspot): CSSProperties {
 
 function inspectionStageStyle(hotspot: WorldHotspot | null) {
   if (!hotspot) return undefined;
-  const bounds = getHotspotBounds(hotspot);
+  const bounds = getInspectionBounds(hotspot);
   return {
     '--inspection-x': `${((bounds.x + bounds.width / 2) / 1920) * 100}%`,
     '--inspection-y': `${((bounds.y + bounds.height / 2) / 1080) * 100}%`,

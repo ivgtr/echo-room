@@ -6,6 +6,7 @@ export type WorldHotspot = {
   id: HotspotId;
   label: string;
   polygon: ReadonlyArray<readonly [number, number]>;
+  inspectionBounds: readonly [number, number, number, number];
 };
 
 type WorldViewAsset = {
@@ -16,7 +17,7 @@ type WorldViewAsset = {
 
 export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
   location_north_wall: {
-    label: '北壁 / ドア・時計・インターホン',
+    label: '北側 / ドア・時計・インターホン',
     images: {
       emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-001/emergency.webp`,
       powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-001/powered.webp`,
@@ -24,7 +25,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
     hotspots: [
       {
         id: 'hotspot_clock',
-        label: 'アナログ時計を調べる',
+        label: '時計を調べる',
         polygon: [
           [347, 113],
           [389, 86],
@@ -37,10 +38,11 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [337, 260],
           [318, 196],
         ],
+        inspectionBounds: [326, 128, 510, 306],
       },
       {
         id: 'hotspot_door',
-        label: '鉄製ドアを調べる',
+        label: 'ドアを調べる',
         polygon: [
           [760, 206],
           [1148, 206],
@@ -51,6 +53,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [686, 868],
           [686, 274],
         ],
+        inspectionBounds: [686, 206, 1218, 936],
       },
       {
         id: 'hotspot_intercom',
@@ -65,11 +68,12 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [1228, 624],
           [1228, 380],
         ],
+        inspectionBounds: [1228, 348, 1436, 658],
       },
     ],
   },
   location_east_wall: {
-    label: '東壁 / 壁面端末・解析パネル',
+    label: '東側 / 端末・端末横のパネル',
     images: {
       emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-002/emergency.webp`,
       powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-002/powered.webp`,
@@ -77,7 +81,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
     hotspots: [
       {
         id: 'hotspot_terminal',
-        label: '壁面端末を調べる',
+        label: '端末を調べる',
         polygon: [
           [746, 302],
           [1168, 302],
@@ -88,10 +92,11 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [682, 704],
           [682, 358],
         ],
+        inspectionBounds: [682, 302, 1228, 762],
       },
       {
         id: 'hotspot_analysis_panel',
-        label: '解析パネルを調べる',
+        label: '端末横のパネルを調べる',
         polygon: [
           [1262, 360],
           [1415, 360],
@@ -102,11 +107,12 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [1229, 635],
           [1229, 390],
         ],
+        inspectionBounds: [1229, 360, 1444, 666],
       },
     ],
   },
   location_south_wall: {
-    label: '南壁 / デスク',
+    label: '南側 / 机',
     images: {
       emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-003/emergency.webp`,
       powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-003/powered.webp`,
@@ -114,7 +120,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
     hotspots: [
       {
         id: 'hotspot_desk',
-        label: 'デスクの紙を調べる',
+        label: '机を調べる',
         polygon: [
           [590, 527],
           [1260, 527],
@@ -123,11 +129,12 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [542, 921],
           [484, 704],
         ],
+        inspectionBounds: [542, 527, 1308, 921],
       },
     ],
   },
   location_west_wall: {
-    label: '西壁 / ブレーカー・ロッカー',
+    label: '西側 / ブレーカー・ロッカー',
     images: {
       emergency: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-004/emergency.webp`,
       powered: `${import.meta.env.BASE_URL}assets/images/world/gfx-wide-004/powered.webp`,
@@ -146,10 +153,11 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [278, 886],
           [278, 150],
         ],
+        inspectionBounds: [278, 112, 584, 922],
       },
       {
         id: 'hotspot_breaker',
-        label: 'ブレーカーパネルを調べる',
+        label: 'ブレーカーを調べる',
         polygon: [
           [1312, 262],
           [1608, 262],
@@ -160,6 +168,7 @@ export const worldViewAssets: Record<LocationId, WorldViewAsset> = {
           [1264, 618],
           [1264, 308],
         ],
+        inspectionBounds: [1264, 262, 1654, 666],
       },
     ],
   },
@@ -184,5 +193,10 @@ export function getHotspotBounds(hotspot: WorldHotspot) {
   const top = Math.min(...ys);
   const right = Math.max(...xs);
   const bottom = Math.max(...ys);
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+export function getInspectionBounds(hotspot: WorldHotspot) {
+  const [left, top, right, bottom] = hotspot.inspectionBounds;
   return { x: left, y: top, width: right - left, height: bottom - top };
 }

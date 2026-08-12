@@ -2,30 +2,30 @@ schemaVersion: 2
 contentVersion: '0.3.0'
 chapters:
   - { id: chapter_intro, label: 覚醒 }
-  - { id: chapter_power_route, label: 非常電源切替 }
-  - { id: chapter_carrier_sync, label: 回線同期 }
-  - { id: chapter_maintenance_lock, label: 保守ロッカー }
-  - { id: chapter_signal_investigation, label: 通信調査 }
-  - { id: chapter_packet_repair, label: 破損PACKET }
+  - { id: chapter_power_route, label: 非常電源 }
+  - { id: chapter_carrier_sync, label: 波形調整 }
+  - { id: chapter_maintenance_lock, label: ロッカー }
+  - { id: chapter_signal_investigation, label: 通信記録と配線 }
+  - { id: chapter_packet_repair, label: 破損データの復元 }
   - { id: chapter_voiceprint, label: 声紋照合 }
-  - { id: chapter_transmission, label: 送信予約 }
+  - { id: chapter_transmission, label: 送信設定 }
   - { id: chapter_ending, label: 脱出 }
 locations:
-  - { id: location_north_wall, label: 北壁 }
-  - { id: location_east_wall, label: 東壁 }
-  - { id: location_south_wall, label: 南壁 }
-  - { id: location_west_wall, label: 西壁 }
+  - { id: location_north_wall, label: 北側 }
+  - { id: location_east_wall, label: 東側 }
+  - { id: location_south_wall, label: 南側 }
+  - { id: location_west_wall, label: 西側 }
 hotspots:
   - {
       id: hotspot_door,
       locationId: location_north_wall,
-      label: 鉄製ドア,
+      label: ドア,
       conditions: [],
     }
   - {
       id: hotspot_clock,
       locationId: location_north_wall,
-      label: アナログ時計,
+      label: 時計,
       conditions: [],
     }
   - {
@@ -36,16 +36,16 @@ hotspots:
     }
   - id: hotspot_terminal
     locationId: location_east_wall
-    label: 壁面端末
+    label: 端末
     conditions: [{ type: puzzleSolved, puzzleId: puzzle_power_route }]
   - id: hotspot_analysis_panel
     locationId: location_east_wall
-    label: 解析パネル
+    label: 端末横のパネル
     conditions: [{ type: itemOwned, itemId: item_screwdriver }]
   - {
       id: hotspot_desk,
       locationId: location_south_wall,
-      label: デスク,
+      label: 机,
       conditions: [],
     }
   - {
@@ -57,28 +57,43 @@ hotspots:
   - {
       id: hotspot_locker,
       locationId: location_west_wall,
-      label: 保守ロッカー,
+      label: ロッカー,
       conditions: [],
     }
 items:
   - { id: item_screwdriver, label: ドライバー }
-  - { id: item_staff_card, label: 職員用カード }
-  - { id: item_floor_map, label: 設備・配線図 }
+  - { id: item_staff_card, label: 職員証 }
+  - { id: item_floor_map, label: 施設図 }
 documents:
   - {
       id: document_power_plan,
-      title: AUXILIARY BUS RECOVERY,
-      body: 保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。,
+      title: 朝番への引き継ぎ,
+      body: 焦げ臭い回路は無理に戻さない。切ったまま印を付ける。停電後の立ち上げは、上の配線を根元から順に。,
     }
   - {
       id: document_synchronization_note,
-      title: CARRIER START POSITION,
-      body: 基準より先に出る波は右へ、後に出る波は左へ動かす。,
+      title: 波を見るとき,
+      body: 先走った波は右へ待たせる。遅れた波は左へ急がせる。基準の山と重なるまで、少しずつ。,
     }
   - {
       id: document_maintenance_order,
-      title: MAINTENANCE ORDER,
-      body: 点検順は端末、通話器、ECHO BUFFER、ドア。各機器の銘板記号を使う。,
+      title: 戸締まり前,
+      body: 夜勤の終わりはいつも同じ。端末の記録を閉じ、インターホンを戻す。転送装置の残りを確認して、最後にドアを見る。,
+    }
+  - {
+      id: document_shift_message,
+      title: 交代の人へ,
+      body: 空調がまた鳴る。朝番には伝えてある。工具箱の留め金は少し固い。,
+    }
+  - {
+      id: document_shopping_list,
+      title: 買い足すもの,
+      body: コーヒー豆、紙コップ、油性ペン、眠気覚まし。,
+    }
+  - {
+      id: document_work_photo,
+      title: 作業中の写真,
+      body: 端末へ向かう作業員が、背中だけ写っている。顔は見えない。,
     }
   - {
       id: document_conduit_map,
@@ -120,7 +135,7 @@ puzzles:
   - id: puzzle_power_route
     kind: routing
     correctAnswer: [terminal, intercom, buffer]
-    incorrectFeedback: CONTROL SIGNAL MISSING。配線の上流を確認。
+    incorrectFeedback: CONTROL SIGNAL MISSING。配線の始まりに近い機器から確認。
     effects: [{ type: unlockTerminal, menuId: system }]
     hintIds: [hint_power_1, hint_power_2, hint_power_3]
   - id: puzzle_carrier_sync
@@ -132,7 +147,7 @@ puzzles:
   - id: puzzle_maintenance_lock
     kind: correlation
     correctAnswer: [double, ring, triangle, node]
-    incorrectFeedback: ロックは開かない。銘板の並びと一致していない。
+    incorrectFeedback: ロックは開かない。記号の並びが合っていない。
     effects:
       - { type: grantItem, itemId: item_screwdriver }
       - { type: grantItem, itemId: item_staff_card }
@@ -168,19 +183,19 @@ hints:
       id: hint_power_1,
       puzzleId: puzzle_power_route,
       level: 1,
-      text: 状態灯と、盤面上部の配線の始点・中継点・終端を観察する。,
+      text: 状態灯と、盤面上部の配線がどこからどこへ続くかを見る。,
     }
   - {
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: 赤い状態灯の回路を隔離し、保護解除後は制御信号の上流から復帰させる。,
+      text: 赤い状態灯の回路を切り、上の配線の始まりに近い機器から電源を入れる。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: DOORをOFFにしてから、端末、通話器、BUFFERの順にONにする。,
+      text: ドアの回路を切ってから、端末、インターホン、転送装置の順に入れる。,
     }
   - {
       id: hint_carrier_1,
@@ -204,7 +219,7 @@ hints:
       id: hint_lock_1,
       puzzleId: puzzle_maintenance_lock,
       level: 1,
-      text: 点検順と、各機器の記号を見比べる。,
+      text: 戸締まりメモに出てくる機器と、それぞれに刻まれた記号を見比べる。,
     }
   - {
       id: hint_lock_2,
@@ -258,7 +273,7 @@ hints:
       id: hint_voice_1,
       puzzleId: puzzle_voiceprint_calibration,
       level: 1,
-      text: 受信データを職員カードと同じ形にする。,
+      text: 受信データを職員証と同じ形にする。,
     }
   - {
       id: hint_voice_2,

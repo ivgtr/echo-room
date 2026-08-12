@@ -1,13 +1,13 @@
 # ECHO ROOM 実装進捗
 
-最終更新: 2026-08-12
+最終更新: 2026-08-13
 
 ## 現在地と次の着手点
 
 - P0〜P3は完了し、代替画像・字幕・正式な手続き生成サウンドで冒頭からエンディングまで通して遊べる。
 - P3R-01は完了。旧7問、音高順、0237ロッカー、資料閲覧だけの進行、自動VOICE ANALYSIS、単純な最終並べ替えを削除し、証拠・複数判断・一括検証を持つ主要10問へ単一移行した。
 - P3R-02は完了。謎の情報量と正解を維持したまま、10問の名称・説明・手掛かり・設問・誤答、30ヒント、目的、端末、探索文、資料、所持品、通知を短く自然な日本語へ統一した。抽象的な技術語は固有名に必要な範囲へ絞り、具体的な見る場所と操作へ言い換えた。
-- P3R-03は完了。共通Puzzle UIから解法要約と`PUZZLE 01`表示を削除し、装置の生データと入力部だけへ縮小した。規則は進行で変わる机上資料、4設備の銘板、会話履歴、端末の別項目へ分散し、全10問の正解後に設備変化や新記録を示すNarrative導線を追加した。
+- P3R-03は完了。共通Puzzle UIから解法要約と`PUZZLE 01`表示を削除し、装置の生データと入力部だけへ縮小した。規則は机に固定された複数資料、4設備の銘板、会話履歴、端末の別項目へ分散し、全10問の正解後に設備変化や新記録を示すNarrative導線を追加した。
 - P3R-04は完了。共通Workbench、選択数、共通確認ボタンを削除し、10問をケーブル・ブレーカー・波形レール・四連ダイヤル・パッチ盤・配線トレーサー・断片レール・検査器・校正器・送信窓盤の直接操作へ単一移行した。正しい連続状態は自動検出し、明示検証はロッカーハンドルと試験レバーだけに限定した。
 - P3R-05は完了。非常電源の通電・短絡・負荷・制御順、搬送波本体の直接dragと重なり、固定HEADERと端形状によるPACKET連続性を装置グラフィックへ統合した。既存の探索証拠と重なるロッカーの経路図・室内記号は追加せず、記号は対象調査時のテキスト、点検順はデスクの紙で再確認する構造を維持した。
 - 搬送波、PACKET指紋、声紋特徴量を同じ視覚文法へ統一し、線高と数列を併記した。すべての主要パズルは発話音声・音の聞き分けなしで解ける。
@@ -17,6 +17,10 @@
 - UIQ-02は完了。ReactとPixiJSが共有する6〜10点の輪郭polygon hotspot、hover・focus・touch接近marker、380msの寄り、動き軽減crossfade、遷移中・modal中のWorld入力停止とfocus復帰を実装した。
 - UIQ-03は完了。独白・通信・発見を共通Narrative UIへ整理し、取得演出、所持品トレイと対象使用、SYSTEMの会話履歴・資料再読・字幕・系統別音量設定を実装した。
 - UIQ-04は完了。バッテリーをアクティブプレイ時間として実装し、10分・5分・00:00の非常状態、SYSTEM・非表示中の停止、保存復元、動き軽減代替を統合した。2026-08-11に代表画面の利用者承認を得た。
+- UIQ-05は完了。独白・通信・発見・終盤通信を全画面決定操作へ統一して進行ボタンを撤去し、ロッカーの直接的な点検表を日常的な夜勤メモへ変更した。地の文・メモ・ヒントの機器ID風表記を自然な日本語へ整理し、ロッカー操作領域を接写原画の正規化座標へ一致させた。
+- UIQ-06は完了。探索対象、所持品、資料、7装置の名称を一般的な日本語へ統一し、表示文、読み上げ名、目的、ヒント、正本を同じ呼称へ更新した。内部ID、保存schema、判定ロジックは変更していない。
+- UIQ-07は完了。調査開始時の途切れた矩形枠を削除し、対象別の単純な演出用輪郭を左上と右下から約110msで同時描画するシアン線、小さなひし形、85ms後から始まるカメラ接近へ置き換えた。操作判定用polygonは可視化せず、動き軽減時は静止表示とクロスフェードを使用する。
+- UIQ-08は完了。進行に応じて一枚の紙を差し替える旧机UIと紙取得後素材を削除し、三つの手掛かり、二つの日常メモ、顔を見せない作業写真を最初から固定配置した。資料カード、紙面上の`読む`、矩形選択枠も撤去し、六点を固有の紙面、自然な重なり、紙自体の浮きと影、同じ物を中央へ持ち上げる再読操作へ変更した。閲覧紙は最終寸法で組版して`transform`だけで往復させ、途中の再レイアウトと紙面内scrollbarを排除した。紙面は固定し、装置を知った後は主人公の解釈だけを変える。SYSTEMには手掛かり三点だけを保存し、広角にも同じ紙束と写真の固定layerを置く。
 - P4-03は完了。時計02:17、非常電源用紙、緊急時メモ、端末時刻、施設図、職員カード、主人公写真、4 PACKET・送信先・4枠を正確なHTML/CSSと本番rasterで統合した。
 - 主人公は32歳前後の日本人男性、短い黒髪、設備保守・運用担当、濃灰の作業着に確定した。氏名や不要な経歴は設定せず、同一写真原本を職員証と声紋特徴量照合へ使用する。
 - P5-01は完了。主要7体験の完了IDを進行schema v4へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。旧schemaの互換層は持たない。
@@ -51,7 +55,7 @@
 | P3-07 | completed | 主要10問に3段階、合計30ヒント、誤答後の利用可能表示、任意閲覧を実装 | XState hint level、content 30 hint validation | 停滞時間通知はP5 Timerと統合 |
 | P3R-01 | completed | 旧7問のstage・event・専用component・保存fieldを削除。10個のdata definition、単一PuzzleWorkbench、単一`PUZZLE_SUBMITTED`event、純粋判定、進行schema v3へ破壊的移行。二層図を通信経路謎へ変更し、赤ボタンを全問後のpayoffへ限定 | `npm run check`成功（17 files/56 tests、10 puzzle/30 hint、4 bundle/27画像、build 589.37kB）。Chromiumでkeyboardのみの予備電源→10問→ending通し1件、既存13件を分割実行し全件成功 | 初見所要時間と難易度はP7-01で利用者playtest |
 | P3R-02 | completed | ゲーム内日本語の基準を正本化。パズル、ヒント、目的、端末、独白、資料、所持品、保存通知を平易化し、同じ対象の呼称を統一。正解配列、判定、進行、PACKET本文は変更なし | `npm run check`成功（17 files/56 tests、content・asset validation、build 589.49kB）。Chromiumの全編10問・keyboard・touch・focus・reduced-motionを含む対象9件成功（7件初回＋文言期待値更新後2件再実行） | 初見時の読みやすさはP7-01で利用者確認 |
-| P3R-03 | completed | 解法を同一画面へ列挙する`evidence`構造を削除。装置readout、進行別の机上資料、端末・通話器・BUFFER・ドアの個別調査、SYSTEM異常表示、全問後のNarrative queueへ単一移行。ロッカー段階で全設備名と記号を常時重ねる銘板overlayも削除。端末は問終了・再開時にSYSTEMへ戻し、プレイヤーがLOG・SIGNAL・SECURITYを選ぶ | `npm run check`成功（17 files/59 tests、content・asset validation、production build）。Chromiumで10問keyboard全編1件、電源復旧・再開keyboardとtouchの代表2件成功 | 初見時の発見順、説明感、迷い方はP7-01で利用者確認 |
+| P3R-03 | completed | 解法を同一画面へ列挙する`evidence`構造を削除。装置readout、机に固定された複数資料、端末・通話器・BUFFER・ドアの個別調査、SYSTEM異常表示、全問後のNarrative queueへ単一移行。ロッカー段階で全設備名と記号を常時重ねる銘板overlayも削除。端末は問終了・再開時にSYSTEMへ戻し、プレイヤーがLOG・SIGNAL・SECURITYを選ぶ | `npm run check`成功（17 files/59 tests、content・asset validation、production build）。Chromiumで10問keyboard全編1件、電源復旧・再開keyboardとtouchの代表2件成功 | 初見時の発見順、説明感、迷い方はP7-01で利用者確認 |
 | P3R-04 | completed | 共通フォーム型`PuzzleWorkbench`とtask/options表示を削除。10問固有の`PuzzleDevice`へ移行し、直接操作、自動作動、世界内ハンドル・試験レバー、接写BACK・Escape・focus復帰を統合。ロッカーから意味の曖昧な`4 STEP`補助表記も削除 | `npm run check`成功（18 files/62 tests、content・asset validation、production build）。PuzzleDevice component 3件、Chromiumの10問keyboard全編・電源誤答再試行・touch到達・focus復帰、1280×720の搬送波・ロッカーを目視確認 | 初見時の装置理解と操作発見性はP7-01で利用者確認 |
 | P3B-04 | completed | 非常電源をDOOR異常回路の観察・隔離と、物理配線から読むTERMINAL→INTERCOM→ECHO BUFFERの順次復帰へ再設計。容量・UNIT表示を削除し、固定土台、単一透過レバー、単一透過状態灯を原画座標で複製。4回路を同一規格とし、DOOR上部だけに焼損した不通端子、全灯に共通`STATUS`銘記、誤順の一時投入・黄色灯・自動復帰を統合。通電表現はCSS図形を撤去し、実配線に一致するカメラ固定ラスター状態差分へ統一。隔離直後は`BOOT SEQUENCE READY`とし、進捗数は投入後だけ表示 | `npm run check`、PuzzleDevice unit、Chromium電源誤答・復旧・再開E2E、1280×720と1440×800で同一ステージ比率・形状・状態遷移を確認 | 初見時に数秒の観察から異常回路と配線順を読み取れるかP7-01で確認 |
 | P3R-05 | completed | 非常電源を盤面全幅の通電図へ変更。搬送波の別置きslider・答え位置数値を削除し波形本体へpointer/touch/keyboard入力を統合。PACKETはCのHEADERを固定し、D/A/Bの端形状、接続・断線、誤答配置保持へ変更。ロッカーのヒント追加案は既存デスク資料との重複として不採用 | `npm run check`成功（18 files/64 tests、content・asset validation、production build 603.28kB）。Chromiumでkeyboardのみ10問通し1件（2.9分）、電源誤答再試行・保存・focus・reduced-motion・touchを含む縦切り8件（4.0分）、搬送波本体touch 1件成功。1280×720の非常電源・搬送波・PACKETを目視確認 | 初見時の操作理解と難易度はP7-01で利用者playtest |
@@ -68,6 +72,11 @@
 | UIQ-02 | completed | 全8対象を6〜10点の画像輪郭polygonへ変更し、ReactとPixiJSの共通View Modelからhit領域を生成。hover・keyboard focus・touch接近marker、380ms zoom、reduced-motion crossfade、遷移・modal中input lock、共通focus trap・起点復帰を実装。対象名を輪郭clipと分離し、狭幅表示の見切れを防止 | Node 24で`npm run check`成功（9 files/21 tests）、`npm run test:e2e`成功（Chromium 7件: polygon境界、連打、resize、縦横復帰、touch、reduced-motion、focus、全編）、304×296のfocus・接近ラベル回帰E2E、北壁focus・接近を1280×720で目視確認 | 正式hit mask入手後の点調整はP4-02で継続 |
 | UIQ-03 | completed | 独白・通信・発見を用途別の共通Narrative UIへ整理し、SIGNAL・話者・通信表示を統一。所持品取得演出、必要時トレイ、対象へのカード・ドライバー使用、SYSTEMのARCHIVE・字幕・系統別音量設定を実装 | Node 24で`npm run check`成功（11 files/23 tests）、`npm run test:e2e`成功（Chromium 8件: 無音、字幕拡大・背景・速度、背景復帰、archive、mouse・touch・keyboard所持品、全編）、1280×720通信・ARCHIVE・設定を目視確認 | アクティブ時間と非常演出はUIQ-04、履歴のcheckpoint永続化はP5-01で継続 |
 | UIQ-04 | completed | `BATTERY 00:19:48`から実プレイ時間を計測し、10分以下LOW、5分以下CRITICALと電圧低下、00:00のRESERVEを文字と背景で段階表示。SYSTEM内へ停止中の残量と目的を併記し、SYSTEM・browser非表示中の停止、保存復元、00:00後の進行継続、動き軽減を実装。2026-08-11に代表画面の利用者承認を取得 | Node 24で`npm run check`成功（13 files/29 tests）、Chromium E2E 9件（固定時計、pause、visibility、保存復元、reduced-motion、予備電源から全編、keyboard、touch）、1280×720のSYSTEM・critical・reserveを目視確認 | なし |
+| UIQ-05 | completed | Narrativeを全画面click・touch・Enter・Spaceへ単一移行し、画面上の進行ボタンを削除。夜間点検表を日常的な夜勤メモへ変更し、本文の機器ID風表記と端末に露出したasset IDを整理。ロッカーの4ダイヤルとハンドルを1672×941原画の正規化座標へ一致 | Node 24で`npm run check`成功（18 files/69 tests、content・asset validation、production build）。Chromium E2E 13件（keyboard全編、全画面進行、ロッカー座標、資料、resize、reduced-motion、touch）成功。1280×720のNarrativeとフォーカス中ロッカーを目視確認 | なし |
+| UIQ-06 | completed | 探索対象をドア、時計、机、ロッカー、端末、ブレーカー、インターホン、所持品をドライバー、職員証、施設図へ統一。7装置の見出し、資料名、目的、ヒント、読み上げ名から内部設計風の複合名称を削除 | Node 24で`npm run check`成功（18 files/69 tests、content・asset validation、production build）。Chromium E2E 14件（keyboard全編、資料、全画面進行、ロッカー座標、探索、reload、resize、reduced-motion、touch）成功 | なし |
+| UIQ-07 | completed | 調査開始時の途切れた矩形枠を、全対象共通の外接四角へ置換。時計の円と机の台形を含む対象別描画を削除し、時計は広角原画に合う外接座標へ補正。輪郭は左上と右下から約110msで同時描画し、中央のひし形、85ms後から重なるカメラ接近を統合。操作判定polygonと演出矩形を分離し、動き軽減時は静止輪郭とひし形を表示 | Node 24で`npm run check`成功（19 files/72 tests、content・asset validation、production build）。Chromium E2E 3件（通常探索、連打防止・focus復帰、resize・reduced-motion）成功。1280×720のドア・時計調査を目視確認 | なし |
+| UIQ-08 | completed | 机を進行非依存の固定探索地点へ再設計。引き継ぎ、波形、戸締まりの三資料に、交代連絡、買い物メモ、作業写真を混在させた。全六点を施設用紙、方眼紙、チェック表、付箋、破れた私物メモ、白縁写真へ描き分け、資料カード、`読む`、矩形選択枠、別資料画面への置換を削除。同じ物を中央へ持ち上げる閲覧は最終組版済みの紙を`transform`だけで往復させ、再レイアウトとscrollbarを排除。机内のfocus復帰、進行別の主人公解釈、SYSTEMへの三資料保存、広角の固定紙束を統合した | `npm run check`成功（19 files/72 tests、4 bundle/31画像、production build）。Chromiumの対象E2Eで移動前後の固定layout寸法、transform限定transition、戸締まり紙面の縦横収まりを確認。1280×720と844×390の一時visual testで六点すべての紙面収まりを確認 | なし |
+| UIQ-09 | completed | 接写、机上閲覧、SYSTEM、所持品、ヒントの戻る操作を右上の共通スロットへ統一。BACKとEscapeを一階層だけ戻る操作とし、机閲覧中の部屋直帰、SYSTEM詳細の直接RESUME、右下の戻る操作を削除。所持品とヒントはSYSTEMトップへ復帰し、横向き画面では紙面と重ならない幅へ調整 | component test、Chromium E2E、1280×720と844×390の画面確認 | なし |
 | P3B-01 | completed | LOG照合と配線追跡、PACKET復元と未来情報、会話順と最終送信をそれぞれ統合し、旧ID・Stage・UI・hintを削除して7体験・schema v4へ単一移行 | 7問正誤・content・save unit、keyboard全編E2E | なし |
 | P3B-02 | completed | 謎解き後の独白・通信・発見を、テキスト表示後にプレイヤーが進める単一NarrativePanelへ統合。presentation分類、自動送りtimer、非操作cueを削除し、ロッカー完了後は会話、所持品取得、探索復帰の順で遷移する。通信調査後は5件から3件へ統合し、会話中Escapeは無効化。誤答入力保持、電源のブレーカー側再試行、最終送信のPACKET・DELAY・ROUTE別反応、60秒無操作・90秒滞在の診断通知も実装 | 単一Narrative契約unit、誤答保持・電源再試行・送信領域別表示unit、ロッカーEscape・通信調査3件・全編E2E、診断timer unit | なし |
 | P3B-03 | completed | 機器銘板、装置別cue、電源4段階の映像・環境音、VOICE MATCH専用照合、冒頭通信再演、世界内ドア脱出を実装。PACKET 04復元結果とVOICE MATCH 100.0%はtimerで閉じず、プレイヤー確認まで保持する | `npm run check`、Chromium 14件、PACKET 04・VOICE MATCH 100.0%・解錠ドアを1280×720で目視確認 | なし |

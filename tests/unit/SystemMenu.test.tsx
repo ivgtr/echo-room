@@ -43,6 +43,7 @@ describe('SystemMenu', () => {
           },
         ]}
         returnFocusRef={createRef<HTMLElement>()}
+        initialFocus={null}
         onClose={vi.fn()}
         onToggleSound={vi.fn()}
         onSoundLevelChange={onSoundLevelChange}
@@ -57,14 +58,20 @@ describe('SystemMenu', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'ARCHIVE / 会話履歴・資料再読',
+        name: 'ARCHIVE / 会話履歴・資料',
       }),
     );
     expect(screen.getByText('……聞こえるか？')).toBeVisible();
     expect(screen.getByText('EMERGENCY POWER TEST')).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'RESUME / ゲームへ戻る' }),
+    ).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }),
     );
+    expect(
+      screen.getByRole('button', { name: 'RESUME / ゲームへ戻る' }),
+    ).toBeVisible();
     fireEvent.click(
       screen.getByRole('button', {
         name: 'TEXT & SOUND / 字幕・サウンド設定',

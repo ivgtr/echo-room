@@ -274,7 +274,7 @@ describe('PuzzleDevice', () => {
           key: 'ArrowUp',
         },
       );
-    fireEvent.click(screen.getByRole('button', { name: 'LOCK HANDLE' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ロッカーのハンドル' }));
 
     expect(onSubmit).toHaveBeenCalledWith('puzzle_maintenance_lock', [
       'double',
@@ -298,7 +298,7 @@ describe('PuzzleDevice', () => {
     const firstDial = device.getByRole('spinbutton', { name: 'ダイヤル1' });
     fireEvent.click(firstDial);
     fireEvent.click(firstDial);
-    fireEvent.click(device.getByRole('button', { name: 'LOCK HANDLE' }));
+    fireEvent.click(device.getByRole('button', { name: 'ロッカーのハンドル' }));
     const position = firstDial.getAttribute('aria-valuenow');
 
     view.rerender(
@@ -384,7 +384,7 @@ describe('PuzzleDevice', () => {
     for (let index = 0; index < 4; index += 1) {
       fireEvent.click(
         device.getByRole('button', {
-          name: `送信断片「${packetLabels[index]}」`,
+          name: `送信する文「${packetLabels[index]}」`,
         }),
       );
       fireEvent.click(

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { ItemId } from '../../game/machine/gameMachine';
+import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 import { itemDetails } from './itemDetails';
 import { StaffAccessCard } from './StaffAccessCard';
@@ -30,6 +31,7 @@ export function InventoryPanel({
         <p className="eyebrow">ITEM TRAY</p>
         <h2 id="inventory-title">所持品</h2>
       </header>
+      <ContextBackButton destination="SYSTEMへ戻る" onClick={onClose} />
       <div className="inventory-layout">
         <ul className="inventory-tray" aria-label="所持品一覧">
           {items.map((item) => (
@@ -66,9 +68,6 @@ export function InventoryPanel({
           )}
         </section>
       </div>
-      <button type="button" onClick={onClose}>
-        所持品を閉じる
-      </button>
     </section>
   );
 }

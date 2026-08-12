@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { locationIds } from '../../src/game/domain/ids';
 import {
   getHotspotBounds,
+  getInspectionBounds,
   getWorldImage,
   worldViewAssets,
 } from '../../src/world/assets/worldAssets';
@@ -30,6 +31,19 @@ describe('world runtime assets', () => {
         }
       }
     }
+  });
+
+  it('uses rectangular inspection bounds without exposing hit polygons', () => {
+    const hotspots = Object.values(worldViewAssets).flatMap(
+      ({ hotspots }) => hotspots,
+    );
+    for (const hotspot of hotspots) {
+      const bounds = getInspectionBounds(hotspot);
+      expect(bounds.width).toBeGreaterThan(0);
+      expect(bounds.height).toBeGreaterThan(0);
+    }
+    const clock = hotspots.find(({ id }) => id === 'hotspot_clock');
+    expect(clock?.inspectionBounds).toEqual([326, 128, 510, 306]);
   });
 
   it('matches the approved west-wall object order', () => {

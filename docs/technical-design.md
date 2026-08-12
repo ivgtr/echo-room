@@ -134,7 +134,7 @@ flowchart TB
 - タイトル、ロード、設定
 - 字幕、会話履歴
 - 所持品、文書閲覧
-- 壁面端末
+- 端末
 - 数字入力、並べ替えなどのパズルUI
 - 一時停止、ヒント、確認ダイアログ
 - スクリーンリーダー向けのライブ通知
@@ -283,6 +283,7 @@ type HotspotDefinition = {
   id: HotspotId;
   label: string;
   shape: Polygon | Rectangle;
+  inspectionBounds: Rectangle;
   cursor: 'inspect' | 'move' | 'use';
   visibleWhen?: Condition[];
   enabledWhen?: Condition[];
@@ -294,6 +295,7 @@ type HotspotDefinition = {
 - 座標は論理解像度に対する正規化値で持つ。
 - 矩形だけでなく多角形を利用できる。
 - ポインター向け領域は見た目より少し広くし、タッチ時の最小選択寸法を確保する。
+- 操作判定用polygonと調査開始時の演出用外接矩形は同じHotspot View Model内で別に持つ。演出は全対象で同じ四角形とし、左上と右下を起点に約110msで同時描画する。時計の円や机の台形のような対象別描画経路を持たず、判定用polygonも可視化しない。
 - キーボード操作時はフォーカス輪郭と対象名を表示する。
 - PixiJSと同じHotspot View ModelからReactのDOMオーバーレイを生成し、各対象へ名前、役割、フォーカス順を与える。
 - ReactのUIとPixiJSのホットスポットが同時に入力を受けないよう、モーダル表示中はWorld Viewの入力を停止する。
@@ -405,7 +407,7 @@ layers:
     parallax: 0.04
 hotspots:
   - id: breaker
-    label: ブレーカーパネルを調べる
+    label: ブレーカーを調べる
     polygon: [[0.08, 0.23], [0.23, 0.22], [0.24, 0.76], [0.07, 0.78]]
     enabledWhen:
       - flagIs: power_restored
@@ -490,11 +492,11 @@ type PuzzleResult =
 |---|---|---|---|
 | 非常電源経路 | routing | 通電表示付き配線・コネクタ・物理ブレーカー | 隔離対象と3設備の給電順 |
 | 搬送波同期 | calibration | 基準へ直接dragする波形レール | 3回線の位相補正 |
-| 保守ロッカー | correlation | 四連記号ダイヤル・ハンドル | 点検順から変換した4記号 |
-| 通信ログ・配線調査 | routing | RECEIVE/SOURCEパッチ盤と二層図トレーサー | 3対応、20分差、線種、中継端子、終端 |
+| ロッカー | correlation | 4つの記号ダイヤル・ハンドル | 点検順から変換した4記号 |
+| 通信記録と配線 | routing | RECEIVE/SOURCEの接続部と施設図 | 3対応、20分差、線種、中継端子、送り先 |
 | PACKET復元 | reconstruction | 固定HEADER・端形状付きデータ片・連続性レール | 4断片の連続順 |
 | 声紋校正 | calibration | 波形画面・ダイヤル・スライダー | 3特徴の逆変換 |
-| 最終送信設計 | routing | 本文付き受信窓パッチ盤・試験レバー | 会話順、4受信窓、遅延、回線終端 |
+| 送信設定 | routing | 本文付き受信枠・試験レバー | 会話順、4受信枠、時間差、送り先 |
 
 ### 9.3 装置操作と判定境界
 

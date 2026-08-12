@@ -27,7 +27,7 @@ describe('TerminalPanel', () => {
         stage="puzzle_carrier_sync"
       />,
     );
-    expect(screen.getByText('搬送波同期器')).toBeVisible();
+    expect(screen.getByText('波形調整')).toBeVisible();
     expect(screen.getByRole('slider', { name: 'CHANNEL A' })).toHaveAttribute(
       'aria-valuenow',
       '-2',
@@ -51,7 +51,7 @@ describe('TerminalPanel', () => {
         stage="puzzle_signal_investigation"
       />,
     );
-    expect(screen.getByText('通信ログ・配線調査盤')).toBeVisible();
+    expect(screen.getByText('通信記録と配線')).toBeVisible();
     expect(screen.getByText('RECEIVE')).toBeVisible();
   });
 
@@ -67,7 +67,7 @@ describe('TerminalPanel', () => {
     expect(
       screen.getByText('WEST MAINTENANCE LOCK / LOCAL CONTROL'),
     ).toBeVisible();
-    expect(screen.queryByText('保守ロッカー')).not.toBeInTheDocument();
+    expect(screen.queryByText('ロッカーの記号錠')).not.toBeInTheDocument();
   });
 
   it('does not reveal the exact negative delay before communication investigation', () => {

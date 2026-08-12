@@ -360,14 +360,12 @@ export function App() {
         return;
       }
       if (hotspotId === 'hotspot_clock')
-        appendHistory([discoveryEntry('アナログ時計は02:17で止まっている。')]);
+        appendHistory([discoveryEntry('時計は02:17で止まっている。')]);
       if (hotspotId === 'hotspot_desk')
-        appendHistory([
-          discoveryEntry(deskDiscoveryText(powerRestored, storyStage)),
-        ]);
+        appendHistory([discoveryEntry(deskDiscoveryText())]);
       actorRef.send({ type: 'HOTSPOT_SELECTED', hotspotId });
     },
-    [actorRef, appendHistory, powerRestored, storyStage],
+    [actorRef, appendHistory, storyStage],
   );
   const handleView = useCallback(
     (nextLocationId: LocationId) =>
@@ -390,11 +388,7 @@ export function App() {
     [actorRef, appendHistory],
   );
 
-  const archiveDocuments = getArchiveDocuments(
-    powerRestored,
-    storyStage,
-    inventory,
-  );
+  const archiveDocuments = getArchiveDocuments(powerRestored, inventory);
 
   if (!environmentSupported) return <UnsupportedScreen />;
   if (!isPlaying)
@@ -503,9 +497,13 @@ export function App() {
       onTerminalMenu={(menuId) =>
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
       }
-      onInventoryToggle={() => {
+      onInventoryOpen={() => {
         setSystemMenuOpen(false);
-        setInventoryOpen((value) => !value);
+        setInventoryOpen(true);
+      }}
+      onInventoryClose={() => {
+        setInventoryOpen(false);
+        setSystemMenuOpen(true);
       }}
       onTransmit={() => {
         soundManager.playEffect('transmission');
@@ -517,9 +515,13 @@ export function App() {
         if (endingLineIndex >= 5) soundManager.playEffect('door_unlock');
         actorRef.send({ type: 'ENDING_ADVANCED' });
       }}
-      onHintToggle={() => {
+      onHintOpen={() => {
         setSystemMenuOpen(false);
-        setHintOpen((value) => !value);
+        setHintOpen(true);
+      }}
+      onHintClose={() => {
+        setHintOpen(false);
+        setSystemMenuOpen(true);
       }}
       onHintReveal={() => actorRef.send({ type: 'HINT_REQUESTED' })}
       onSystemToggle={() => {
@@ -568,12 +570,8 @@ const puzzleFailureCue: Record<PuzzleId, SoundEffectId> = {
   puzzle_transmission_window: 'locker_error',
 };
 
-function deskDiscoveryText(powerRestored: boolean, stage: string) {
-  if (!powerRestored)
-    return '保護回路が作動したら異常回線を隔離し、制御信号の上流から順に復帰させると記されている。';
-  if (stage === 'puzzle_carrier_sync')
-    return '同期調整メモだ。早い波は右へ、遅い波は左へ動かす。';
-  return '夜間点検は、端末、通話器、ECHO BUFFER、ドアの順だ。各機器の銘板記号を使う。';
+function deskDiscoveryText() {
+  return '仕事のメモや私物が、片づけられないまま散らばっている。';
 }
 
 function progressFingerprint(progress: SavedProgress) {

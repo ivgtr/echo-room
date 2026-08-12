@@ -4,6 +4,7 @@ import type {
 } from '../../game/machine/gameMachine';
 import { stagePuzzle } from '../../game/machine/gameMachine';
 import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 import { PuzzleDevice } from '../puzzles/PuzzleDevice';
 
@@ -59,8 +60,8 @@ export function TerminalPanel(props: Props) {
       }}
     >
       <header>
-        <p className="eyebrow">ECHO BUFFER / gfx-close-010</p>
-        <h2 id="terminal-title">壁面端末</h2>
+        <p className="eyebrow">ECHO BUFFER / OPERATIONS TERMINAL</p>
+        <h2 id="terminal-title">端末</h2>
       </header>
       <nav className="terminal-menu" aria-label="端末メニュー">
         {(Object.keys(menuLabels) as TerminalMenuId[]).map((id) => (
@@ -94,14 +95,7 @@ export function TerminalPanel(props: Props) {
           />
         )}
       </div>
-      <button
-        type="button"
-        className="terminal-back"
-        aria-label="装置から離れる"
-        onClick={props.onClose}
-      >
-        &lt; BACK
-      </button>
+      <ContextBackButton destination="部屋に戻る" onClick={props.onClose} />
     </section>
   );
 }
@@ -164,7 +158,7 @@ function TerminalMenuContent({
         <p>
           {completedPuzzleIds.includes('puzzle_signal_investigation')
             ? '確認済み：E-01の通信線は、隣室ではなくECHO BUFFER RETURNへ戻る。'
-            : '職員カードを使えば、部屋の図と配線図を重ねて見られる。'}
+            : '職員証を使えば、部屋の図と配線図を重ねて見られる。'}
         </p>
       </div>
     );

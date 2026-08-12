@@ -1,34 +1,54 @@
-import type { StoryStage } from '../../game/machine/gameMachine';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type TransitionEvent,
+} from 'react';
 
-type Props = {
-  kind: 'clock' | 'desk';
-  powerRestored?: boolean;
-  stage?: StoryStage;
-  onClose: () => void;
-};
+import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import { ContextBackButton } from '../common/ContextBackButton';
+import {
+  deskEvidence,
+  getDeskInterpretation,
+  type DeskEvidence as DeskEvidenceItem,
+  type DeskEvidenceId,
+} from './deskEvidence';
 
-export function InspectionEvidencePanel({
-  kind,
-  powerRestored = false,
-  stage = 'puzzle_carrier_sync',
-  onClose,
-}: Props) {
-  const clock = kind === 'clock';
+type Props =
+  | { kind: 'clock'; onClose: () => void }
+  | {
+      kind: 'desk';
+      onClose: () => void;
+      powerRestored: boolean;
+      completedPuzzleIds: readonly PuzzleId[];
+    };
+
+const deskPhoto = `${import.meta.env.BASE_URL}assets/images/documents/gfx-doc-005__desk-photo__runtime__1024x768.webp`;
+
+export function InspectionEvidencePanel(props: Props) {
+  const clock = props.kind === 'clock';
+  if (!clock) {
+    return (
+      <DeskEvidenceModal
+        powerRestored={props.powerRestored}
+        completedPuzzleIds={props.completedPuzzleIds}
+        onClose={props.onClose}
+      />
+    );
+  }
+
   return (
     <section
-      className={`puzzle-modal artwork-modal evidence-modal ${clock ? 'clock-evidence-modal' : 'power-test-evidence-modal'}`}
+      className="puzzle-modal artwork-modal evidence-modal clock-evidence-modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="evidence-title"
     >
-      {clock ? (
-        <ClockEvidence />
-      ) : (
-        <DeskEvidence powerRestored={powerRestored} stage={stage} />
-      )}
-      <button type="button" onClick={onClose}>
-        閉じる
-      </button>
+      <ClockEvidence />
+      <ContextBackButton destination="部屋に戻る" onClick={props.onClose} />
     </section>
   );
 }
@@ -37,7 +57,7 @@ function ClockEvidence() {
   return (
     <div className="clock-evidence">
       <p className="eyebrow">WALL CLOCK / STOPPED</p>
-      <h2 id="evidence-title">停止したアナログ時計</h2>
+      <h2 id="evidence-title">止まった時計</h2>
       <div className="clock-dial-composite" aria-hidden="true">
         <span className="clock-mark clock-mark-12">12</span>
         <span className="clock-mark clock-mark-3">3</span>
@@ -55,74 +75,296 @@ function ClockEvidence() {
   );
 }
 
-function DeskEvidence({
+function DeskEvidenceModal({
   powerRestored,
-  stage,
+  completedPuzzleIds,
+  onClose,
 }: {
   powerRestored: boolean;
-  stage: StoryStage;
+  completedPuzzleIds: readonly PuzzleId[];
+  onClose: () => void;
 }) {
-  if (powerRestored && stage === 'puzzle_carrier_sync')
-    return <SynchronizationNote />;
-  if (powerRestored) return <MaintenanceOrder />;
-  return <PowerPlan />;
-}
+  const [selectedId, setSelectedId] = useState<DeskEvidenceId | null>(null);
+  const [lifted, setLifted] = useState(false);
+  const selected = deskEvidence.find(({ id }) => id === selectedId) ?? null;
+  const selectedIndex = selected
+    ? deskEvidence.findIndex(({ id }) => id === selected.id)
+    : -1;
+  const selectedButtonIdRef = useRef<DeskEvidenceId | null>(null);
+  const itemButtonRefs = useRef<
+    Partial<Record<DeskEvidenceId, HTMLButtonElement>>
+  >({});
+  const backRef = useRef<HTMLButtonElement>(null);
+  const liftedPropRef = useRef<HTMLDivElement>(null);
+  const returnTimerRef = useRef<number | null>(null);
 
-function PowerPlan() {
+  useEffect(() => {
+    if (selected) backRef.current?.focus();
+  }, [selected]);
+
+  useLayoutEffect(() => {
+    if (!selected) return;
+    const source = itemButtonRefs.current[selected.id];
+    const target = liftedPropRef.current;
+    if (!source || !target) return;
+
+    const sourceRect = source.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetWidth = targetRect.width || 1;
+    const targetHeight = targetRect.height || 1;
+    target.style.setProperty(
+      '--desk-lift-x',
+      `${sourceRect.left - targetRect.left}px`,
+    );
+    target.style.setProperty(
+      '--desk-lift-y',
+      `${sourceRect.top - targetRect.top}px`,
+    );
+    target.style.setProperty(
+      '--desk-lift-scale-x',
+      `${sourceRect.width / targetWidth || 1}`,
+    );
+    target.style.setProperty(
+      '--desk-lift-scale-y',
+      `${sourceRect.height / targetHeight || 1}`,
+    );
+
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => setLifted(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+    };
+  }, [selected]);
+
+  useEffect(
+    () => () => {
+      if (returnTimerRef.current !== null) {
+        window.clearTimeout(returnTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  function finishReturnToDesk() {
+    if (returnTimerRef.current !== null) {
+      window.clearTimeout(returnTimerRef.current);
+      returnTimerRef.current = null;
+    }
+    const buttonId = selectedButtonIdRef.current;
+    setSelectedId(null);
+    window.requestAnimationFrame(() => {
+      if (buttonId) itemButtonRefs.current[buttonId]?.focus();
+    });
+  }
+
+  function returnToDesk() {
+    if (!selected || returnTimerRef.current !== null) return;
+    setLifted(false);
+    returnTimerRef.current = window.setTimeout(finishReturnToDesk, 320);
+  }
+
+  function handleLiftTransitionEnd(event: TransitionEvent<HTMLDivElement>) {
+    if (
+      !lifted &&
+      event.target === event.currentTarget &&
+      event.propertyName === 'transform'
+    ) {
+      finishReturnToDesk();
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Escape' || !selected) return;
+    event.preventDefault();
+    event.stopPropagation();
+    returnToDesk();
+  }
+
   return (
-    <div className="document-evidence">
-      <p className="eyebrow">FACILITY E-01 / MAINTENANCE DOCUMENT</p>
-      <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>EMERGENCY SYSTEM / RECOVERY NOTE</p>
-        <h2 id="evidence-title">補助回路復旧手順</h2>
-        <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">
-          保護回路が作動した場合は、異常回線を隔離する。
-        </p>
-        <p className="document-annotation">
-          CONTROL BUS: SOURCE — RELAY — TERMINATOR
-          <br />
-          RESTORE FROM UPSTREAM TO DOWNSTREAM
-        </p>
-      </article>
-    </div>
+    <section
+      className="puzzle-modal artwork-modal evidence-modal desk-evidence-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="evidence-title"
+      onKeyDown={handleKeyDown}
+    >
+      <div className={`desk-evidence${selected ? ' is-reading' : ''}`}>
+        <header className="desk-evidence-heading">
+          <p className="eyebrow">DESK</p>
+          <h2 id="evidence-title">机の上</h2>
+        </header>
+        <div className="desk-paper-field" aria-label="机の上にある物">
+          <div className="desk-reading-shade" aria-hidden="true" />
+          {deskEvidence.map((evidence, index) => {
+            const isSelected = evidence.id === selectedId;
+            return (
+              <div
+                className={`desk-prop desk-prop-${index + 1} is-${evidence.format}${isSelected ? ' is-source' : ''}${selected && !isSelected ? ' is-set-aside' : ''}`}
+                key={evidence.id}
+                aria-hidden={selected ? true : undefined}
+              >
+                <button
+                  type="button"
+                  className="desk-prop-trigger"
+                  aria-label={`${evidence.label}を調べる`}
+                  aria-expanded={isSelected}
+                  tabIndex={selected ? -1 : 0}
+                  ref={(element) => {
+                    if (element) itemButtonRefs.current[evidence.id] = element;
+                  }}
+                  onClick={() => {
+                    selectedButtonIdRef.current = evidence.id;
+                    setLifted(false);
+                    setSelectedId(evidence.id);
+                  }}
+                />
+                <DeskPropFace evidence={evidence} expanded={false} />
+              </div>
+            );
+          })}
+          {selected ? (
+            <>
+              <div
+                ref={liftedPropRef}
+                className={`desk-lifted-prop desk-lifted-prop-${selectedIndex + 1} is-${selected.format}${lifted ? ' is-lifted' : ''}`}
+                style={
+                  {
+                    '--desk-lift-rotation': `${getDeskRotation(selectedIndex)}deg`,
+                  } as CSSProperties
+                }
+                onTransitionEnd={handleLiftTransitionEnd}
+              >
+                <DeskPropFace evidence={selected} expanded />
+              </div>
+              <div className={`desk-reading-ui${lifted ? ' is-visible' : ''}`}>
+                <p className="desk-interpretation" role="status">
+                  {getDeskInterpretation(
+                    selected.id,
+                    completedPuzzleIds,
+                    powerRestored,
+                  )}
+                </p>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
+      <ContextBackButton
+        destination={selected ? '机に戻る' : '部屋に戻る'}
+        onClick={selected ? returnToDesk : onClose}
+        {...(selected ? { buttonRef: backRef } : {})}
+      />
+    </section>
   );
 }
 
-function SynchronizationNote() {
+const deskRotations = [-6, 3, 7, 4, -5, 5] as const;
+
+function getDeskRotation(index: number) {
+  return deskRotations[index] ?? 0;
+}
+
+function DeskPropFace({
+  evidence,
+  expanded,
+}: {
+  evidence: DeskEvidenceItem;
+  expanded: boolean;
+}) {
+  if (evidence.format === 'photo') {
+    return (
+      <figure className="desk-prop-face desk-photo-face">
+        <img
+          src={deskPhoto}
+          alt={expanded ? '端末に向かう、後ろ姿の作業員' : ''}
+        />
+        {expanded ? (
+          <figcaption className="desk-prop-full">
+            <h3>{evidence.title}</h3>
+            <p>{evidence.body}</p>
+          </figcaption>
+        ) : null}
+      </figure>
+    );
+  }
+
   return (
-    <div className="document-evidence">
-      <p className="eyebrow">ECHO BUFFER / SERVICE NOTE</p>
-      <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>CARRIER START POSITION</p>
-        <h2 id="evidence-title">同期調整メモ</h2>
-        <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">
-          基準より先に出る波：<strong>DELAY / 右へ</strong>
-          <br />
-          基準より後に出る波：<strong>ADVANCE / 左へ</strong>
-        </p>
-        <p className="document-annotation">波が出る位置を0に合わせること。</p>
-      </article>
-    </div>
+    <article className="desk-prop-face">
+      <DeskPaperPreview evidence={evidence} />
+      {expanded &&
+      evidence.format !== 'checklist' &&
+      evidence.format !== 'torn' ? (
+        <div className="desk-prop-full">
+          <p>{evidence.body}</p>
+        </div>
+      ) : null}
+    </article>
   );
 }
 
-function MaintenanceOrder() {
+function DeskPaperPreview({ evidence }: { evidence: DeskEvidenceItem }) {
+  if (evidence.format === 'handover') {
+    return (
+      <>
+        <p className="paper-form-label">夜間勤務 / 引継事項</p>
+        <h3>{evidence.title}</h3>
+        <span className="paper-rule" aria-hidden="true" />
+        {evidence.previewLines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </>
+    );
+  }
+  if (evidence.format === 'graph') {
+    return (
+      <>
+        <h3>{evidence.title}</h3>
+        <div className="paper-wave" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        {evidence.previewLines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </>
+    );
+  }
+  if (evidence.format === 'checklist') {
+    return (
+      <>
+        <p className="paper-form-label">夜勤終了チェック</p>
+        <h3>{evidence.title}</h3>
+        <ul>
+          {evidence.previewLines.map((line) => (
+            <li key={line}>
+              <span aria-hidden="true">✓</span>
+              {line}
+            </li>
+          ))}
+        </ul>
+      </>
+    );
+  }
   return (
-    <div className="document-evidence">
-      <p className="eyebrow">FACILITY E-01 / INSPECTION SHEET</p>
-      <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>LAST MANUAL INSPECTION</p>
-        <h2 id="evidence-title">夜間点検順</h2>
-        <div className="document-rule" aria-hidden="true" />
-        <p className="document-instruction">
-          TERMINAL → INTERCOM → ECHO BUFFER → DOOR
-        </p>
-        <p className="document-annotation">
-          ロッカーには各機器の銘板記号を入力する。
-        </p>
-      </article>
-    </div>
+    <>
+      <h3>{evidence.title}</h3>
+      {evidence.format === 'torn' ? (
+        <ul>
+          {evidence.previewLines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : (
+        evidence.previewLines.map((line) => <p key={line}>{line}</p>)
+      )}
+    </>
   );
 }

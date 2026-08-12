@@ -8,7 +8,7 @@ type Props = {
   kind: NarrativeKind;
   speaker?: string;
   text: string;
-  actionLabel: string;
+  advanceLabel: string;
   onAdvance: () => void;
   secondaryAction?: { label: string; onSelect: () => void };
   autoFocus?: boolean;
@@ -21,7 +21,7 @@ export function NarrativePanel({
   kind,
   speaker,
   text,
-  actionLabel,
+  advanceLabel,
   onAdvance,
   secondaryAction,
   autoFocus = false,
@@ -55,36 +55,47 @@ export function NarrativePanel({
       aria-atomic="true"
       aria-busy={!textComplete}
     >
-      {communication && (
-        <p className="narrative-signal" aria-label="通信状態、受信中">
-          SIGNAL // ACTIVE
-        </p>
-      )}
-      {speaker && <span className="speaker">{speaker}</span>}
-      <p
-        className="narrative-text"
-        data-text-complete={textComplete}
-        aria-label={text}
-      >
-        <NarrativeText
-          text={text}
-          speed={textSpeed}
-          motionReduced={motionReduced}
-          forceComplete={forceCompleteText === text}
-          onBlip={onTextBlip}
-          onComplete={handleTextComplete}
-        />
-      </p>
-      <div className="narrative-actions">
-        {secondaryAction && (
-          <button type="button" onClick={secondaryAction.onSelect}>
-            {secondaryAction.label}
-          </button>
+      <button
+        type="button"
+        className="narrative-advance-surface"
+        aria-label={textComplete ? advanceLabel : '文章をすべて表示'}
+        onClick={handleAdvance}
+        autoFocus={autoFocus}
+      />
+      <div className="narrative-window">
+        {communication && (
+          <p className="narrative-signal" aria-label="通信状態、受信中">
+            SIGNAL // ACTIVE
+          </p>
         )}
-        <button type="button" onClick={handleAdvance} autoFocus={autoFocus}>
-          {actionLabel}
-        </button>
+        {speaker && <span className="speaker">{speaker}</span>}
+        <p
+          className="narrative-text"
+          data-text-complete={textComplete}
+          aria-label={text}
+        >
+          <NarrativeText
+            text={text}
+            speed={textSpeed}
+            motionReduced={motionReduced}
+            forceComplete={forceCompleteText === text}
+            onBlip={onTextBlip}
+            onComplete={handleTextComplete}
+          />
+        </p>
+        <span className="narrative-advance-mark" aria-hidden="true">
+          {textComplete ? '▼' : '…'}
+        </span>
       </div>
+      {secondaryAction && (
+        <button
+          type="button"
+          className="narrative-secondary-action"
+          onClick={secondaryAction.onSelect}
+        >
+          {secondaryAction.label}
+        </button>
+      )}
     </section>
   );
 }
