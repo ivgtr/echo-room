@@ -95,21 +95,21 @@
         },
         {
           "id": "gfx-close-005__all-off",
-          "src": "/assets/images/close/gfx-close-005__circuits-off__preview-flat.webp",
+          "src": "/assets/images/close/gfx-close-005__empty-panel__preview-flat.webp",
           "width": 1672,
           "height": 941
         },
         {
-          "id": "gfx-close-005__aux-on",
-          "src": "/assets/images/close/gfx-close-005__aux-on__preview-flat.webp",
-          "width": 1672,
-          "height": 941
+          "id": "gfx-close-005__lever-sprite",
+          "src": "/assets/images/close/gfx-close-005__lever-sprite.webp",
+          "width": 265,
+          "height": 930
         },
         {
-          "id": "gfx-close-005__door-short",
-          "src": "/assets/images/close/gfx-close-005__door-short__preview-flat.webp",
-          "width": 1672,
-          "height": 941
+          "id": "gfx-close-005__socket-sprite",
+          "src": "/assets/images/close/gfx-close-005__socket-sprite.webp",
+          "width": 434,
+          "height": 435
         },
         {
           "id": "gfx-close-006__closed",

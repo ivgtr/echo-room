@@ -97,8 +97,6 @@ const deviceComponents: Record<PuzzleId, ComponentType<DeviceProps>> = {
 };
 
 const closeupImages: Partial<Record<PuzzleId, string>> = {
-  puzzle_power_route:
-    'assets/images/close/gfx-close-005__circuits-off__preview-flat.webp',
   puzzle_maintenance_lock:
     'assets/images/close/gfx-close-007__symbol-reel__preview-flat.webp',
   puzzle_voiceprint_calibration:
@@ -126,7 +124,6 @@ function DeviceFrame({
   const titleId = `${puzzleId}-title`;
   const closeupImage = closeupImages[puzzleId];
   const errorCode: Partial<Record<PuzzleId, string>> = {
-    puzzle_power_route: 'PROTECTION / TRIPPED',
     puzzle_maintenance_lock: 'LOCK / JAMMED',
     puzzle_packet_repair: 'CONTINUITY / BROKEN',
   };
@@ -162,14 +159,16 @@ function DeviceFrame({
         <h2 id={titleId}>{copy.title}</h2>
       </header>
       <div className="device-workarea">{children}</div>
-      <p
-        className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
-        aria-live="assertive"
-      >
-        {failures > 0
-          ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
-          : 'STATUS / STANDBY'}
-      </p>
+      {puzzleId !== 'puzzle_power_route' && (
+        <p
+          className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
+          aria-live="assertive"
+        >
+          {failures > 0
+            ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
+            : 'STATUS / STANDBY'}
+        </p>
+      )}
       {diagnosticAvailable && (
         <p className="device-diagnostic" role="status">
           DIAGNOSTIC AVAILABLE / SYSTEMのヒントを確認できます
@@ -180,103 +179,157 @@ function DeviceFrame({
 }
 
 function PowerRouteDevice({ submit }: DeviceProps) {
-  const [activeCircuits, setActiveCircuits] = useState<string[]>(['door']);
-  const [rejectedCircuit, setRejectedCircuit] = useState<string | null>(null);
-  const [bootStep, setBootStep] = useState(0);
+  type CircuitId = 'terminal' | 'intercom' | 'buffer' | 'door';
+  const startupOrder: CircuitId[] = ['terminal', 'intercom', 'buffer'];
+  const [activeCircuits, setActiveCircuits] = useState<CircuitId[]>(['door']);
+  const [rejectedCircuit, setRejectedCircuit] = useState<CircuitId | null>(
+    null,
+  );
+  const [isComplete, setIsComplete] = useState(false);
+  const rejectionTimerRef = useRef<number | null>(null);
+  const completionTimerRef = useRef<number | null>(null);
   const lines = [
-    ['terminal', 'TERMINAL', 2],
-    ['intercom', 'INTERCOM', 1],
-    ['buffer', 'ECHO BUFFER', 3],
-    ['door', 'DOOR', 4],
+    ['terminal', 'TERMINAL', 489],
+    ['intercom', 'INTERCOM', 665],
+    ['buffer', 'ECHO BUFFER', 842],
+    ['door', 'DOOR', 1021],
   ] as const;
-  const healthyCircuits = ['terminal', 'intercom', 'buffer'];
-  const ready =
-    !activeCircuits.includes('door') &&
-    healthyCircuits.every((id) => activeCircuits.includes(id));
-  const loadUsed = activeCircuits.reduce((total, id) => {
-    const line = lines.find(([lineId]) => lineId === id);
-    return total + (line?.[2] ?? 0);
-  }, 0);
+  const startedCount = startupOrder.filter((id) =>
+    activeCircuits.includes(id),
+  ).length;
 
   useEffect(() => {
-    if (!ready || bootStep < 1 || bootStep > 3) return;
-    const reduced = document.documentElement.dataset.reducedMotion === 'true';
-    const delay = reduced ? 40 : 260;
-    const timer = window.setTimeout(() => {
-      const nextStep = bootStep + 1;
-      setBootStep(nextStep);
-      if (nextStep === 4) submit(['terminal', 'intercom', 'buffer']);
-    }, delay);
-    return () => window.clearTimeout(timer);
-  }, [bootStep, ready, submit]);
+    return () => {
+      if (rejectionTimerRef.current !== null)
+        window.clearTimeout(rejectionTimerRef.current);
+      if (completionTimerRef.current !== null)
+        window.clearTimeout(completionTimerRef.current);
+    };
+  }, []);
 
-  function toggleCircuit(id: string) {
-    if (bootStep > 0) return;
+  function rejectCircuit(id: CircuitId, answer: string[]) {
+    if (rejectionTimerRef.current !== null)
+      window.clearTimeout(rejectionTimerRef.current);
+    setRejectedCircuit(id);
+    submit(answer);
+    rejectionTimerRef.current = window.setTimeout(
+      () => setRejectedCircuit(null),
+      520,
+    );
+  }
+
+  function toggleCircuit(id: CircuitId) {
+    if (isComplete) return;
     if (id !== 'door' && activeCircuits.includes('door')) {
-      setRejectedCircuit(id);
-      submit(['short-circuit', id]);
-      window.setTimeout(() => setRejectedCircuit(null), 480);
+      rejectCircuit(id, ['short-circuit', id]);
       return;
     }
     setRejectedCircuit(null);
-    const nextCircuits = activeCircuits.includes(id)
-      ? activeCircuits.filter((circuit) => circuit !== id)
-      : [...activeCircuits, id];
+
+    if (id === 'door') {
+      setActiveCircuits((current) =>
+        current.includes('door')
+          ? current.filter((circuit) => circuit !== 'door')
+          : [...current, 'door'],
+      );
+      return;
+    }
+
+    if (activeCircuits.includes(id)) {
+      const selectedIndex = startupOrder.indexOf(id);
+      setActiveCircuits((current) =>
+        current.filter(
+          (circuit) =>
+            circuit === 'door' || startupOrder.indexOf(circuit) < selectedIndex,
+        ),
+      );
+      return;
+    }
+
+    const expectedCircuit = startupOrder[startedCount];
+    if (id !== expectedCircuit) {
+      rejectCircuit(id, ['control-signal-missing', id]);
+      return;
+    }
+
+    const nextCircuits = [...activeCircuits, id];
     setActiveCircuits(nextCircuits);
-    if (
-      !nextCircuits.includes('door') &&
-      healthyCircuits.every((circuit) => nextCircuits.includes(circuit))
-    )
-      setBootStep(1);
+    if (startedCount === startupOrder.length - 1) {
+      setIsComplete(true);
+      const reduced = document.documentElement.dataset.reducedMotion === 'true';
+      completionTimerRef.current = window.setTimeout(
+        () => submit(startupOrder),
+        reduced ? 60 : 420,
+      );
+    }
   }
+
+  const status = rejectedCircuit
+    ? activeCircuits.includes('door')
+      ? 'PROTECTION TRIPPED'
+      : 'CONTROL SIGNAL MISSING'
+    : activeCircuits.includes('door')
+      ? 'PROTECTION TRIPPED'
+      : isComplete
+        ? 'ONLINE'
+        : startedCount > 0
+          ? `BOOT SEQUENCE / ${startedCount} / 3`
+          : 'PROTECTION CLEAR';
 
   return (
     <div
-      className={`power-device${rejectedCircuit ? ' is-rejecting' : ''}${bootStep > 0 ? ' is-booting' : ''}`}
+      className={`power-device${rejectedCircuit ? ' is-rejecting' : ''}${isComplete ? ' is-online' : ''}`}
     >
-      <div className="power-state-layers" aria-hidden="true">
-        {healthyCircuits.map((id) =>
-          activeCircuits.includes(id) ? (
-            <i className={`power-state-layer is-${id}`} key={id} />
-          ) : null,
-        )}
-        {activeCircuits.includes('door') && (
-          <i className="power-state-layer is-door" />
-        )}
-      </div>
-      <p
-        className="power-readout"
-        aria-label={`電源容量7 UNIT、使用中${loadUsed} UNIT`}
-      >
-        CAPACITY 7 / AUX LOAD {loadUsed > 7 ? 'OVER' : loadUsed}
-      </p>
-      <p className="power-protection" role="status" aria-live="assertive">
-        {rejectedCircuit
-          ? 'DOOR LINE SHORT — SWITCH REJECTED'
-          : bootStep > 0
-            ? 'AUXILIARY SYSTEMS STARTING'
-            : activeCircuits.includes('door')
-              ? 'DOOR LINE / FAULT'
-              : 'DOOR LINE / ISOLATED'}
-      </p>
-      <div className="breaker-bank" aria-label="非常電源の四回路">
-        {lines.map(([id, label, load], index) => {
-          const active = activeCircuits.includes(id);
-          const started = id !== 'door' && bootStep > index;
-          return (
-            <button
-              type="button"
-              className={`physical-breaker${active ? ' is-on' : ''}${id === 'door' ? ' is-short' : ''}${rejectedCircuit === id ? ' is-rejected' : ''}${started ? ' is-started' : ''}`}
-              aria-pressed={active}
-              aria-label={`${label}回路、${active ? 'ON' : 'OFF'}、消費ランプ${load}個`}
-              disabled={bootStep > 0}
-              key={id}
-              onClick={() => toggleCircuit(id)}
-            >
-              <span className="circuit-name">{label}</span>
-            </button>
-          );
-        })}
+      <div className="power-stage">
+        <img
+          className="power-panel-base"
+          src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-005__empty-panel__preview-flat.webp`}
+          alt=""
+          aria-hidden="true"
+        />
+        <p className="power-readout">AUXILIARY POWER BUS</p>
+        <p className="power-protection" role="status" aria-live="assertive">
+          {status}
+        </p>
+        <div className="power-signal-vfx" aria-hidden="true">
+          <i className={startedCount >= 1 ? 'is-powered' : ''} />
+          <i className={startedCount >= 2 ? 'is-powered' : ''} />
+        </div>
+        <div className="breaker-bank" aria-label="非常電源の四回路">
+          {lines.map(([id, label, bayX]) => {
+            const active = activeCircuits.includes(id);
+            const rejected = rejectedCircuit === id;
+            return (
+              <button
+                type="button"
+                className={`physical-breaker${active ? ' is-on' : ''}${id === 'door' ? ' is-short' : ''}${rejected ? ' is-rejected' : ''}`}
+                style={{ '--bay-x': bayX } as CSSProperties}
+                aria-pressed={active}
+                aria-label={`${label}回路、${active ? 'ON' : 'OFF'}`}
+                disabled={isComplete}
+                key={id}
+                onClick={() => toggleCircuit(id)}
+              >
+                <span className="circuit-name">{label}</span>
+                <img
+                  className="breaker-lever-sprite"
+                  src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-005__lever-sprite.webp`}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span className="breaker-sockets" aria-hidden="true">
+                  <span className="breaker-socket">
+                    <img
+                      src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-005__socket-sprite.webp`}
+                      alt=""
+                    />
+                    {(active || rejected) && <i />}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

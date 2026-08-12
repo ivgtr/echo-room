@@ -1022,7 +1022,7 @@ button:focus-visible {
 
 .clock-mark-3 {
   top: 50%;
-  right: 9%;
+  right: 13%;
   transform: translateY(-50%);
 }
 
@@ -1976,62 +1976,44 @@ button:focus-visible {
 }
 
 .power-device {
-  position: static;
+  position: absolute;
+  display: grid;
+  inset: 0;
   width: 100%;
   height: 100%;
-  min-height: 24rem;
+  place-items: center;
 }
 
 .device-puzzle_power_route .device-workarea {
-  position: static;
+  position: absolute;
+  inset: 0;
   padding: 0;
   overflow: hidden;
 }
 
-.power-state-layers,
-.power-state-layer {
+.power-stage {
+  position: relative;
+  width: min(100%, calc(100vh * 1.7779));
+  aspect-ratio: 1672 / 941;
+  overflow: hidden;
+}
+.power-panel-base {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
-
-.power-state-layer {
-  background-position: center;
-  background-size: cover;
-  animation: hardware-state-in 160ms ease-out;
-}
-
-.power-state-layer.is-terminal,
-.power-state-layer.is-intercom,
-.power-state-layer.is-buffer {
-  background-image: url('/assets/images/close/gfx-close-005__aux-on__preview-flat.webp');
-}
-
-.power-state-layer.is-terminal {
-  clip-path: inset(33% 60.5% 18% 29%);
-}
-.power-state-layer.is-intercom {
-  clip-path: inset(33% 49.5% 18% 39.5%);
-}
-.power-state-layer.is-buffer {
-  clip-path: inset(33% 38.5% 18% 50.5%);
-}
-.power-state-layer.is-door {
-  background-image: url('/assets/images/close/gfx-close-005__door-short__preview-flat.webp');
-  clip-path: inset(33% 27% 18% 61.5%);
-}
-
 .breaker-bank {
-  position: absolute;
-  top: 33%;
-  left: 29%;
-  display: grid;
-  width: 44%;
-  height: 49%;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
+  position: static;
 }
 .physical-breaker {
-  position: relative;
+  position: absolute;
+  top: calc(350 / 941 * 100%);
+  left: calc(var(--bay-x) / 1672 * 100%);
+  width: calc(161 / 1672 * 100%);
+  height: calc(390 / 941 * 100%);
   padding: 0;
   border: 1px solid transparent;
   background: transparent;
@@ -2039,7 +2021,7 @@ button:focus-visible {
 }
 .physical-breaker .circuit-name {
   position: absolute;
-  top: -0.2rem;
+  top: -9%;
   left: 50%;
   width: max-content;
   max-width: 95%;
@@ -2050,13 +2032,91 @@ button:focus-visible {
   text-align: center;
   transform: translateX(-50%);
 }
+.breaker-lever-sprite {
+  position: absolute;
+  z-index: 1;
+  top: 29%;
+  left: 34%;
+  width: 30%;
+  height: auto;
+  filter: brightness(0.76) contrast(1.06);
+  transform: translate(-50%, 0);
+  transform-origin: 50% 18%;
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.75, 0.2, 1),
+    filter 180ms ease;
+  pointer-events: none;
+}
+.physical-breaker.is-on .breaker-lever-sprite {
+  filter: brightness(0.92) contrast(1.04);
+  transform: translate(-50%, 0) scaleY(0.78);
+}
+.physical-breaker.is-rejected .breaker-lever-sprite {
+  filter: brightness(1.02) contrast(1.04);
+  animation: rejected-lever 520ms cubic-bezier(0.25, 0.75, 0.25, 1);
+}
+.breaker-sockets {
+  position: absolute;
+  z-index: 1;
+  top: 34%;
+  right: 9%;
+  display: grid;
+  width: 18%;
+  align-content: start;
+  gap: 0.18rem;
+  pointer-events: none;
+}
+.breaker-socket {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+}
+.breaker-socket img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: brightness(0.55) contrast(1.18);
+  object-fit: contain;
+}
+.breaker-socket i {
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  background: #bafffa;
+  box-shadow:
+    0 0 0.22rem #7df5ed,
+    0 0 0.65rem #37d6d1,
+    0 0 1rem rgb(55 214 209 / 55%);
+  animation: circuit-vfx-in 140ms ease-out;
+}
+.physical-breaker.is-short .breaker-socket i {
+  background: #ffd0d0;
+  box-shadow:
+    0 0 0.22rem #ff7379,
+    0 0 0.68rem #e32e39,
+    0 0 1rem rgb(227 46 57 / 65%);
+}
+.physical-breaker.is-rejected:not(.is-short) .breaker-socket i {
+  background: #ffe0a1;
+  box-shadow:
+    0 0 0.22rem #ffc45c,
+    0 0 0.68rem #d98c22,
+    0 0 1rem rgb(217 140 34 / 62%);
+  animation: rejected-lamp 130ms steps(2, end) 4;
+}
+.power-device.is-rejecting .physical-breaker.is-short .breaker-socket i {
+  animation: short-vfx 120ms steps(2, end) 4;
+}
 .physical-breaker.is-rejected {
   border-color: transparent;
   animation: breaker-reject 160ms ease 3;
 }
 .puzzle-device .physical-breaker:focus-visible {
   outline: 0;
-  box-shadow: inset 0 0 1.2rem rgb(201 255 249 / 22%);
+  box-shadow: none;
+}
+.puzzle-device .physical-breaker:focus-visible .breaker-lever-sprite {
+  filter: brightness(1.08) drop-shadow(0 0 0.22rem rgb(201 255 249 / 58%));
 }
 
 .power-readout,
@@ -2078,26 +2138,86 @@ button:focus-visible {
   transform: translateX(-50%);
 }
 .power-readout {
-  top: 24%;
+  top: 18.7%;
 }
 .power-protection {
-  top: 29%;
+  top: 24.1%;
 }
 .power-device.is-rejecting .power-protection {
   color: #ff9ca2;
   animation: protection-pulse 160ms steps(2, end) 3;
 }
 
-@keyframes hardware-state-in {
+.power-signal-vfx {
+  position: absolute;
+  z-index: 2;
+  top: 31.6%;
+  left: 35.7%;
+  display: flex;
+  width: 22.6%;
+  pointer-events: none;
+}
+
+.power-signal-vfx i {
+  display: block;
+  width: 50%;
+  height: 2px;
+  background: transparent;
+  box-shadow: none;
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.power-signal-vfx i.is-powered {
+  background: rgb(102 231 222 / 54%);
+  box-shadow: 0 0 0.48rem rgb(76 226 216 / 72%);
+  animation: signal-energize 280ms ease-out;
+}
+
+@keyframes circuit-vfx-in {
   from {
-    filter: brightness(1.45);
-    opacity: 0.65;
+    opacity: 0;
+    transform: scale(0.35);
+  }
+}
+
+@keyframes short-vfx {
+  50% {
+    opacity: 0.25;
+    transform: scale(1.35);
   }
 }
 
 @keyframes breaker-reject {
   50% {
     transform: translateX(0.25rem);
+  }
+}
+
+@keyframes rejected-lever {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  36%,
+  68% {
+    transform: translate(-50%, 0) scaleY(0.78);
+  }
+}
+
+@keyframes rejected-lamp {
+  50% {
+    opacity: 0.3;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes signal-energize {
+  from {
+    opacity: 0;
+    transform: scaleX(0.1);
+    transform-origin: left;
   }
 }
 

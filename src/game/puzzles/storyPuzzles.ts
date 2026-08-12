@@ -20,7 +20,7 @@ export const PUZZLE_DEVICE_COPY: Record<PuzzleId, PuzzleDeviceCopy> = {
   puzzle_power_route: {
     eyebrow: 'EMERGENCY POWER / BYPASS',
     title: '非常電源切替盤',
-    incorrectFeedback: 'SHORT CIRCUIT。DOOR回路を点検。',
+    incorrectFeedback: 'CONTROL SIGNAL MISSING。配線の上流を確認。',
   },
   puzzle_carrier_sync: {
     eyebrow: 'ECHO BUFFER / CARRIER',

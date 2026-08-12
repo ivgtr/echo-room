@@ -13,9 +13,9 @@ import { PuzzleDevice } from '../../src/ui/puzzles/PuzzleDevice';
 afterEach(() => vi.useRealTimers());
 
 describe('PuzzleDevice', () => {
-  it('blocks auxiliary circuits until DOOR is off, then restores power in any order', async () => {
+  it('isolates DOOR, rejects an out-of-order circuit, then restores power upstream first', async () => {
     const onSubmit = vi.fn();
-    render(
+    const view = render(
       <PuzzleDevice
         puzzleId="puzzle_power_route"
         failures={0}
@@ -24,21 +24,47 @@ describe('PuzzleDevice', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /TERMINAL回路、OFF/ }));
+    const leverSources = Array.from(
+      view.container.querySelectorAll<HTMLImageElement>(
+        '.breaker-lever-sprite',
+      ),
+      (image) => image.src,
+    );
+    expect(leverSources).toHaveLength(4);
+    expect(new Set(leverSources)).toHaveLength(1);
+    expect(view.container.querySelectorAll('.breaker-socket')).toHaveLength(4);
+
+    fireEvent.click(screen.getByRole('button', { name: 'TERMINAL回路、OFF' }));
     expect(onSubmit).toHaveBeenCalledWith('puzzle_power_route', [
       'short-circuit',
       'terminal',
     ]);
     expect(
-      screen.getByRole('button', { name: /DOOR回路、ON/ }),
+      screen.getByRole('button', { name: 'DOOR回路、ON' }),
     ).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: /DOOR回路、ON/ }));
-    for (const name of [
-      /ECHO BUFFER回路、OFF/,
-      /TERMINAL回路、OFF/,
-      /INTERCOM回路、OFF/,
-    ])
-      fireEvent.click(screen.getByRole('button', { name }));
+    fireEvent.click(screen.getByRole('button', { name: 'DOOR回路、ON' }));
+    expect(screen.getByText('PROTECTION CLEAR')).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
+    );
+    expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
+      'control-signal-missing',
+      'buffer',
+    ]);
+    expect(screen.getByText('CONTROL SIGNAL MISSING')).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
+    ).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'TERMINAL回路、OFF' }));
+    expect(screen.getByText('BOOT SEQUENCE / 1 / 3')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'INTERCOM回路、OFF' }));
+    expect(screen.getByText('BOOT SEQUENCE / 2 / 3')).toBeVisible();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
+    );
+    expect(screen.getByText('ONLINE')).toBeVisible();
     await waitFor(
       () =>
         expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
@@ -52,7 +78,7 @@ describe('PuzzleDevice', () => {
     expect(screen.queryByText('この答えで確認する')).not.toBeInTheDocument();
   });
 
-  it('keeps the rejected switch down while the short is active', () => {
+  it('keeps the rejected switch logically off while the short is active', () => {
     const onSubmit = vi.fn();
     const view = render(
       <PuzzleDevice
@@ -63,7 +89,7 @@ describe('PuzzleDevice', () => {
       />,
     );
     const device = within(view.container);
-    fireEvent.click(device.getByRole('button', { name: /TERMINAL回路、OFF/ }));
+    fireEvent.click(device.getByRole('button', { name: 'TERMINAL回路、OFF' }));
 
     view.rerender(
       <PuzzleDevice
@@ -75,12 +101,15 @@ describe('PuzzleDevice', () => {
     );
 
     expect(
-      device.getByRole('button', { name: /DOOR回路、ON/ }),
+      device.getByRole('button', { name: 'DOOR回路、ON' }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(
-      device.getByRole('button', { name: /TERMINAL回路、OFF/ }),
+      device.getByRole('button', { name: 'TERMINAL回路、OFF' }),
     ).toHaveAttribute('aria-pressed', 'false');
-    expect(device.getByText('PROTECTION / TRIPPED')).toBeVisible();
+    expect(device.getByText('PROTECTION TRIPPED')).toBeVisible();
+    expect(
+      view.container.querySelector('.physical-breaker.is-rejected'),
+    ).not.toBeNull();
   });
 
   it('submits carrier offsets when the waveforms themselves reach the lock point', async () => {

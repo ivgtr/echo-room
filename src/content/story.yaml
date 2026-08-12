@@ -67,8 +67,8 @@ items:
 documents:
   - {
       id: document_power_plan,
-      title: EMERGENCY BYPASS PLAN,
-      body: 容量は7 UNIT。TERMINAL 2、INTERCOM 1、BUFFER 3、DOOR 4。ドアの線はショート。,
+      title: AUXILIARY BUS RECOVERY,
+      body: 保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。,
     }
   - {
       id: document_synchronization_note,
@@ -120,7 +120,7 @@ puzzles:
   - id: puzzle_power_route
     kind: routing
     correctAnswer: [terminal, intercom, buffer]
-    incorrectFeedback: SHORT CIRCUIT。DOOR回路を点検。
+    incorrectFeedback: CONTROL SIGNAL MISSING。配線の上流を確認。
     effects: [{ type: unlockTerminal, menuId: system }]
     hintIds: [hint_power_1, hint_power_2, hint_power_3]
   - id: puzzle_carrier_sync
@@ -168,19 +168,19 @@ hints:
       id: hint_power_1,
       puzzleId: puzzle_power_route,
       level: 1,
-      text: 合計容量と、ショートした線を確認する。,
+      text: 状態灯と、盤面上部の配線の始点・中継点・終端を観察する。,
     }
   - {
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: DOOR回路がONの間、ほかの回路は保護機構に拒否される。,
+      text: 赤い状態灯の回路を隔離し、保護解除後は制御信号の上流から復帰させる。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: DOORをOFFにしてから、端末、通話器、BUFFERをONにする。順番は問わない。,
+      text: DOORをOFFにしてから、端末、通話器、BUFFERの順にONにする。,
     }
   - {
       id: hint_carrier_1,

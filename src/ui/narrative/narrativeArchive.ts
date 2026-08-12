@@ -165,8 +165,8 @@ export function discoveryEntry(text: string): NarrativeEntry {
 
 const powerPlan: ArchiveDocument = {
   id: 'document_power_plan',
-  title: 'EMERGENCY BYPASS PLAN',
-  body: '容量は7 UNIT。ドアの線はショートしている。端末、通話器、BUFFERの順につなぐ。',
+  title: 'AUXILIARY BUS RECOVERY',
+  body: '保護回路が作動した場合は異常回線を隔離する。補助制御は信号源から中継器、終端の順に復帰させる。',
 };
 
 const maintenanceSheet: ArchiveDocument = {

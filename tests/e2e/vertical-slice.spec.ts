@@ -175,25 +175,39 @@ test('keyboard-capable route restores power and resumes after reload', async ({
   const powerPuzzle = page.locator(
     '[data-puzzle-id="puzzle_power_route"]:visible',
   );
+  const stageRatio = async () =>
+    powerPuzzle.locator('.power-stage').evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return bounds.width / bounds.height;
+    });
+  await expect.poll(stageRatio).toBeCloseTo(1672 / 941, 2);
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await expect.poll(stageRatio).toBeCloseTo(1672 / 941, 2);
   await powerPuzzle
-    .getByRole('button', { name: /TERMINAL回路、OFF/ })
+    .getByRole('button', { name: 'TERMINAL回路、OFF' })
     .press('Enter');
-  await expect(page.getByText('PROTECTION / TRIPPED')).toBeVisible();
+  await expect(powerPuzzle.getByText('PROTECTION TRIPPED')).toBeVisible();
+  await page.screenshot({ path: 'tmp/power-single-status-light.png' });
   await powerPuzzle
-    .getByRole('button', { name: /DOOR回路、ON/ })
+    .getByRole('button', { name: 'DOOR回路、ON' })
     .press('Enter');
   await expect(
-    powerPuzzle.getByRole('button', { name: /DOOR回路、OFF/ }),
+    powerPuzzle.getByRole('button', { name: 'DOOR回路、OFF' }),
   ).toHaveAttribute('aria-pressed', 'false');
   await expect(
-    powerPuzzle.getByRole('button', { name: /TERMINAL回路、OFF/ }),
+    powerPuzzle.getByRole('button', { name: 'TERMINAL回路、OFF' }),
   ).toHaveAttribute('aria-pressed', 'false');
-  for (const name of [
-    /ECHO BUFFER回路、OFF/,
-    /TERMINAL回路、OFF/,
-    /INTERCOM回路、OFF/,
-  ])
+  await expect(powerPuzzle.getByText('PROTECTION CLEAR')).toBeVisible();
+  await powerPuzzle
+    .getByRole('button', { name: 'ECHO BUFFER回路、OFF' })
+    .press('Enter');
+  await expect(powerPuzzle.getByText('CONTROL SIGNAL MISSING')).toBeVisible();
+  for (const name of ['TERMINAL回路、OFF', 'INTERCOM回路、OFF'])
     await powerPuzzle.getByRole('button', { name }).press('Enter');
+  await page.screenshot({ path: 'tmp/power-sequence-vfx.png' });
+  await powerPuzzle
+    .getByRole('button', { name: 'ECHO BUFFER回路、OFF' })
+    .press('Enter');
 
   await expect(page.getByText('MAIN POWER ONLINE')).toBeVisible();
   await expect(world).toHaveAttribute('data-transition-state', 'idle');
@@ -408,7 +422,7 @@ test('system archive and subtitle/sound settings preserve the exploration view',
     .getByRole('button', { name: 'ARCHIVE / 会話履歴・資料再読' })
     .click();
   await expect(system.getByText('……聞こえるか？')).toBeVisible();
-  await expect(system.getByText('EMERGENCY BYPASS PLAN')).toBeVisible();
+  await expect(system.getByText('AUXILIARY BUS RECOVERY')).toBeVisible();
   await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
   await system
     .getByRole('button', {

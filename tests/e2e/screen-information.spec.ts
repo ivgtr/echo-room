@@ -38,10 +38,10 @@ test('clock and desk compose exact story information over close-up art', async (
   await page.getByRole('button', { name: /右を向く（南壁/ }).click();
   await page.getByRole('button', { name: 'デスクの紙を調べる' }).click();
   const document = page.getByRole('dialog', {
-    name: '非常電源配分表',
+    name: '補助回路復旧手順',
   });
-  await expect(document.getByText(/TERMINAL 2.*INTERCOM 1/)).toBeVisible();
-  await expect(document.getByText(/SHORT DETECTED/)).toBeVisible();
+  await expect(document.getByText(/異常回線を隔離/)).toBeVisible();
+  await expect(document.getByText(/SOURCE — RELAY — TERMINATOR/)).toBeVisible();
   await expect(document).toHaveCSS(
     'background-image',
     /gfx-close-004__paper-present__preview-flat\.webp/,

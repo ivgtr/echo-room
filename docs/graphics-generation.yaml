@@ -467,18 +467,24 @@ assets:
     canvas: *closeup_canvas
     prompt: >-
       Inspect the same industrial breaker panel straight enough for interaction.
-      It contains exactly four vertical mechanical levers in one row. All start
-      down. Give the four circuits exactly 2, 1, 3 and 4 physical lamp sockets;
-      damage the fourth circuit to communicate a fault without a text label.
-      Generate camera-locked raster state plates so visible handles, sockets and
-      emitted light are composited from images rather than CSS-drawn substitutes.
-    state_variants: [all_off, auxiliary_on, door_short_on]
+      It contains exactly four identical breaker units in one row. Give every
+      circuit exactly one physical status-lamp socket at the same coordinate;
+      mark the fourth circuit only with a small recent soot trace without changing
+      its geometry. In the upper recessed strip, add subtle physical control wiring
+      that links the first three bays as source, relay and terminated endpoint.
+      Use no arrows, numbers, readable text or glowing baked-in lines.
+      Generate one immutable base without levers or sockets, one transparent
+      movable lever sprite, and one transparent dark socket sprite. Duplicate the
+      same raster sprites at fixed coordinates; use CSS only for pivot motion and
+      light/fault VFX, never to draw the hardware itself.
+    state_variants: [empty_panel, lever_sprite, socket_sprite]
     exact_counts:
       levers: 4
     deliverables:
-      - fixed_panel_base
-      - auxiliary_on_state_plate
-      - door_short_state_plate
+      - empty_panel_base
+      - single_transparent_lever_sprite
+      - single_transparent_status_socket_sprite
+      - fixed_sprite_coordinates
       - four_hit_masks
       - preview_states
 
