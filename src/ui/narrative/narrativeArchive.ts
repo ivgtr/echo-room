@@ -8,7 +8,6 @@ export type NarrativeKind =
 export type NarrativeEntry = {
   id: string;
   kind: NarrativeKind;
-  presentation?: 'ambient' | 'subtitle' | 'dramatic';
   speaker?: string;
   text: string;
 };
@@ -81,7 +80,6 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'locker_cue',
         kind: 'discovery',
-        presentation: 'ambient',
         text: '回線がそろった。西壁から、ロックの外れる音がした。',
       },
     ],
@@ -89,7 +87,6 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'log_cue',
         kind: 'system',
-        presentation: 'ambient',
         speaker: 'FACILITY SYSTEM',
         text: '壁面端末に、未確認の通信ログが3件ある。',
       },
@@ -98,33 +95,28 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'offset_discovered',
         kind: 'discovery',
-        presentation: 'ambient',
         text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。',
       },
       {
         id: 'offset_warning',
         kind: 'communication',
-        presentation: 'dramatic',
         speaker: 'UNKNOWN',
         text: 'ログは気にするな。',
       },
       {
         id: 'no_room_question',
         kind: 'monologue',
-        presentation: 'dramatic',
         text: '隣の部屋なんてない。回線はこの部屋へ戻っている。',
       },
       {
         id: 'no_room_answer',
         kind: 'communication',
-        presentation: 'dramatic',
         speaker: 'UNKNOWN',
         text: '分かってる。まだ説明できない。',
       },
       {
         id: 'damaged_packet_cue',
         kind: 'system',
-        presentation: 'ambient',
         speaker: 'FACILITY SYSTEM',
         text: 'SIGNALに、破損したPACKETが残っている。',
       },
@@ -133,13 +125,11 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'packet_question',
         kind: 'monologue',
-        presentation: 'subtitle',
         text: '……赤いボタン？ そんなものは、まだ見ていない。',
       },
       {
         id: 'voiceprint_cue',
         kind: 'system',
-        presentation: 'ambient',
         speaker: 'FACILITY SYSTEM',
         text: 'PACKET 04に、照合できる声紋データが残っている。',
       },
@@ -148,13 +138,11 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'identity_question',
         kind: 'monologue',
-        presentation: 'dramatic',
         text: 'この波の形は……俺の職員記録と同じだ。',
       },
       {
         id: 'identity_answer',
         kind: 'communication',
-        presentation: 'dramatic',
         speaker: '20分後の自分',
         text: '20分後のお前だ。',
       },
@@ -162,7 +150,6 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'script_cue',
         kind: 'communication',
         speaker: '20分後の自分',
-        presentation: 'dramatic',
         text: 'お前が受け取った4つの文を、20分前へ戻せ。',
       },
     ],
@@ -170,7 +157,6 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'transmission_ready_cue',
         kind: 'system',
-        presentation: 'ambient',
         speaker: 'FACILITY SYSTEM',
         text: '送信テスト完了。赤い送信ボタンを使用できる。',
       },
@@ -184,7 +170,6 @@ export function discoveryEntry(text: string): NarrativeEntry {
   return {
     id: `discovery_${text}`,
     kind: 'discovery',
-    presentation: 'subtitle',
     text,
   };
 }

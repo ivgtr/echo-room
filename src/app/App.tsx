@@ -329,21 +329,6 @@ export function App() {
   }, [saveMessage]);
 
   const activeEventNarrative = eventNarrativeQueue[0] ?? null;
-  const activeEventNarrativeId = activeEventNarrative?.id;
-  const activeEventNarrativePresentation = activeEventNarrative?.presentation;
-  useEffect(() => {
-    if (
-      !activeEventNarrativeId ||
-      activeEventNarrativePresentation === 'dramatic'
-    )
-      return;
-    const timer = window.setTimeout(
-      () => setEventNarrativeQueue((current) => current.slice(1)),
-      2800,
-    );
-    return () => window.clearTimeout(timer);
-  }, [activeEventNarrativeId, activeEventNarrativePresentation]);
-
   const handleStart = useCallback(() => {
     savedProgressRef.current = false;
     lastSavedFingerprintRef.current = null;

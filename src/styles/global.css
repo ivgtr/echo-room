@@ -685,52 +685,6 @@ button:focus-visible {
   }
 }
 
-.narrative-cue {
-  position: absolute;
-  z-index: 18;
-  right: max(5%, env(safe-area-inset-right));
-  bottom: max(4%, env(safe-area-inset-bottom));
-  left: max(5%, env(safe-area-inset-left));
-  display: grid;
-  min-height: 16%;
-  padding: clamp(0.8rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
-  border: 0;
-  border-left: 2px solid #58b8b0;
-  color: #e7efed;
-  background: rgb(5 9 10 / 88%);
-  box-shadow: 0 14px 50px rgb(0 0 0 / 45%);
-  align-content: center;
-  pointer-events: none;
-  animation: narrative-in 180ms ease-out both;
-}
-
-.narrative-cue.is-communication {
-  border-left-color: #6fe7e2;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 3px,
-      rgb(111 231 226 / 4%) 4px
-    ),
-    rgb(5 13 14 / 94%);
-}
-
-.narrative-cue .speaker {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: #6fe7e2;
-  font:
-    clamp(0.7rem, 1vw, 0.88rem) ui-monospace,
-    monospace;
-  letter-spacing: 0.14em;
-}
-
-.narrative-cue .narrative-text {
-  margin: 0;
-  font-size: clamp(0.95rem, 1.8vw, 1.35rem);
-  line-height: 1.65;
-}
-
 .door-escape-cue {
   position: absolute;
   z-index: 18;

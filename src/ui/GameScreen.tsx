@@ -134,8 +134,6 @@ export function GameScreen(props: Props) {
   const [inspectionPhase, setInspectionPhase] = useState<
     'idle' | 'approaching' | 'active'
   >('idle');
-  const eventNarrativeBlocking =
-    props.eventNarrative?.presentation === 'dramatic';
   const acquisitionVisible =
     props.acquiredItems.length > 0 && !props.eventNarrative;
   const endingSequence =
@@ -161,7 +159,7 @@ export function GameScreen(props: Props) {
     inspectionPhase !== 'idle' ||
     inspectionModalOpen ||
     Boolean(props.subtitle) ||
-    eventNarrativeBlocking ||
+    Boolean(props.eventNarrative) ||
     ending;
   const explorationControlsVisible =
     !props.intro && !props.powerPuzzle && !ending;
@@ -268,11 +266,6 @@ export function GameScreen(props: Props) {
         if (props.subtitle) {
           event.preventDefault();
           closeInspection();
-          return;
-        }
-        if (props.eventNarrative) {
-          event.preventDefault();
-          props.onEventNarrativeAdvance();
           return;
         }
         if (props.powerPuzzle || inspectionModalOpen) {
@@ -535,7 +528,7 @@ export function GameScreen(props: Props) {
             onTextBlip={props.onTextBlip}
           />
         )}
-        {props.eventNarrative && eventNarrativeBlocking && (
+        {props.eventNarrative && (
           <ModalFocusScope
             focusKey={`event-${props.eventNarrative.id}`}
             returnFocusRef={inspectionReturnFocusRef}
@@ -555,23 +548,6 @@ export function GameScreen(props: Props) {
               onTextBlip={props.onTextBlip}
             />
           </ModalFocusScope>
-        )}
-        {props.eventNarrative && !eventNarrativeBlocking && (
-          <section
-            className={`narrative-cue is-${props.eventNarrative.presentation ?? 'ambient'} is-${props.eventNarrative.kind}`}
-            data-narrative-kind={props.eventNarrative.kind}
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {props.eventNarrative.kind === 'communication' && (
-              <p className="narrative-signal">SIGNAL // ACTIVE</p>
-            )}
-            {props.eventNarrative.speaker && (
-              <span className="speaker">{props.eventNarrative.speaker}</span>
-            )}
-            <p className="narrative-text">{props.eventNarrative.text}</p>
-          </section>
         )}
         {inspectionDialog && (
           <ModalFocusScope

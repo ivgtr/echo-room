@@ -21,7 +21,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await openHotspot(page, 'ロッカーを調べる');
   await solveLocker(page);
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_03');
-  const lockerMessage = page.locator('.narrative-cue');
+  const lockerMessage = page.getByRole('dialog', { name: 'メッセージ' });
   await expect(lockerMessage).toContainText('未確認の通信ログが3件ある');
   const lockerMessageText = await lockerMessage.textContent();
   expect(lockerMessageText).not.toContain('MESSAGE LOG');
@@ -29,18 +29,18 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await expect(
     page.getByRole('dialog', { name: '所持品を入手した' }),
   ).toBeHidden();
-  await expect(page.locator('.exploration-controls')).not.toHaveAttribute(
+  await expect(page.locator('.exploration-controls')).toHaveAttribute(
     'inert',
     '',
   );
-  await turnRight(page, '北壁');
-  await page.keyboard.press('Escape');
+  await advanceNarratives(page, 1);
   const acquisition = page.getByRole('dialog', { name: '所持品を入手した' });
   await expect(acquisition.getByText('設備・配線図')).toBeVisible();
   await acquisition
     .getByRole('button', { name: '所持品に追加' })
     .press('Enter');
 
+  await turnRight(page, '北壁');
   await turnRight(page, '東壁');
   await openHotspot(page, '壁面端末を調べる');
   await page.getByRole('button', { name: 'LOG' }).press('Enter');
@@ -106,10 +106,10 @@ async function puzzle(page: Page) {
   return page.locator('[data-puzzle-id]:visible');
 }
 
-async function finishAutomaticPuzzle(page: Page, narrativeCount: number) {
+async function finishPuzzle(page: Page, narrativeCount: number) {
   const puzzle = page.locator('[data-puzzle-id]:visible');
   await expect(puzzle).toBeHidden();
-  await dismissEventNarrative(page, narrativeCount);
+  await advanceNarratives(page, narrativeCount);
 }
 
 async function solveCarrier(page: Page) {
@@ -117,7 +117,7 @@ async function solveCarrier(page: Page) {
   await device.getByRole('slider', { name: 'CHANNEL A' }).press('ArrowRight');
   await device.getByRole('slider', { name: 'CHANNEL A' }).press('ArrowRight');
   await device.getByRole('slider', { name: 'CHANNEL C' }).press('ArrowLeft');
-  await finishAutomaticPuzzle(page, 1);
+  await finishPuzzle(page, 1);
 }
 
 async function solveLocker(page: Page) {
@@ -155,7 +155,7 @@ async function solveSignalInvestigation(page: Page) {
   await device
     .getByRole('button', { name: 'ECHO BUFFER RETURN' })
     .press('Enter');
-  await finishAutomaticPuzzle(page, 5);
+  await finishPuzzle(page, 5);
 }
 
 async function solvePacketRail(page: Page) {
@@ -174,7 +174,7 @@ async function solvePacketRail(page: Page) {
       })
       .press('Enter');
   }
-  await finishAutomaticPuzzle(page, 2);
+  await finishPuzzle(page, 2);
 }
 
 async function solveVoiceprint(page: Page) {
@@ -185,7 +185,7 @@ async function solveVoiceprint(page: Page) {
   await device.getByRole('switch').press('Enter');
   await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
   await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
-  await finishAutomaticPuzzle(page, 3);
+  await finishPuzzle(page, 3);
 }
 
 async function solveTransmissionPatch(page: Page) {
@@ -219,32 +219,21 @@ async function solveTransmissionPatch(page: Page) {
     .getByRole('spinbutton', { name: '送信終端ダイヤル' })
     .press('Enter');
   await device.getByRole('button', { name: 'TEST PULSE' }).press('Enter');
-  await finishAutomaticPuzzle(page, 1);
+  await finishPuzzle(page, 1);
 }
 
-async function dismissEventNarrative(page: Page, count: number) {
-  const message = page.locator(
-    '.narrative-cue:visible, .narrative-panel:visible',
-  );
+async function advanceNarratives(page: Page, count: number) {
+  const message = page.locator('.narrative-panel:visible');
   for (let index = 0; index < count; index += 1) {
     await expect(message).toBeVisible();
     const currentText = await message.textContent();
-    const cue = await message.evaluate((element) =>
-      element.classList.contains('narrative-cue'),
+    await expect(message.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+      { timeout: 10_000 },
     );
-    if (cue) {
-      if (index === count - 1)
-        await expect(message).toBeHidden({ timeout: 10_000 });
-      else await expect.poll(() => message.textContent()).not.toBe(currentText);
-    } else {
-      await expect(message.locator('.narrative-text')).toHaveAttribute(
-        'data-text-complete',
-        'true',
-        { timeout: 10_000 },
-      );
-      await message.getByRole('button', { name: '続ける' }).press('Enter');
-    }
-    if (!cue && index < count - 1)
+    await message.getByRole('button', { name: '続ける' }).press('Enter');
+    if (index < count - 1)
       await expect.poll(() => message.textContent()).not.toBe(currentText);
   }
   await expect(message).toBeHidden({ timeout: 10_000 });

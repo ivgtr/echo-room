@@ -37,24 +37,10 @@ describe('story puzzle validators', () => {
       expect(getPuzzleCompletionEntries(puzzleId).length).toBeGreaterThan(0);
   });
 
-  it('separates ambient cues from dramatic revelations', () => {
-    const signalEntries = getPuzzleCompletionEntries(
-      'puzzle_signal_investigation',
-    );
-    expect(
-      signalEntries.find(({ id }) => id === 'offset_discovered'),
-    ).toMatchObject({ presentation: 'ambient' });
-    expect(
-      signalEntries.find(({ id }) => id === 'no_room_question'),
-    ).toMatchObject({ presentation: 'dramatic' });
-    expect(getPuzzleCompletionEntries('puzzle_packet_repair')).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'packet_question',
-          presentation: 'subtitle',
-        }),
-      ]),
-    );
+  it('uses one player-advanced contract for every completion message', () => {
+    for (const puzzleId of puzzleIds)
+      for (const entry of getPuzzleCompletionEntries(puzzleId))
+        expect(entry).not.toHaveProperty('presentation');
   });
 
   it.each(Object.entries(solutions))(
