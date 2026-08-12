@@ -45,9 +45,10 @@ describe('InspectionEvidencePanel', () => {
         onClose={vi.fn()}
       />,
     );
-    expect(screen.getByRole('heading', { name: '夜間点検順' })).toBeVisible();
     expect(
-      screen.getByText('TERMINAL → INTERCOM → ECHO BUFFER → DOOR'),
+      screen.getByRole('heading', { name: '夜勤の覚え書き' }),
     ).toBeVisible();
+    expect(screen.getByText(/端末の記録を閉じ、通話器を戻す/)).toBeVisible();
+    expect(screen.queryByText(/ロッカーには/)).not.toBeInTheDocument();
   });
 });

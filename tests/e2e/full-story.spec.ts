@@ -76,7 +76,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
       'true',
       { timeout: 10_000 },
     );
-    await page.getByRole('button', { name: '続ける' }).press('Enter');
+    await page.getByRole('button', { name: '次の文章へ' }).press('Enter');
   }
   await expect(page.locator('.ending-text')).toHaveAttribute(
     'data-text-complete',
@@ -84,7 +84,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
     { timeout: 10_000 },
   );
   await page.getByRole('button', { name: '通信を終える' }).press('Enter');
-  await expect(page.getByText(/DOOR UNLOCKED/)).toBeVisible();
+  await expect(page.getByText(/ドア解錠/)).toBeVisible();
   await page.getByRole('button', { name: '鉄製ドアを調べる' }).press('Enter');
   await expect(page.getByText('TRANSMISSION COMPLETE')).toBeVisible();
   await expectSavedCheckpoint(page, 'checkpoint_completed');
@@ -255,7 +255,7 @@ async function advanceNarratives(page: Page, count: number) {
       'true',
       { timeout: 10_000 },
     );
-    await message.getByRole('button', { name: '続ける' }).press('Enter');
+    await message.getByRole('button', { name: '次の文章へ' }).press('Enter');
     if (index < count - 1)
       await expect.poll(() => message.textContent()).not.toBe(currentText);
   }

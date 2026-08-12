@@ -51,7 +51,7 @@ export function FacilityMap({
       <p className="map-finding">
         {revealRoute
           ? 'E-01の左右に部屋はない。通信線は設備壁の中へ続いている。'
-          : 'E-01の左右は設備壁だ。INTERCOMから接続した線をたどる。'}
+          : 'E-01の左右は設備壁だ。通話器から接続した線をたどる。'}
       </p>
     </figure>
   );

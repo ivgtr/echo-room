@@ -111,17 +111,19 @@ function SynchronizationNote() {
 function MaintenanceOrder() {
   return (
     <div className="document-evidence">
-      <p className="eyebrow">FACILITY E-01 / INSPECTION SHEET</p>
+      <p className="eyebrow">NIGHT SHIFT / PERSONAL NOTE</p>
       <article className="document-sheet" aria-labelledby="evidence-title">
-        <p>LAST MANUAL INSPECTION</p>
-        <h2 id="evidence-title">夜間点検順</h2>
+        <p>BEFORE LEAVING</p>
+        <h2 id="evidence-title">夜勤の覚え書き</h2>
         <div className="document-rule" aria-hidden="true" />
         <p className="document-instruction">
-          TERMINAL → INTERCOM → ECHO BUFFER → DOOR
+          夜勤の終わりはいつも同じ。
+          <br />
+          端末の記録を閉じ、通話器を戻す。
+          <br />
+          転送装置の残りを確認して、最後にドアを見る。
         </p>
-        <p className="document-annotation">
-          ロッカーには各機器の銘板記号を入力する。
-        </p>
+        <p className="document-annotation">今日も忘れないように。</p>
       </article>
     </div>
   );

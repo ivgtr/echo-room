@@ -15,7 +15,7 @@ async function enterRoom(page: Page) {
       'data-text-complete',
       'true',
     );
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.getByRole('button', { name: '次の文章へ' }).click();
   }
   await expect(page.locator('.narrative-text')).toHaveAttribute(
     'data-text-complete',
@@ -32,9 +32,77 @@ async function dismissEventNarrative(page: Page) {
       'true',
       { timeout: 10_000 },
     );
-    await narrative.getByRole('button', { name: '続ける' }).press('Enter');
+    await narrative.getByRole('button', { name: '次の文章へ' }).press('Enter');
   }
 }
+
+test('advances narrative from the full screen without visible action buttons', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ゲーム開始' }).click();
+  const stage = page.locator('.logical-stage');
+  const narrative = page.getByRole('dialog', { name: 'メッセージ' });
+  await expect(narrative.locator('.narrative-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+  );
+  await expect(narrative.locator('.narrative-actions')).toHaveCount(0);
+
+  const stageBox = await stage.boundingBox();
+  expect(stageBox).not.toBeNull();
+  await page.mouse.click(
+    stageBox!.x + stageBox!.width / 2,
+    stageBox!.y + stageBox!.height * 0.15,
+  );
+  await expect(page.getByRole('dialog', { name: '通信' })).toContainText(
+    '聞こえるか',
+  );
+});
+
+test('aligns locker controls to the close-up artwork coordinate system', async ({
+  page,
+}) => {
+  await page.addInitScript(
+    installProgressSave,
+    createProgressSave({
+      checkpointId: 'checkpoint_puzzle_02',
+      locationId: 'location_west_wall',
+      storyStage: 'puzzle_maintenance_lock',
+      completedPuzzleIds: ['puzzle_power_route', 'puzzle_carrier_sync'],
+    }),
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: '続きから' }).click();
+  await page.getByRole('button', { name: 'ロッカーを調べる' }).click();
+
+  const device = page.locator('[data-puzzle-id="puzzle_maintenance_lock"]');
+  const firstDial = device.getByRole('spinbutton', { name: 'ダイヤル1' });
+  const handle = device.getByRole('button', { name: 'LOCK HANDLE' });
+  await expect(firstDial).toBeVisible();
+  await firstDial.focus();
+  const [deviceBox, dialBox, handleBox] = await Promise.all([
+    device.boundingBox(),
+    firstDial.boundingBox(),
+    handle.boundingBox(),
+  ]);
+  expect(deviceBox).not.toBeNull();
+  expect(dialBox).not.toBeNull();
+  expect(handleBox).not.toBeNull();
+
+  const normalized = (box: NonNullable<typeof dialBox>) => ({
+    x: (box.x - deviceBox!.x) / deviceBox!.width,
+    y: (box.y - deviceBox!.y) / deviceBox!.height,
+    width: box.width / deviceBox!.width,
+  });
+  const dial = normalized(dialBox!);
+  const lockHandle = normalized(handleBox!);
+  expect(dial.x).toBeCloseTo(560 / 1672, 2);
+  expect(dial.y).toBeCloseTo(223 / 941, 2);
+  expect(dial.width).toBeCloseTo(113 / 1672, 2);
+  expect(lockHandle.x).toBeCloseTo(570 / 1672, 2);
+  expect(lockHandle.y).toBeCloseTo(608 / 941, 2);
+});
 
 test('keeps one canvas while crossfading all four room views', async ({
   page,
@@ -98,7 +166,7 @@ test('keyboard-capable route restores power and resumes after reload', async ({
       'data-text-complete',
       'true',
     );
-    await page.getByRole('button', { name: '次へ' }).press('Enter');
+    await page.getByRole('button', { name: '次の文章へ' }).press('Enter');
   }
   await expect(page.locator('.narrative-text')).toHaveAttribute(
     'data-text-complete',
@@ -325,13 +393,12 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
     stageBox!.x + stageBox!.width,
   );
   await page.clock.fastForward(380);
-  const closeNarrative = page.getByRole('button', { name: '閉じる' });
-  await closeNarrative.click();
+  await page.getByRole('button', { name: '文章をすべて表示' }).click();
   await expect(page.locator('.narrative-text')).toHaveAttribute(
     'data-text-complete',
     'true',
   );
-  await closeNarrative.click();
+  await page.getByRole('button', { name: 'メッセージを閉じる' }).click();
   const doorBox = await page
     .getByRole('button', { name: '鉄製ドアを調べる' })
     .boundingBox();
@@ -456,7 +523,7 @@ test('system archive and subtitle/sound settings preserve the exploration view',
   const narrativeText = narrative.locator('.narrative-text');
   await expect(narrativeText).toHaveCSS('font-size', /(?:2[0-9]|3[0-9])px/);
   await expect(narrativeText).toHaveAttribute('data-text-complete', 'true');
-  await narrative.getByRole('button', { name: '閉じる' }).click();
+  await narrative.getByRole('button', { name: 'メッセージを閉じる' }).click();
   await expect(narrative).toBeHidden();
   await expect(page.getByTestId('world-canvas')).toBeVisible();
 
@@ -523,7 +590,7 @@ test.describe('touch input', () => {
         'data-text-complete',
         'true',
       );
-      await page.getByRole('button', { name: '次へ' }).tap();
+      await page.getByRole('button', { name: '次の文章へ' }).tap();
     }
     await expect(page.locator('.narrative-text')).toHaveAttribute(
       'data-text-complete',

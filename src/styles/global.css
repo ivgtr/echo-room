@@ -539,21 +539,32 @@ button:focus-visible {
 
 .narrative-panel {
   position: absolute;
-  right: max(5%, env(safe-area-inset-right));
-  bottom: max(4%, env(safe-area-inset-bottom));
-  left: max(5%, env(safe-area-inset-left));
   z-index: 10;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: max(4%, env(safe-area-inset-bottom))
+    max(5%, env(safe-area-inset-right)) max(4%, env(safe-area-inset-bottom))
+    max(5%, env(safe-area-inset-left));
+  border: 0;
+  animation: narrative-in var(--narrative-duration, 220ms) ease-out both;
+  pointer-events: auto;
+}
+
+.narrative-window {
+  position: relative;
+  z-index: 1;
+  width: 100%;
   min-height: 16%;
   padding: clamp(0.8rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
   border: 0;
   border-left: 2px solid #58b8b0;
   background: rgb(5 9 10 / 88%);
   box-shadow: 0 14px 50px rgb(0 0 0 / 45%);
-  animation: narrative-in var(--narrative-duration, 220ms) ease-out both;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
-.narrative-panel.is-communication {
+.narrative-panel.is-communication .narrative-window {
   border-left-color: #6fe7e2;
   background:
     repeating-linear-gradient(
@@ -562,6 +573,27 @@ button:focus-visible {
       rgb(111 231 226 / 4%) 4px
     ),
     rgb(5 13 14 / 94%);
+}
+
+.narrative-advance-surface {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.narrative-advance-surface:focus-visible {
+  outline: 0;
+}
+
+.narrative-advance-surface:focus-visible + .narrative-window {
+  border-left-color: #f4fbfa;
+  box-shadow:
+    0 0 0 1px rgb(244 251 250 / 45%),
+    0 14px 50px rgb(0 0 0 / 45%);
 }
 
 .narrative-panel .speaker {
@@ -612,20 +644,25 @@ button:focus-visible {
   display: inline-block;
 }
 
-.narrative-actions {
+.narrative-advance-mark {
   position: absolute;
   right: 1rem;
   bottom: 0.7rem;
-  display: flex;
-  gap: 0.75rem;
+  color: #8de1d8;
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
-.narrative-actions button {
-  min-width: 4rem;
+.narrative-secondary-action {
+  position: absolute;
+  z-index: 2;
+  top: max(4%, env(safe-area-inset-top));
+  right: max(5%, env(safe-area-inset-right));
+  min-width: 8rem;
   min-height: 2.4rem;
   border: 0;
   color: #8de1d8;
-  background: transparent;
+  background: rgb(5 9 10 / 78%);
   cursor: pointer;
 }
 
@@ -637,7 +674,7 @@ button:focus-visible {
   font-size: clamp(1.2rem, 2.35vw, 1.75rem);
 }
 
-.logical-stage[data-subtitle-background='solid'] .narrative-panel {
+.logical-stage[data-subtitle-background='solid'] .narrative-window {
   color: #fff;
   background: #05090a;
 }
@@ -1736,16 +1773,34 @@ button:focus-visible {
 }
 
 .ending-panel p {
+  position: relative;
+  z-index: 1;
   max-width: 50rem;
   font-size: clamp(1.1rem, 2.2vw, 2rem);
   line-height: 1.8;
 }
 
-.ending-panel button {
-  min-height: 3rem;
-  border: 1px solid #c9d5d5;
-  color: inherit;
-  background: rgb(17 24 28 / 80%);
+.ending-panel .ending-advance-surface {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ending-panel .ending-advance-surface:focus-visible {
+  outline: 2px solid rgb(244 251 250 / 55%);
+  outline-offset: -0.8rem;
+}
+
+.ending-advance-mark {
+  position: absolute;
+  z-index: 1;
+  right: 8%;
+  bottom: 8%;
+  color: #eef8f6;
+  font-size: 0.72rem;
 }
 
 .ending-panel.is-complete {
@@ -2305,10 +2360,19 @@ button:focus-visible {
 }
 
 .locker-device {
-  position: relative;
-  width: min(31rem, 38%);
-  height: min(35rem, 88%);
-  min-height: 21rem;
+  position: absolute;
+  top: 18.81%;
+  left: 27.87%;
+  width: 43.06%;
+  height: 62.59%;
+  min-height: 0;
+}
+
+.device-puzzle_maintenance_lock .device-workarea {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  overflow: hidden;
 }
 .lock-plate {
   position: absolute;
@@ -2337,13 +2401,13 @@ button:focus-visible {
 }
 .symbol-dials {
   position: absolute;
-  top: 23%;
-  left: 9%;
+  top: 7.8%;
+  left: 13.1%;
   display: grid;
-  width: 82%;
-  height: 46%;
+  width: 75.4%;
+  height: 63.5%;
   grid-template-columns: repeat(4, 1fr);
-  gap: 3%;
+  gap: 6%;
 }
 .symbol-dial {
   position: relative;
@@ -2376,10 +2440,10 @@ button:focus-visible {
 }
 .lock-handle {
   position: absolute;
-  bottom: 7%;
-  left: 24%;
-  width: 52%;
-  height: 18%;
+  bottom: 2.2%;
+  left: 14.4%;
+  width: 70.8%;
+  height: 24.6%;
   padding: 0;
   border: 0;
   background: transparent;
@@ -3263,7 +3327,7 @@ button:focus-visible {
   }
 
   .locker-device {
-    min-height: 15rem;
+    min-height: 0;
   }
 
   .physical-breaker {

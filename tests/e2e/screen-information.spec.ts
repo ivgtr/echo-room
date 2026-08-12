@@ -8,7 +8,7 @@ async function enterRoom(page: Page) {
       'data-text-complete',
       'true',
     );
-    await page.getByRole('button', { name: '次へ' }).click();
+    await page.getByRole('button', { name: '次の文章へ' }).click();
   }
   await expect(page.locator('.narrative-text')).toHaveAttribute(
     'data-text-complete',

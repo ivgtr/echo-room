@@ -59,7 +59,7 @@ export function TerminalPanel(props: Props) {
       }}
     >
       <header>
-        <p className="eyebrow">ECHO BUFFER / gfx-close-010</p>
+        <p className="eyebrow">ECHO BUFFER / OPERATIONS TERMINAL</p>
         <h2 id="terminal-title">壁面端末</h2>
       </header>
       <nav className="terminal-menu" aria-label="端末メニュー">

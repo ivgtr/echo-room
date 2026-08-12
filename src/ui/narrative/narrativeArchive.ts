@@ -52,7 +52,7 @@ export const powerRestoredEntry: NarrativeEntry = {
   id: 'system_power_restored',
   kind: 'system',
   speaker: 'FACILITY SYSTEM',
-  text: '非常電源がつながった。壁面端末とECHO BUFFERが起動する。',
+  text: '非常電源がつながった。壁面端末と転送装置が起動する。',
 };
 
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
@@ -107,7 +107,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'damaged_packet_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: 'SIGNALに、破損したPACKETが残っている。',
+        text: '端末のSIGNALに、破損した通信データが残っている。',
       },
     ],
     puzzle_packet_repair: [
@@ -120,7 +120,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'voiceprint_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: 'PACKET 04に、照合できる声紋データが残っている。',
+        text: '4番目の通信データに、照合できる声紋が残っている。',
       },
     ],
     puzzle_voiceprint_calibration: [
@@ -171,8 +171,8 @@ const powerPlan: ArchiveDocument = {
 
 const maintenanceSheet: ArchiveDocument = {
   id: 'document_maintenance_order',
-  title: 'MAINTENANCE ORDER',
-  body: '点検順：端末、通話器、ECHO BUFFER、ドア。それぞれを機器の記号に置き換える。',
+  title: 'NIGHT SHIFT NOTE',
+  body: '夜勤の終わりはいつも同じ。端末の記録を閉じ、通話器を戻す。転送装置の残りを確認して、最後にドアを見る。',
 };
 
 const synchronizationNote: ArchiveDocument = {

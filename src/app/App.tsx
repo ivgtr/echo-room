@@ -573,7 +573,7 @@ function deskDiscoveryText(powerRestored: boolean, stage: string) {
     return '保護回路が作動したら異常回線を隔離し、制御信号の上流から順に復帰させると記されている。';
   if (stage === 'puzzle_carrier_sync')
     return '同期調整メモだ。早い波は右へ、遅い波は左へ動かす。';
-  return '夜間点検は、端末、通話器、ECHO BUFFER、ドアの順だ。各機器の銘板記号を使う。';
+  return '夜勤の覚え書きだ。端末の記録を閉じ、通話器を戻し、転送装置を確認してから最後にドアを見る、とある。';
 }
 
 function progressFingerprint(progress: SavedProgress) {

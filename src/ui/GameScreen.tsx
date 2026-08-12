@@ -495,7 +495,7 @@ export function GameScreen(props: Props) {
         )}
         {doorEscape && (
           <div className="door-escape-cue" role="status" aria-live="assertive">
-            DOOR UNLOCKED / 北壁のドアから脱出する
+            ドア解錠 / 北壁のドアから脱出する
           </div>
         )}
         {!ending && props.subtitle && (
@@ -507,7 +507,7 @@ export function GameScreen(props: Props) {
             <NarrativePanel
               kind="discovery"
               text={props.subtitle}
-              actionLabel="閉じる"
+              advanceLabel="メッセージを閉じる"
               onAdvance={closeInspection}
               textSpeed={props.subtitleSettings.speed}
               motionReduced={props.motionReduced}
@@ -538,7 +538,7 @@ export function GameScreen(props: Props) {
                 ? { speaker: props.eventNarrative.speaker }
                 : {})}
               text={props.eventNarrative.text}
-              actionLabel="続ける"
+              advanceLabel="次の文章へ"
               onAdvance={props.onEventNarrativeAdvance}
               autoFocus
               textSpeed={props.subtitleSettings.speed}

@@ -77,8 +77,8 @@ documents:
     }
   - {
       id: document_maintenance_order,
-      title: MAINTENANCE ORDER,
-      body: 点検順は端末、通話器、ECHO BUFFER、ドア。各機器の銘板記号を使う。,
+      title: NIGHT SHIFT NOTE,
+      body: 夜勤の終わりはいつも同じ。端末の記録を閉じ、通話器を戻す。転送装置の残りを確認して、最後にドアを見る。,
     }
   - {
       id: document_conduit_map,
@@ -180,7 +180,7 @@ hints:
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: DOORをOFFにしてから、端末、通話器、BUFFERの順にONにする。,
+      text: ドアの回路を切ってから、端末、通話器、転送装置の順に入れる。,
     }
   - {
       id: hint_carrier_1,
@@ -204,7 +204,7 @@ hints:
       id: hint_lock_1,
       puzzleId: puzzle_maintenance_lock,
       level: 1,
-      text: 点検順と、各機器の記号を見比べる。,
+      text: 夜勤メモに出てくる機器と、それぞれの銘板記号を見比べる。,
     }
   - {
       id: hint_lock_2,

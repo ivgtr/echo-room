@@ -30,8 +30,8 @@ export function IntroDialogue({
       kind={line.kind}
       {...(speaker ? { speaker } : {})}
       text={line.text}
-      actionLabel={
-        lineIndex >= introEntries.length - 1 ? '探索を始める' : '次へ'
+      advanceLabel={
+        lineIndex >= introEntries.length - 1 ? '探索を始める' : '次の文章へ'
       }
       onAdvance={onAdvance}
       textSpeed={textSpeed}

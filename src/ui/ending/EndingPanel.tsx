@@ -73,9 +73,22 @@ export function EndingPanel({
               onComplete={handleTextComplete}
             />
           </p>
-          <button type="button" onClick={handleAdvance} autoFocus>
-            {lineIndex === lines.length - 1 ? '通信を終える' : '続ける'}
-          </button>
+          <button
+            type="button"
+            className="ending-advance-surface"
+            aria-label={
+              textComplete
+                ? lineIndex === lines.length - 1
+                  ? '通信を終える'
+                  : '次の文章へ'
+                : '文章をすべて表示'
+            }
+            onClick={handleAdvance}
+            autoFocus
+          />
+          <span className="ending-advance-mark" aria-hidden="true">
+            {textComplete ? '▼' : '…'}
+          </span>
         </>
       )}
     </section>

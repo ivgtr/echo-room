@@ -40,10 +40,10 @@ export const selectReservePower = (snapshot: GameSnapshot) =>
 
 const objectives: Partial<Record<StoryStage, string>> = {
   puzzle_carrier_sync: 'デスクの保守メモと、端末の波の位置を見比べる。',
-  puzzle_maintenance_lock: 'デスクの点検順と、部屋にある4つの銘板を調べる。',
+  puzzle_maintenance_lock: 'デスクの夜勤メモと、部屋にある4つの銘板を調べる。',
   puzzle_signal_investigation:
     '端末のLOGで波形をつなぎ、そのまま配線の行き先を追う。',
-  puzzle_packet_repair: 'SIGNALに残った破損PACKETを調べる。',
+  puzzle_packet_repair: '端末のSIGNALに残った破損データを調べる。',
   puzzle_voiceprint_calibration: '職員カードと解析パネルの波形を見比べる。',
   puzzle_transmission_window:
     '判明した時間差と回線を使い、送信予約を完成させる。',
@@ -67,7 +67,7 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
     if (hotspot === 'hotspot_intercom')
       return '通話器の銘板には、丸い「○」が刻まれている。';
     if (hotspot === 'hotspot_breaker')
-      return 'ECHO BUFFER回路の銘板には、三角の「△」が刻まれている。';
+      return '転送装置の回路銘板には、三角の「△」が刻まれている。';
   }
   if (hotspot === 'hotspot_door')
     return stage === 'transmission_ready'
@@ -78,7 +78,7 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
   if (hotspot === 'hotspot_intercom')
     return stage === 'puzzle_signal_investigation'
       ? '丸い端子から、通信線が設備壁の中へ続いている。'
-      : '音声は流れない。文章と声紋データがPACKETで届いている。';
+      : '音声は流れない。文章と声紋を含む通信データが届いている。';
   if (hotspot === 'hotspot_terminal' && !snapshot.context.powerRestored)
     return '端末には電源が来ていない。';
   if (

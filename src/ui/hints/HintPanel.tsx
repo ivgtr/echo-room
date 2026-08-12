@@ -7,7 +7,7 @@ const hints: Partial<Record<StoryStage, [string, string, string]>> = {
     'Aは右へ2、Bはそのまま、Cは左へ1。',
   ],
   puzzle_maintenance_lock: [
-    'デスクにある点検順と、各機器の記号を見比べる。',
+    'デスクの夜勤メモに出てくる機器と、各機器の記号を見比べる。',
     '機器名を、同じ機器の記号に置き換える。',
     '二重線、丸、三角、ひし形の順。',
   ],
