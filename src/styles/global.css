@@ -2347,9 +2347,6 @@ button:focus-visible {
   font-size: clamp(2rem, 5vw, 4rem);
   text-shadow: 0 2px #000;
 }
-.symbol-dial small {
-  color: #727a78;
-}
 .lock-handle {
   display: grid;
   min-width: 12rem;

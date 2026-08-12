@@ -235,13 +235,17 @@ describe('PuzzleDevice', () => {
 
   it('keeps a diegetic actuator for manual validation devices', () => {
     const onSubmit = vi.fn();
-    render(
+    const view = render(
       <PuzzleDevice
         puzzleId="puzzle_maintenance_lock"
         failures={0}
         onSubmit={onSubmit}
         onClose={vi.fn()}
       />,
+    );
+
+    expect(view.container.querySelectorAll('.symbol-dial small')).toHaveLength(
+      0,
     );
 
     for (let index = 1; index <= 4; index += 1)

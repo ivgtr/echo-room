@@ -451,15 +451,7 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
                   );
                 }}
               >
-                <small>
-                  {
-                    symbols[
-                      (symbolIndex - 1 + symbols.length) % symbols.length
-                    ]![1]
-                  }
-                </small>
                 <strong>{symbol}</strong>
-                <small>{symbols[(symbolIndex + 1) % symbols.length]![1]}</small>
               </button>
             );
           })}
