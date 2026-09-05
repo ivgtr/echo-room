@@ -510,7 +510,17 @@ type PuzzleResult =
 - 正解時は完了IDと次の`StoryStage`だけをXState contextへ反映する。
 - 装置ごとの専用machineは作らず、共通進行machineと純粋判定を単一境界として維持する。
 
-### 9.4 波形の共通文法
+### 9.4 端末表示と操作状態
+
+- `terminalTelemetry`は既存の`StoryStage`と完了IDから観測値・情報開示・送信可否を導出する読み取り専用selectorとする。別の完了フラグ、専用machine、保存schemaは追加しない。
+- `TerminalPanel`が筐体、共通の表示見出し、物理キー、送信インターロックを所有する。embeddedの`PuzzleDevice`は操作面と装置feedbackだけを描画する。
+- 現在のパズルcomponentは表示切替でunmountせず、非選択時に`hidden`・`inert`とし、`active=false`で診断タイマーと自動送信を停止する。再選択時は保持した入力で検出を再開し、診断の待ち時間を開始し直す。パズルID変更または接写を閉じたときに破棄し、旧UIとの併存や全パズルの常駐は行わない。
+- `ModalFocusScope`はhidden・inert・aria-hidden配下をfocus候補から除外する。表示器はkeyboardでscrollできる単一regionとし、操作キーとBACKはその外側に置く。
+- 完了メッセージ中は接写のfocus scope自体をhidden・inertにする。端末を保持したままメッセージへのpointer/touch操作を通し、読了後は表示器へfocusを戻す。
+- 照合時と再読時の波形・時刻は`signalRecords`を共有する。`FacilityMap`の確定経路は既定では隠し、確認済みの呼び出し側だけが明示的に開示する。
+- 表示切替音は既存の`SoundManager`の`terminal_connect`を用い、同じ操作の汎用click音と二重再生しない。走査演出と安全カバーの動きはreduced-motionで省略し、文字と押下状態は常に残す。
+
+### 9.5 波形の共通文法
 
 - 横軸は常に時間とし、同じ線高・短長・節点は同じ特徴を表す。
 - 搬送波、PACKET指紋、声紋特徴量の三用途だけに限定する。
@@ -566,6 +576,7 @@ master
 
 - `performance.now()`を用いてアクティブプレイ時間を計測する。
 - 一時停止、設定、ブラウザが非表示の間は加算しない。
+- 可視期間は`visibilitychange`の時点で確定する。React effectの遅延cleanupやタイマー復帰時に非表示期間を加算しない。
 - 壁時計の02:17は固定の物語情報であり、バッテリー残量とは別に扱う。
 - バッテリー表示は00:19:48から減算する。
 - 00:00到達時は非常予備電源へ切り替わる演出を出すが、進行は継続できる。

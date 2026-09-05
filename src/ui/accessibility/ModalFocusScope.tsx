@@ -9,9 +9,18 @@ import {
 type Props = {
   children: ReactNode;
   focusKey: string;
+  active?: boolean;
   returnFocusRef: RefObject<HTMLElement | null>;
   fallbackFocusRef: RefObject<HTMLElement | null>;
 };
+
+function focusableControls(scope: HTMLElement | null) {
+  return Array.from(
+    scope?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
+  ).filter(
+    (element) => !element.closest('[hidden], [inert], [aria-hidden="true"]'),
+  );
+}
 
 const focusableSelector =
   'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
@@ -19,6 +28,7 @@ const focusableSelector =
 export function ModalFocusScope({
   children,
   focusKey,
+  active = true,
   returnFocusRef,
   fallbackFocusRef,
 }: Props) {
@@ -35,16 +45,14 @@ export function ModalFocusScope({
 
   useEffect(() => {
     const scope = scopeRef.current;
-    if (!scope?.contains(document.activeElement)) {
-      scope?.querySelector<HTMLElement>(focusableSelector)?.focus();
+    if (active && !scope?.contains(document.activeElement)) {
+      focusableControls(scope)[0]?.focus();
     }
-  }, [focusKey]);
+  }, [active, focusKey]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== 'Tab') return;
-    const controls = Array.from(
-      scopeRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
-    );
+    const controls = focusableControls(scopeRef.current);
     if (controls.length === 0) return;
     const first = controls[0];
     const last = controls.at(-1);
@@ -58,7 +66,13 @@ export function ModalFocusScope({
   }
 
   return (
-    <div ref={scopeRef} className="modal-focus-scope" onKeyDown={handleKeyDown}>
+    <div
+      ref={scopeRef}
+      className="modal-focus-scope"
+      hidden={!active}
+      inert={!active}
+      onKeyDown={handleKeyDown}
+    >
       {children}
     </div>
   );

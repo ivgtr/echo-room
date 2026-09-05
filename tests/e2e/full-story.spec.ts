@@ -1,6 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { createProgressSave, installProgressSave } from './saveFixture';
+import {
+  createProgressSave,
+  createSettingsSave,
+  installProgressSave,
+  installSettingsSave,
+} from './saveFixture';
 
 test('keyboard-only route solves all seven deductions before transmission', async ({
   page,
@@ -9,6 +14,10 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await page.addInitScript(
     installProgressSave,
     createProgressSave({ activeElapsedMs: 1_188_000, reservePower: true }),
+  );
+  await page.addInitScript(
+    installSettingsSave,
+    createSettingsSave({ motionReduced: true, soundEnabled: false }),
   );
   await page.goto('/');
   await page.getByRole('button', { name: '続きから' }).press('Enter');
@@ -64,7 +73,13 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
   await expectSavedCheckpoint(page, 'checkpoint_puzzle_07');
 
   const terminal = page.getByRole('dialog', { name: '端末' });
-  await expect(terminal.getByText('確認完了：7 / 7')).toBeVisible();
+  await expect(terminal).toHaveAttribute('data-transmission-ready', 'true');
+  await expect(
+    terminal.getByText('READY / 送信可', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    terminal.getByText(/PUZZLES VERIFIED|確認完了：|7 \/ 7/),
+  ).toHaveCount(0);
   await terminal
     .getByRole('button', { name: '赤い送信ボタンを押す' })
     .press('Enter');

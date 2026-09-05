@@ -3,4 +3,5 @@ docs
 node_modules
 playwright-report
 test-results
+tmp
 package-lock.json

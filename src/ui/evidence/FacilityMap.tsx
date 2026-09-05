@@ -1,18 +1,21 @@
+import { useId } from 'react';
+
 export function FacilityMap({
   compact = false,
   conduitLayer = false,
-  revealRoute = true,
+  revealRoute = false,
 }: {
   compact?: boolean;
   conduitLayer?: boolean;
   revealRoute?: boolean;
 }) {
+  const titleId = useId();
   return (
     <figure
       className={`facility-map${compact ? ' is-compact' : ''}`}
-      aria-labelledby="facility-map-title"
+      aria-labelledby={titleId}
     >
-      <figcaption id="facility-map-title">FACILITY MAP / ROOM E-01</figcaption>
+      <figcaption id={titleId}>FACILITY MAP / ROOM E-01</figcaption>
       <div className="facility-map-grid">
         <div className="map-zone map-machine-west">
           MACHINE
@@ -39,7 +42,14 @@ export function FacilityMap({
       {conduitLayer && (
         <div className="facility-conduit-layer" aria-label="通信の配線図">
           <span>INTERCOM ○</span>
-          <i aria-hidden="true">
+          <i
+            role="img"
+            aria-label={
+              revealRoute
+                ? '通信実線、J-2 丸端子、帰還経路確認済み'
+                : '未追跡の配線候補：通信実線・J-2 丸端子、電力破線・J-3 線端子'
+            }
+          >
             {revealRoute ? '━━━━ ○ J-2 ━━━━' : '━━━━ ○ J-2  ┅┅┅  ┃ J-3'}
           </i>
           <strong>
@@ -50,8 +60,8 @@ export function FacilityMap({
       )}
       <p className="map-finding">
         {revealRoute
-          ? 'E-01の左右に部屋はない。通信線は機械設備区画へ続いている。'
-          : 'E-01の左右は機械設備区画だ。インターホンから線をたどる。'}
+          ? '通信線はJ-2を通り、ECHO BUFFER RETURNへ戻る。'
+          : '西側は機械設備、東側はコンクリート壁。インターホンから線をたどる。'}
       </p>
     </figure>
   );

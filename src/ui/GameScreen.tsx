@@ -407,7 +407,7 @@ export function GameScreen(props: Props) {
           const target = event.target;
           if (!(target instanceof Element)) return;
           const button = target.closest('button:not(:disabled)');
-          if (!button) return;
+          if (!button || button.closest('.terminal-function-keys')) return;
           const device = button.closest<HTMLElement>('[data-puzzle-id]');
           const puzzleId = device?.dataset.puzzleId as PuzzleId | undefined;
           if (puzzleId) props.onPuzzleInteraction(puzzleId);
@@ -563,6 +563,7 @@ export function GameScreen(props: Props) {
         )}
         {inspectionDialog && (
           <ModalFocusScope
+            active={!props.eventNarrative}
             focusKey={
               props.powerPuzzle
                 ? 'hotspot_breaker'

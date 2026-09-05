@@ -1,33 +1,19 @@
+import { useRef, useState } from 'react';
+
 import type {
   StoryStage,
   TerminalMenuId,
 } from '../../game/machine/gameMachine';
-import { stagePuzzle } from '../../game/machine/gameMachine';
-import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import { matchedRecords } from '../../game/puzzles/signalRecords';
+import {
+  packetTexts,
+  PUZZLE_DEVICE_COPY,
+  type PuzzleId,
+} from '../../game/puzzles/storyPuzzles';
 import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 import { PuzzleDevice } from '../puzzles/PuzzleDevice';
-
-const menuLabels: Record<TerminalMenuId, string> = {
-  system: 'SYSTEM',
-  log: 'LOG',
-  audio: 'SIGNAL',
-  security: 'SECURITY',
-};
-
-const puzzleMenu: Partial<Record<PuzzleId, TerminalMenuId>> = {
-  puzzle_carrier_sync: 'system',
-  puzzle_signal_investigation: 'log',
-  puzzle_packet_repair: 'audio',
-  puzzle_transmission_window: 'system',
-};
-
-const terminalStatus: Partial<Record<StoryStage, string>> = {
-  puzzle_maintenance_lock: 'WEST MAINTENANCE LOCK / LOCAL CONTROL',
-  puzzle_signal_investigation: 'LOG / 3 RECORDS / CONDUIT TRACE',
-  puzzle_packet_repair: 'SIGNAL / DAMAGED FRAME DETECTED',
-  puzzle_voiceprint_calibration: 'VOICEPRINT DATA / EXTERNAL PANEL',
-};
+import { getTerminalTelemetry, terminalModes } from './terminalTelemetry';
 
 type Props = {
   menuId: TerminalMenuId;
@@ -40,168 +26,264 @@ type Props = {
   onTransmit: () => void;
 };
 
+type Telemetry = ReturnType<typeof getTerminalTelemetry>;
+
 export function TerminalPanel(props: Props) {
-  const currentPuzzleId = stagePuzzle[props.stage];
-  const currentPuzzleMenu = currentPuzzleId
-    ? puzzleMenu[currentPuzzleId]
-    : undefined;
-  const puzzleVisible =
-    currentPuzzleId !== undefined && currentPuzzleMenu === props.menuId;
-  const transmissionReady = props.stage === 'transmission_ready';
+  const telemetry = getTerminalTelemetry(props.stage, props.completedPuzzleIds);
+  const { puzzleId, puzzleMode, transmissionReady } = telemetry;
+  const puzzleVisible = puzzleId !== undefined && puzzleMode === props.menuId;
+  const mode = terminalModes.find(({ id }) => id === props.menuId)!;
+  const [switchSequence, setSwitchSequence] = useState(0);
+  const transmissionSent = useRef(false);
+  const screenTitle =
+    puzzleVisible && puzzleId
+      ? PUZZLE_DEVICE_COPY[puzzleId].title
+      : transmissionReady && props.menuId === 'system'
+        ? 'ECHO TRANSMISSION READY'
+        : mode.caption;
+
+  function selectMode(id: TerminalMenuId) {
+    if (id === props.menuId) return;
+    setSwitchSequence((value) => value + 1);
+    props.onSelect(id);
+  }
 
   return (
     <section
-      className="puzzle-modal terminal-panel artwork-modal"
+      className="terminal-instrument"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="terminal-title"
-      style={{
-        backgroundImage: `url("${import.meta.env.BASE_URL}assets/images/close/gfx-close-010__on__preview-flat.webp")`,
-      }}
+      aria-label="端末"
+      data-transmission-ready={transmissionReady}
     >
-      <header>
-        <p className="eyebrow">ECHO BUFFER / OPERATIONS TERMINAL</p>
-        <h2 id="terminal-title">端末</h2>
-      </header>
-      <nav className="terminal-menu" aria-label="端末メニュー">
-        {(Object.keys(menuLabels) as TerminalMenuId[]).map((id) => (
-          <button
-            type="button"
-            key={id}
-            aria-pressed={props.menuId === id}
-            onClick={() => props.onSelect(id)}
+      <div className="terminal-machine">
+        <div className="terminal-viewer">
+          <img
+            className="terminal-chassis"
+            src={`${import.meta.env.BASE_URL}assets/images/close/gfx-close-008__off__preview-flat.webp`}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
+          <div className="terminal-glass">
+            <header className="terminal-readout-header">
+              <span>ECHO BUFFER / {mode.label}</span>
+              <h2>{screenTitle}</h2>
+            </header>
+            <div
+              className="terminal-observation"
+              role="region"
+              aria-label="端末表示器"
+              tabIndex={0}
+            >
+              {/* Switching the display must not unplug an unfinished device. */}
+              {puzzleId && (
+                <div
+                  className="terminal-draft"
+                  hidden={!puzzleVisible}
+                  inert={!puzzleVisible}
+                >
+                  <PuzzleDevice
+                    key={puzzleId}
+                    embedded
+                    active={puzzleVisible}
+                    puzzleId={puzzleId}
+                    failures={props.puzzleFailures[puzzleId]}
+                    onSubmit={props.onPuzzleSubmit}
+                    onClose={props.onClose}
+                  />
+                </div>
+              )}
+              {!puzzleVisible && (
+                <TerminalReadout menuId={props.menuId} telemetry={telemetry} />
+              )}
+            </div>
+            <span
+              key={switchSequence}
+              className={
+                switchSequence > 0
+                  ? 'terminal-scan is-switching'
+                  : 'terminal-scan'
+              }
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+        <div className="terminal-console">
+          <div className="terminal-nameplate">
+            <span>ECHO BUFFER</span>
+            <strong>TERMINAL ║</strong>
+          </div>
+          <div
+            className="terminal-function-keys"
+            role="group"
+            aria-label="端末の表示切替"
           >
-            {menuLabels[id]}
-          </button>
-        ))}
-      </nav>
-
-      <div className="terminal-content">
-        {puzzleVisible && currentPuzzleId ? (
-          <PuzzleDevice
-            embedded
-            puzzleId={currentPuzzleId}
-            failures={props.puzzleFailures[currentPuzzleId]}
-            onSubmit={props.onPuzzleSubmit}
-            onClose={props.onClose}
-          />
-        ) : transmissionReady && props.menuId === 'system' ? (
-          <TransmissionReady onTransmit={props.onTransmit} />
-        ) : (
-          <TerminalMenuContent
-            menuId={props.menuId}
-            stage={props.stage}
-            completedPuzzleIds={props.completedPuzzleIds}
-          />
-        )}
+            {terminalModes.map(({ id, label, caption }) => (
+              <button
+                className="terminal-function-key"
+                type="button"
+                key={id}
+                aria-label={label}
+                aria-description={caption}
+                aria-pressed={props.menuId === id}
+                onClick={() => selectMode(id)}
+              >
+                <i aria-hidden="true" />
+                <span>{label}</span>
+                <small aria-hidden="true">{caption}</small>
+              </button>
+            ))}
+          </div>
+          <div className="terminal-transmit-control">
+            <button
+              type="button"
+              className="terminal-transmit-button"
+              disabled={!transmissionReady}
+              aria-label="赤い送信ボタンを押す"
+              aria-describedby="terminal-interlock"
+              onClick={() => {
+                if (!transmissionReady || transmissionSent.current) return;
+                transmissionSent.current = true;
+                props.onTransmit();
+              }}
+            >
+              <span aria-hidden="true">TX</span>
+            </button>
+            <span className="terminal-safety-cover" aria-hidden="true" />
+            <small id="terminal-interlock" role="status">
+              {transmissionReady ? 'READY / 送信可' : 'LOCKED / 送信不可'}
+            </small>
+          </div>
+        </div>
       </div>
       <ContextBackButton destination="部屋に戻る" onClick={props.onClose} />
     </section>
   );
 }
 
-function TerminalMenuContent({
+function TerminalReadout({
   menuId,
-  stage,
-  completedPuzzleIds,
+  telemetry,
 }: {
   menuId: TerminalMenuId;
-  stage: StoryStage;
-  completedPuzzleIds: readonly PuzzleId[];
+  telemetry: Telemetry;
 }) {
-  if (menuId === 'system')
+  if (menuId === 'system') {
+    const readings = telemetry.transmissionReady
+      ? telemetry.readings.filter(
+          ({ label }) => label === 'NEGATIVE DELAY' || label === 'RETURN BUS',
+        )
+      : telemetry.readings;
     return (
-      <div className="terminal-system-grid">
-        {stage === 'puzzle_maintenance_lock' && (
-          <div>
-            <span>DEVICE NAMEPLATE</span>
-            <strong>TERMINAL ║</strong>
-          </div>
-        )}
-        <div>
-          <span>NEGATIVE DELAY</span>
-          <strong>
-            {completedPuzzleIds.includes('puzzle_signal_investigation')
-              ? '-00:20:00'
-              : '--:--:-- / CALIBRATION ERROR'}
-          </strong>
-        </div>
-        <div>
-          <span>LOCAL CLOCK</span>
-          <strong>02:17 / STOPPED</strong>
-        </div>
-        <div>
-          <span>PUZZLES VERIFIED</span>
-          <strong>{completedPuzzleIds.length} / 7</strong>
-        </div>
-        <p>{terminalStatus[stage] ?? 'TRANSMISSION BUS / STANDBY'}</p>
+      <div className="terminal-readings">
+        {telemetry.transmissionReady && <PacketReadout transmission />}
+        <dl>
+          {readings.map(({ label, value }) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="terminal-equipment-status">{telemetry.status}</p>
       </div>
+    );
+  }
+
+  if (menuId === 'security')
+    return telemetry.recordsAvailable ? (
+      <div className="terminal-route-record">
+        <FacilityMap conduitLayer revealRoute={telemetry.investigated} />
+        <p className="terminal-equipment-status">
+          {telemetry.investigated
+            ? 'RETURN BUS / TRACE VERIFIED'
+            : 'ROUTE / NOT TRACED — 経路未確認'}
+        </p>
+      </div>
+    ) : (
+      <Unavailable
+        code="ACCESS / STAFF CARD REQUIRED"
+        text="施設図の参照には職員証が必要です。"
+      />
     );
 
   if (menuId === 'log')
-    return (
-      <div className="terminal-placeholder">
-        <h3>RECEIVE / SOURCE LOG</h3>
-        <p>受信と送信は別々に記録されている。表示の順番も違う。</p>
-        <p>
-          {completedPuzzleIds.includes('puzzle_signal_investigation')
-            ? '確認済み：3つとも20分差。通信線はECHO BUFFER RETURNへ戻る。'
-            : '3つの波の並びを比べ、同じ通信を探す。'}
-        </p>
+    return telemetry.investigated ? (
+      <div className="terminal-log-record">
+        <table>
+          <caption>RECEIVE / SOURCE — 照合済みの通信記録</caption>
+          <thead>
+            <tr>
+              <th scope="col">RECEIVE</th>
+              <th scope="col">SOURCE</th>
+              <th scope="col">波形</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matchedRecords.map(({ receive, source }) => (
+              <tr key={receive.id}>
+                <td>
+                  {receive.id.toUpperCase()} / {receive.time}
+                </td>
+                <td>
+                  {source.id.toUpperCase()} / {source.time}
+                </td>
+                <td>{receive.signature}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="terminal-equipment-status">+20:00 / OFFSET CONFIRMED</p>
       </div>
+    ) : (
+      <Unavailable
+        code="LOG / ACCESS PENDING"
+        text="通信記録は保守アクセス後に参照できます。"
+      />
     );
 
-  if (menuId === 'security')
-    return (
-      <div className="terminal-placeholder">
-        <FacilityMap conduitLayer />
-        <p>
-          {completedPuzzleIds.includes('puzzle_signal_investigation')
-            ? '確認済み：E-01の通信線は、隣室ではなくECHO BUFFER RETURNへ戻る。'
-            : '職員証を使えば、部屋の図と配線図を重ねて見られる。'}
-        </p>
-      </div>
-    );
-
-  return (
-    <div className="terminal-placeholder signal-summary">
-      <h3>ECHO SIGNAL BUFFER</h3>
-      <p>届いた文章と、通信を見分ける波形、声紋データを確認できる。</p>
-      {['01', '02', '03', '04'].map((id) => (
-        <span key={id}>PACKET {id} / DATA FRAME</span>
-      ))}
+  return telemetry.frameRestored ? (
+    <div className="terminal-signal-record">
+      <PacketReadout />
+      <p className="terminal-equipment-status">FRAME / RESTORED</p>
+      <p>
+        {telemetry.voiceMatched
+          ? 'VOICEPRINT / MATCH / E-01 OCCUPANT'
+          : 'VOICEPRINT / AWAITING CALIBRATION — 端末横のパネルで校正できます。'}
+      </p>
     </div>
+  ) : (
+    <Unavailable
+      code={
+        telemetry.investigated ? 'FRAME / DAMAGED' : 'SIGNAL / NO DECODED FRAME'
+      }
+      text="本文を表示できるデータフレームがありません。"
+    />
   );
 }
 
-function TransmissionReady({ onTransmit }: { onTransmit: () => void }) {
+function PacketReadout({ transmission = false }: { transmission?: boolean }) {
   return (
-    <section
-      className="transmission-ready"
-      aria-labelledby="transmission-title"
+    <ol
+      className="terminal-packet-record"
+      aria-label={transmission ? '送信パケット4枠' : '復元済みパケット'}
     >
-      <p className="eyebrow">TEST TRANSMISSION / ALL CONDITIONS PASSED</p>
-      <h3 id="transmission-title">ECHO TRANSMISSION READY</h3>
-      <p>確認完了：7 / 7</p>
-      <ol aria-label="送信パケット4枠">
-        <li>W1 / ……聞こえるか？</li>
-        <li>W2 / まず電源を戻せ。</li>
-        <li>W3 / ログは気にするな。</li>
-        <li>W4 / 最後に、赤いボタンを押せ。</li>
-      </ol>
-      <dl>
-        <div>
-          <dt>DELAY</dt>
-          <dd>-00:20:00</dd>
-        </div>
-        <div>
-          <dt>ROUTE</dt>
-          <dd>ECHO BUFFER RETURN</dd>
-        </div>
-      </dl>
-      <button type="button" className="transmit-button" onClick={onTransmit}>
-        赤い送信ボタンを押す
-      </button>
-    </section>
+      {packetTexts.map((text, index) => (
+        <li key={text}>
+          <span>{transmission ? `W${index + 1}` : `PACKET 0${index + 1}`}</span>
+          {text}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Unavailable({ code, text }: { code: string; text: string }) {
+  return (
+    <div className="terminal-unavailable">
+      <p>{code}</p>
+      <p>{text}</p>
+    </div>
   );
 }
