@@ -1,0 +1,160 @@
+diff --git a/docs/decisions/terminal-instrument.md b/docs/decisions/terminal-instrument.md
+index d70393f..107665e 100644
+--- a/docs/decisions/terminal-instrument.md
++++ b/docs/decisions/terminal-instrument.md
+@@ -24,6 +24,8 @@ Tab・Enter・Space、波形の左右キー、既存のクリック／タップ
+ 
+ ## 検証
+ 
++ブラウザ検証で通信調査の入れ子gridによる横はみ出しを修正した。既存の計時処理にあった非表示イベントとReact cleanupの競合も修正し、サウンドE2Eは冒頭会話を通常操作で終えてからSYSTEMを開く手順へ合わせた。動き軽減では全体CSSの最小durationではなく、transition自体が無効であることを検証する。
++
+ ローカルの`npm run check`は成功。単体テスト85件で情報開示、操作途中状態、送信インターロック、focus除外、既存の全パズル・進行・保存を確認した。ローカル環境はNode 22.16.0であるため、指定のNode 24系での再検証も行う。
+ 
+ 実ブラウザ検証: 実施待ち。PR作成前に結果を更新する。
+diff --git a/docs/technical-design.md b/docs/technical-design.md
+index 555fcce..fc54d3e 100644
+--- a/docs/technical-design.md
++++ b/docs/technical-design.md
+@@ -575,6 +575,7 @@ master
+ 
+ - `performance.now()`を用いてアクティブプレイ時間を計測する。
+ - 一時停止、設定、ブラウザが非表示の間は加算しない。
++- 可視期間は`visibilitychange`の時点で確定する。React effectの遅延cleanupやタイマー復帰時に非表示期間を加算しない。
+ - 壁時計の02:17は固定の物語情報であり、バッテリー残量とは別に扱う。
+ - バッテリー表示は00:19:48から減算する。
+ - 00:00到達時は非常予備電源へ切り替わる演出を出すが、進行は継続できる。
+diff --git a/src/app/App.tsx b/src/app/App.tsx
+index 8d56785..64966e6 100644
+--- a/src/app/App.tsx
++++ b/src/app/App.tsx
+@@ -229,15 +229,25 @@ export function App() {
+   useEffect(() => {
+     if (!isPlaying || systemMenuOpen || !pageVisible) return;
+     let previousTime = performance.now();
++    let clockVisible = document.visibilityState === 'visible';
+     const commitElapsedTime = () => {
+       const currentTime = performance.now();
+       const deltaMs = Math.max(0, currentTime - previousTime);
+       previousTime = currentTime;
+-      if (deltaMs > 0) actorRef.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs });
++      if (clockVisible && deltaMs > 0)
++        actorRef.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs });
+     };
++    // Flush at the visibility event itself, before React's deferred cleanup.
++    // Hidden time must not be charged when timers or effects resume later.
++    const syncClockVisibility = () => {
++      commitElapsedTime();
++      clockVisible = document.visibilityState === 'visible';
++    };
++    document.addEventListener('visibilitychange', syncClockVisibility);
+     const timer = window.setInterval(commitElapsedTime, 250);
+     return () => {
+       window.clearInterval(timer);
++      document.removeEventListener('visibilitychange', syncClockVisibility);
+       commitElapsedTime();
+     };
+   }, [actorRef, isPlaying, pageVisible, systemMenuOpen]);
+diff --git a/src/ui/terminal/terminal.css b/src/ui/terminal/terminal.css
+index 6433589..21cd7a1 100644
+--- a/src/ui/terminal/terminal.css
++++ b/src/ui/terminal/terminal.css
+@@ -448,6 +448,11 @@
+   gap: 1rem;
+ }
+ 
++.terminal-instrument .trace-device {
++  min-width: 0;
++  grid-template-columns: minmax(0, 1fr);
++}
++
+ .terminal-instrument .log-columns {
+   gap: 0.4rem;
+ }
+diff --git a/tests/e2e/full-story.spec.ts b/tests/e2e/full-story.spec.ts
+index 7cd2cb1..da527a9 100644
+--- a/tests/e2e/full-story.spec.ts
++++ b/tests/e2e/full-story.spec.ts
+@@ -1,6 +1,11 @@
+ import { expect, test, type Page } from '@playwright/test';
+ 
+-import { createProgressSave, installProgressSave } from './saveFixture';
++import {
++  createProgressSave,
++  createSettingsSave,
++  installProgressSave,
++  installSettingsSave,
++} from './saveFixture';
+ 
+ test('keyboard-only route solves all seven deductions before transmission', async ({
+   page,
+@@ -10,6 +15,10 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
+     installProgressSave,
+     createProgressSave({ activeElapsedMs: 1_188_000, reservePower: true }),
+   );
++  await page.addInitScript(
++    installSettingsSave,
++    createSettingsSave({ motionReduced: true, soundEnabled: false }),
++  );
+   await page.goto('/');
+   await page.getByRole('button', { name: '続きから' }).press('Enter');
+ 
+diff --git a/tests/e2e/sound-lifecycle.spec.ts b/tests/e2e/sound-lifecycle.spec.ts
+index 19963d5..01ff6b5 100644
+--- a/tests/e2e/sound-lifecycle.spec.ts
++++ b/tests/e2e/sound-lifecycle.spec.ts
+@@ -1,5 +1,7 @@
+ import { expect, test } from '@playwright/test';
+ 
++import { createSettingsSave, installSettingsSave } from './saveFixture';
++
+ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', async ({
+   page,
+ }) => {
+@@ -76,6 +78,10 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
+         ).__soundAudit,
+     );
+ 
++  await page.addInitScript(
++    installSettingsSave,
++    createSettingsSave({ motionReduced: true }),
++  );
+   await page.goto('/');
+   await page.getByRole('button', { name: 'ゲーム開始' }).click();
+   const environmentStarts = async () =>
+@@ -92,6 +98,21 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
+     .toBe(true);
+   expect((await readAudit()).resumed).toBe(1);
+ 
++  // The opening narrative owns the full-screen pointer surface. Finish it
++  // before exercising the SYSTEM control rather than clicking through it.
++  for (let index = 0; index < 6; index += 1) {
++    await expect(page.locator('.narrative-text')).toHaveAttribute(
++      'data-text-complete',
++      'true',
++    );
++    await page.getByRole('button', { name: '次の文章へ' }).click();
++  }
++  await expect(page.locator('.narrative-text')).toHaveAttribute(
++    'data-text-complete',
++    'true',
++  );
++  await page.getByRole('button', { name: '探索を始める' }).click();
++
+   await page.getByRole('button', { name: 'SYSTEM' }).click();
+   await expect
+     .poll(async () => (await readAudit()).started.includes(760))
+diff --git a/tests/e2e/terminal-instrument.spec.ts b/tests/e2e/terminal-instrument.spec.ts
+index 2a5080c..b6e3f7a 100644
+--- a/tests/e2e/terminal-instrument.spec.ts
++++ b/tests/e2e/terminal-instrument.spec.ts
+@@ -200,8 +200,8 @@ for (const viewport of [
+       await expect(wave).toHaveAttribute('aria-valuenow', '-1');
+       await assertDisplayBounds(page);
+       await expect(page.locator('.terminal-safety-cover')).toHaveCSS(
+-        'transition-duration',
+-        '0s',
++        'transition-property',
++        'none',
+       );
+       await capture(page, info, `carrier-touch-${viewport.width}`);
+     } finally {

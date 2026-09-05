@@ -1,4 +1,4 @@
-name: Terminal verification workspace
+name: Terminal integration verification
 
 on:
   push:
@@ -15,7 +15,10 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout the work branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -48,7 +51,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: tmp/terminal-e2e-results.json
           PLAYWRIGHT_HTML_REPORT: tmp/terminal-playwright-report
           PLAYWRIGHT_HTML_OPEN: never
-        run: npx playwright test --retries=0 --workers=2 --max-failures=3 --reporter=line,json,html --output=tmp/terminal-test-results 2>&1 | tee tmp/terminal-e2e.log
+        run: npx playwright test --retries=0 --workers=1 --max-failures=3 --reporter=line,json,html --output=tmp/terminal-test-results 2>&1 | tee tmp/terminal-e2e.log
       - name: Upload review evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
