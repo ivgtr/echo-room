@@ -1,0 +1,270 @@
+diff --git a/tests/e2e/full-story.spec.ts b/tests/e2e/full-story.spec.ts
+index ee51c24..7cd2cb1 100644
+--- a/tests/e2e/full-story.spec.ts
++++ b/tests/e2e/full-story.spec.ts
+@@ -64,7 +64,13 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
+   await expectSavedCheckpoint(page, 'checkpoint_puzzle_07');
+ 
+   const terminal = page.getByRole('dialog', { name: '端末' });
+-  await expect(terminal.getByText('確認完了：7 / 7')).toBeVisible();
++  await expect(terminal).toHaveAttribute('data-transmission-ready', 'true');
++  await expect(
++    terminal.getByText('READY / 送信可', { exact: true }),
++  ).toBeVisible();
++  await expect(
++    terminal.getByText(/PUZZLES VERIFIED|確認完了：|7 \/ 7/),
++  ).toHaveCount(0);
+   await terminal
+     .getByRole('button', { name: '赤い送信ボタンを押す' })
+     .press('Enter');
+diff --git a/tests/e2e/terminal-instrument.spec.ts b/tests/e2e/terminal-instrument.spec.ts
+new file mode 100644
+index 0000000..bd0fb8d
+--- /dev/null
++++ b/tests/e2e/terminal-instrument.spec.ts
+@@ -0,0 +1,245 @@
++import { expect, test, type Page, type TestInfo } from '@playwright/test';
++
++import { packetTexts, puzzleIds } from '../../src/game/puzzles/storyPuzzles';
++import type { SavedProgress } from '../../src/game/save/saveManager';
++import {
++  createProgressSave,
++  createSettingsSave,
++  installProgressSave,
++  installSettingsSave,
++} from './saveFixture';
++
++type TerminalStage = Extract<
++  SavedProgress['storyStage'],
++  | 'puzzle_carrier_sync'
++  | 'puzzle_signal_investigation'
++  | 'puzzle_packet_repair'
++  | 'puzzle_voiceprint_calibration'
++  | 'puzzle_transmission_window'
++  | 'transmission_ready'
++>;
++
++async function openTerminal(page: Page, stage: TerminalStage, quiet = true) {
++  const count =
++    stage === 'transmission_ready'
++      ? puzzleIds.length
++      : puzzleIds.indexOf(stage);
++  await page.addInitScript(
++    installProgressSave,
++    createProgressSave({
++      storyStage: stage,
++      checkpointId:
++        `checkpoint_puzzle_0${count}` as SavedProgress['checkpointId'],
++      completedPuzzleIds: puzzleIds.slice(0, count),
++      inventory:
++        count >= 3
++          ? ['item_screwdriver', 'item_staff_card', 'item_floor_map']
++          : [],
++    }),
++  );
++  await page.addInitScript(
++    installSettingsSave,
++    createSettingsSave({
++      soundEnabled: !quiet,
++      motionReduced: quiet,
++      subtitleSettings: {
++        size: 'medium',
++        background: 'soft',
++        speed: 'fast',
++      },
++    }),
++  );
++  await page.emulateMedia({
++    reducedMotion: quiet ? 'reduce' : 'no-preference',
++  });
++  await page.goto('/');
++  await page.getByRole('button', { name: '続きから' }).click();
++  await page.getByRole('button', { name: '端末を調べる' }).click();
++  await expect(page.getByRole('dialog', { name: '端末' })).toBeVisible();
++}
++
++const mode = (page: Page, name: string) =>
++  page
++    .getByRole('dialog', { name: '端末' })
++    .getByRole('button', { name, exact: true });
++
++async function capture(page: Page, info: TestInfo, name: string) {
++  await info.attach(name, {
++    body: await page.screenshot(),
++    contentType: 'image/png',
++  });
++}
++
++async function assertDisplayBounds(page: Page) {
++  const measurements = await page
++    .locator('.terminal-observation')
++    .evaluate((element) => ({
++      width: element.clientWidth,
++      scrollWidth: element.scrollWidth,
++      height: element.clientHeight,
++    }));
++  expect(measurements.width).toBeGreaterThan(0);
++  expect(measurements.height).toBeGreaterThan(60);
++  expect(measurements.scrollWidth).toBeLessThanOrEqual(measurements.width + 1);
++  for (const label of [
++    'SYSTEM',
++    'LOG',
++    'SIGNAL',
++    'SECURITY',
++    '赤い送信ボタンを押す',
++  ]) {
++    await expect(mode(page, label)).toBeInViewport();
++    const bounds = await mode(page, label).boundingBox();
++    expect(bounds!.height).toBeGreaterThanOrEqual(44);
++    expect(bounds!.width).toBeGreaterThanOrEqual(44);
++  }
++}
++
++test('physical keys preserve a calibration, exclude hidden drafts from Tab order, and restore focus', async ({
++  page,
++}, info) => {
++  await page.setViewportSize({ width: 1440, height: 900 });
++  await openTerminal(page, 'puzzle_carrier_sync', false);
++  const display = page.getByRole('region', { name: '端末表示器', exact: true });
++  const channelA = page.getByRole('slider', { name: 'CHANNEL A' });
++  await expect(display).toBeFocused();
++  await page.keyboard.press('Tab');
++  await expect(channelA).toBeFocused();
++  await page.keyboard.press('ArrowRight');
++  await expect(channelA).toHaveAttribute('aria-valuenow', '-1');
++  await mode(page, 'LOG').click();
++  await expect(channelA).toHaveCount(0);
++  const back = page.getByRole('button', { name: 'BACK / 部屋に戻る' });
++  await back.focus();
++  await page.keyboard.press('Tab');
++  await expect(display).toBeFocused();
++  await page.keyboard.press('Tab');
++  await expect(mode(page, 'SYSTEM')).toBeFocused();
++  await page.keyboard.press('Enter');
++  await expect(channelA).toHaveAttribute('aria-valuenow', '-1');
++  await expect(mode(page, '赤い送信ボタンを押す')).toBeDisabled();
++  await assertDisplayBounds(page);
++  await capture(page, info, 'carrier-desktop');
++  await page.keyboard.press('Escape');
++  await expect(
++    page.getByRole('button', { name: '端末を調べる' }),
++  ).toBeFocused();
++});
++
++test('comparison and unfinished tracing survive a display switch without exposing the answer', async ({
++  page,
++}, info) => {
++  await page.setViewportSize({ width: 1440, height: 900 });
++  await openTerminal(page, 'puzzle_signal_investigation');
++  await expect(page.getByText('--:--:-- / CALIBRATION ERROR')).toBeVisible();
++  await mode(page, 'SECURITY').click();
++  await expect(page.getByText('ECHO BUFFER RETURN ○')).toHaveCount(0);
++  await mode(page, 'LOG').click();
++  for (const [receive, source] of [
++    ['R1', 'S-B'],
++    ['R2', 'S-C'],
++    ['R3', 'S-A'],
++  ]) {
++    await mode(page, `${receive}受信端子`).click();
++    await mode(page, `${source}送信端子`).click();
++  }
++  await expect(page.getByText('+20:00 / OFFSET CONFIRMED')).toBeVisible();
++  await mode(page, '通信実線').click();
++  await mode(page, 'SECURITY').click();
++  await expect(page.getByText('ROUTE / NOT TRACED — 経路未確認')).toBeVisible();
++  await mode(page, 'LOG').click();
++  await expect(mode(page, '通信実線')).toHaveAttribute('aria-pressed', 'true');
++  await expect(mode(page, 'J-2 丸端子')).toBeEnabled();
++  await assertDisplayBounds(page);
++  await expect(page.locator('.terminal-scan')).toHaveCSS(
++    'animation-name',
++    'none',
++  );
++  await capture(page, info, 'comparison-and-trace-desktop');
++});
++
++test('completed observations remain available after loading a checkpoint', async ({
++  page,
++}, info) => {
++  await openTerminal(page, 'puzzle_voiceprint_calibration');
++  await mode(page, 'LOG').click();
++  await expect(page.getByRole('table')).toContainText('S-B / 02:31:04');
++  await mode(page, 'SECURITY').click();
++  await expect(page.getByText('ECHO BUFFER RETURN ○')).toBeVisible();
++  await mode(page, 'SIGNAL').click();
++  await expect(
++    page.getByRole('list', { name: '復元済みパケット' }),
++  ).toContainText(packetTexts[3]!);
++  await expect(page.getByText(/E-01 OCCUPANT/)).toHaveCount(0);
++  await capture(page, info, 'restored-packets');
++});
++
++for (const viewport of [
++  { width: 844, height: 390 },
++  { width: 568, height: 320 },
++]) {
++  test(`touch controls remain reachable without sound or motion at ${viewport.width}x${viewport.height}`, async ({
++    browser,
++  }, info) => {
++    const context = await browser.newContext({
++      viewport,
++      hasTouch: true,
++      baseURL: 'http://127.0.0.1:43173',
++    });
++    const page = await context.newPage();
++    try {
++      await openTerminal(page, 'puzzle_carrier_sync');
++      const wave = page.getByRole('slider', { name: 'CHANNEL A' });
++      // A single tap, not a drag, can set the waveform position.
++      await wave.tap({
++        position: { x: (await wave.boundingBox())!.width * 0.25, y: 12 },
++      });
++      await expect(wave).toHaveAttribute('aria-valuenow', '-1');
++      await mode(page, 'LOG').tap();
++      await mode(page, 'SYSTEM').tap();
++      await expect(wave).toHaveAttribute('aria-valuenow', '-1');
++      await assertDisplayBounds(page);
++      await expect(page.locator('.terminal-safety-cover')).toHaveCSS(
++        'transition-duration',
++        '0s',
++      );
++      await capture(page, info, `carrier-touch-${viewport.width}`);
++    } finally {
++      await context.close();
++    }
++  });
++}
++
++test('transmission remains a guarded physical action with readable conditions on a short screen', async ({
++  page,
++}, info) => {
++  await page.setViewportSize({ width: 844, height: 390 });
++  await openTerminal(page, 'transmission_ready');
++  const terminal = page.getByRole('dialog', { name: '端末' });
++  await expect(terminal).toHaveAttribute('data-transmission-ready', 'true');
++  await expect(
++    terminal.getByText('READY / 送信可', { exact: true }),
++  ).toBeVisible();
++  await expect(
++    terminal.getByText(/PUZZLES VERIFIED|確認完了：|7 \/ 7/),
++  ).toHaveCount(0);
++  const display = page.getByRole('region', { name: '端末表示器', exact: true });
++  await display.focus();
++  await page.keyboard.press('End');
++  await expect(
++    terminal.getByText('TRANSMIT / INTERLOCK RELEASED'),
++  ).toBeInViewport();
++  await assertDisplayBounds(page);
++  await capture(page, info, 'transmission-ready-touch');
++  await mode(page, '赤い送信ボタンを押す').click();
++  await expect(terminal).toHaveCount(0);
++  await expect
++    .poll(() =>
++      page.evaluate(
++        () =>
++          JSON.parse(localStorage.getItem('echo-room:progress')!).progress
++            .checkpointId,
++      ),
++    )
++    .toBe('checkpoint_transmission_started');
++});
