@@ -1,0 +1,104 @@
+diff --git a/src/ui/terminal/terminal.css b/src/ui/terminal/terminal.css
+index 807c932..6433589 100644
+--- a/src/ui/terminal/terminal.css
++++ b/src/ui/terminal/terminal.css
+@@ -11,6 +11,7 @@
+ }
+ 
+ .terminal-machine {
++  position: relative;
+   width: min(94cqw, calc((100cqh - 7rem) * 1.66), 72rem);
+   min-width: 0;
+   filter: drop-shadow(0 1.2rem 1.8rem #000);
+@@ -123,7 +124,6 @@
+ }
+ 
+ .terminal-console {
+-  position: relative;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+@@ -551,7 +551,7 @@
+ @container (max-width: 650px) {
+   .terminal-nameplate {
+     position: absolute;
+-    top: -1.65rem;
++    top: 0.8rem;
+     left: 1.2rem;
+     padding: 0;
+     border: 0;
+diff --git a/tests/e2e/terminal-instrument.spec.ts b/tests/e2e/terminal-instrument.spec.ts
+index bd0fb8d..2a5080c 100644
+--- a/tests/e2e/terminal-instrument.spec.ts
++++ b/tests/e2e/terminal-instrument.spec.ts
+@@ -243,3 +243,70 @@ test('transmission remains a guarded physical action with readable conditions on
+     )
+     .toBe('checkpoint_transmission_started');
+ });
++
++for (const stage of [
++  'puzzle_signal_investigation',
++  'puzzle_packet_repair',
++] as const) {
++  test(`dense ${stage} controls work by touch on a short display`, async ({
++    browser,
++  }, info) => {
++    const context = await browser.newContext({
++      viewport: { width: 568, height: 320 },
++      hasTouch: true,
++      baseURL: 'http://127.0.0.1:43173',
++    });
++    const page = await context.newPage();
++    try {
++      await openTerminal(page, stage);
++      if (stage === 'puzzle_signal_investigation') {
++        await mode(page, 'LOG').tap();
++        for (const [receive, source] of [
++          ['R1', 'S-B'],
++          ['R2', 'S-C'],
++          ['R3', 'S-A'],
++        ]) {
++          await mode(page, `${receive}受信端子`).tap();
++          await mode(page, `${source}送信端子`).tap();
++        }
++        await mode(page, '通信実線').tap();
++        await mode(page, 'J-2 丸端子').tap();
++        await expect(mode(page, 'ECHO BUFFER RETURN')).toBeEnabled();
++      } else {
++        await mode(page, 'SIGNAL').tap();
++        for (const [fragment, rail] of [
++          ['D', 2],
++          ['A', 3],
++          ['B', 4],
++        ] as const) {
++          await mode(page, `断片${fragment}を持つ`).tap();
++          await mode(page, `レール${rail}へ断片${fragment}を置く`).tap();
++        }
++        await expect(page.getByText('FRAME RESTORED')).toBeVisible();
++        await mode(
++          page,
++          'ACCEPT FRAME / 復元内容を確認する',
++        ).scrollIntoViewIfNeeded();
++      }
++      await assertDisplayBounds(page);
++      const plate = await page.locator('.terminal-nameplate').boundingBox();
++      const glass = await page.locator('.terminal-glass').boundingBox();
++      expect(plate!.y + plate!.height).toBeLessThanOrEqual(glass!.y);
++      await capture(page, info, `dense-touch-${stage}`);
++      if (stage === 'puzzle_packet_repair') {
++        await mode(page, 'ACCEPT FRAME / 復元内容を確認する').tap();
++        await expect
++          .poll(() =>
++            page.evaluate(
++              () =>
++                JSON.parse(localStorage.getItem('echo-room:progress')!).progress
++                  .checkpointId,
++            ),
++          )
++          .toBe('checkpoint_puzzle_05');
++      }
++    } finally {
++      await context.close();
++    }
++  });
++}
