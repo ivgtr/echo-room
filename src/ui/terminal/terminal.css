@@ -515,7 +515,13 @@
   border-color: #a5c4b9;
 }
 .terminal-instrument .trace-path button[aria-pressed='true']::before {
-  content: '● ';
+  content: '';
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  margin-right: 0.35em;
+  border-radius: 50%;
+  background: currentColor;
 }
 .terminal-instrument .packet-plugs small {
   font-size: 0.75rem;
