@@ -1,0 +1,770 @@
+diff --git a/src/styles/global.css b/src/styles/global.css
+index bca94a7..e20d356 100644
+--- a/src/styles/global.css
++++ b/src/styles/global.css
+@@ -3676,77 +3676,6 @@ button:focus-visible {
+   box-shadow: inset 0 -1.2rem #19090a;
+ }
+ 
+-.terminal-panel {
+-  display: grid;
+-  min-height: 0;
+-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+-  gap: 0.7rem;
+-}
+-
+-.terminal-panel.artwork-modal::before {
+-  background: rgb(4 8 9 / 62%);
+-}
+-
+-.terminal-menu {
+-  display: grid;
+-  grid-template-columns: repeat(4, 1fr);
+-  gap: 0.35rem;
+-}
+-
+-.terminal-menu button[aria-pressed='true'] {
+-  border-color: #8de1d8;
+-  color: #071112;
+-  background: #8de1d8;
+-}
+-
+-.terminal-content {
+-  min-height: 0;
+-  padding: 0.7rem;
+-  border: 1px solid rgb(88 184 176 / 25%);
+-  background: rgb(4 17 18 / 82%);
+-  overflow: auto;
+-}
+-
+-.terminal-system-grid {
+-  display: grid;
+-  grid-template-columns: repeat(3, 1fr);
+-  gap: 0.7rem;
+-}
+-
+-.terminal-system-grid > div {
+-  display: grid;
+-  padding: 0.8rem;
+-  border-left: 2px solid #58b8b0;
+-  background: rgb(88 184 176 / 7%);
+-  gap: 0.35rem;
+-}
+-
+-.terminal-system-grid span,
+-.transmission-ready dt {
+-  color: #79aaa6;
+-  font:
+-    0.65rem ui-monospace,
+-    monospace;
+-}
+-
+-.terminal-system-grid p {
+-  grid-column: 1 / -1;
+-}
+-
+-.signal-summary {
+-  display: grid;
+-  gap: 0.5rem;
+-}
+-
+-.signal-summary > span {
+-  padding: 0.45rem;
+-  border-left: 2px solid #58b8b0;
+-  background: rgb(88 184 176 / 8%);
+-  font:
+-    0.72rem ui-monospace,
+-    monospace;
+-}
+-
+ .facility-conduit-layer {
+   display: grid;
+   margin-top: 0.65rem;
+@@ -3765,54 +3694,7 @@ button:focus-visible {
+   grid-column: 1 / -1;
+ }
+ 
+-.transmission-ready {
+-  display: grid;
+-  max-width: 44rem;
+-  margin: auto;
+-  gap: 0.7rem;
+-}
+-
+-.transmission-ready ol {
+-  display: grid;
+-  margin: 0;
+-  padding: 0;
+-  list-style: none;
+-  gap: 0.35rem;
+-}
+-
+-.transmission-ready li,
+-.transmission-ready dl > div {
+-  padding: 0.55rem 0.8rem;
+-  border: 1px solid rgb(88 184 176 / 25%);
+-  background: rgb(88 184 176 / 7%);
+-}
+-
+-.transmission-ready dl {
+-  display: grid;
+-  margin: 0;
+-  grid-template-columns: 1fr 1fr;
+-  gap: 0.5rem;
+-}
+-
+-.transmission-ready dd {
+-  margin: 0.25rem 0 0;
+-}
+-
+-.puzzle-modal .transmit-button {
+-  border-color: #ef6a70;
+-  background: #8f1d23;
+-  font-weight: 700;
+-}
+-
+ @media (max-width: 760px) {
+-  .terminal-system-grid {
+-    grid-template-columns: 1fr;
+-  }
+-
+-  .terminal-system-grid p {
+-    grid-column: 1;
+-  }
+-
+   .power-device,
+   .trace-device,
+   .voiceprint-device,
+diff --git a/src/ui/terminal/terminal.css b/src/ui/terminal/terminal.css
+new file mode 100644
+index 0000000..807c932
+--- /dev/null
++++ b/src/ui/terminal/terminal.css
+@@ -0,0 +1,627 @@
++.terminal-instrument {
++  position: absolute;
++  z-index: 10;
++  inset: 0;
++  display: grid;
++  place-items: center;
++  container-type: size;
++  color: #dce8e6;
++  background: radial-gradient(ellipse at 50% 40%, #192224, #030607 80%);
++  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
++}
++
++.terminal-machine {
++  width: min(94cqw, calc((100cqh - 7rem) * 1.66), 72rem);
++  min-width: 0;
++  filter: drop-shadow(0 1.2rem 1.8rem #000);
++}
++
++.terminal-viewer {
++  position: relative;
++  aspect-ratio: 880 / 530;
++  overflow: hidden;
++  background: #111b1e;
++}
++
++/* Reframe the existing terminal, not the neighbouring open service panel.
++   Source crop: (384, 150, 880, 530) in the 1648 × 928 raster.
++   The image keeps its aspect ratio; the DOM occupies only its blank glass. */
++.terminal-chassis {
++  position: absolute;
++  top: calc(-150 / 530 * 100%);
++  left: calc(-384 / 880 * 100%);
++  width: calc(1648 / 880 * 100%);
++  max-width: none;
++  height: auto;
++  pointer-events: none;
++  user-select: none;
++}
++
++.terminal-glass {
++  position: absolute;
++  inset: 7.5% 6.3% 10% 6.7%;
++  display: grid;
++  min-width: 0;
++  min-height: 0;
++  grid-template-rows: auto minmax(0, 1fr);
++  border: 1px solid #223c3c;
++  border-radius: 0.65rem;
++  background: #071213;
++  box-shadow:
++    inset 0 0 2rem #000,
++    0 0 1rem rgb(86 168 159 / 12%);
++  overflow: hidden;
++  isolation: isolate;
++}
++
++.terminal-readout-header {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: baseline;
++  justify-content: space-between;
++  gap: 0.3rem 1rem;
++  margin: 0 1.2rem;
++  padding: 0.8rem 0 0.6rem;
++  border-bottom: 1px solid #395854;
++}
++
++.terminal-readout-header > span {
++  color: #9cbbb6;
++  font-size: 0.7rem;
++  letter-spacing: 0.08em;
++}
++
++.terminal-readout-header h2 {
++  margin: 0;
++  color: #c4e9e3;
++  font:
++    500 1rem system-ui,
++    sans-serif;
++}
++
++/* Only this region scrolls when text is enlarged or the viewport is short.
++   Keys and the guarded transmit control never scroll out of reach. */
++.terminal-observation {
++  min-width: 0;
++  min-height: 0;
++  padding: 1rem 1.2rem;
++  overflow: auto;
++  overscroll-behavior: contain;
++  scrollbar-width: thin;
++  scrollbar-color: #53746e #071213;
++}
++
++.terminal-draft[hidden] {
++  display: none;
++}
++
++.terminal-scan {
++  position: absolute;
++  z-index: 2;
++  inset: 0;
++  pointer-events: none;
++}
++
++.terminal-scan.is-switching {
++  background: linear-gradient(
++    transparent 45%,
++    rgb(150 235 222 / 16%) 50%,
++    transparent 55%
++  );
++  animation: terminal-resync 180ms ease-out both;
++}
++
++@keyframes terminal-resync {
++  from {
++    opacity: 0.6;
++    transform: translateY(-60%);
++  }
++  to {
++    opacity: 0;
++    transform: translateY(60%);
++  }
++}
++
++.terminal-console {
++  position: relative;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  gap: clamp(0.5rem, 2vw, 1.5rem);
++  min-height: 5.25rem;
++  padding: 0.6rem 1.4rem;
++  border: 1px solid #4a5552;
++  border-top: 3px solid #64716c;
++  border-bottom: 0.5rem solid #0a1011;
++  background: linear-gradient(#303a38, #1a2222 32%, #101617);
++  box-shadow:
++    inset 0 1px #82918a,
++    inset 0 -1px #3e4946;
++}
++
++.terminal-nameplate {
++  display: grid;
++  gap: 0.3rem;
++  margin-right: auto;
++  padding: 0.4rem 0.6rem;
++  border: 1px solid #59635e;
++  color: #c3c6b7;
++  background: #252c2a;
++  box-shadow: inset 1px 1px 2px #101515;
++  white-space: nowrap;
++}
++
++.terminal-nameplate span {
++  font-size: 0.58rem;
++  letter-spacing: 0.14em;
++}
++
++.terminal-nameplate strong {
++  font-size: 0.78rem;
++  font-weight: 500;
++}
++
++.terminal-function-keys {
++  display: grid;
++  grid-template-columns: repeat(4, minmax(0, 1fr));
++  gap: 0.6rem;
++  min-width: 0;
++}
++
++.terminal-function-key {
++  display: grid;
++  position: relative;
++  gap: 0.2rem;
++  min-width: 4.6rem;
++  min-height: 3.1rem;
++  padding: 0.45rem 0.6rem;
++  border: 1px solid #64716c;
++  border-bottom: 4px solid #060c0d;
++  border-radius: 3px;
++  color: #d2d7ce;
++  background: linear-gradient(#3c4643, #242e2c);
++  box-shadow:
++    0 2px 2px #030708,
++    inset 0 1px #78837c;
++  font:
++    0.7rem ui-monospace,
++    monospace;
++  text-shadow: 0 1px #000;
++  cursor: pointer;
++  touch-action: manipulation;
++}
++
++.terminal-function-key small {
++  color: #b1c0b8;
++  font:
++    0.6rem system-ui,
++    sans-serif;
++}
++
++.terminal-function-key i {
++  position: absolute;
++  top: -0.4rem;
++  right: 0.5rem;
++  width: 0.8rem;
++  height: 0.2rem;
++  border: 1px solid #0c1917;
++  background: #15231f;
++}
++
++.terminal-function-key[aria-pressed='true'] {
++  border-top-color: #1a2522;
++  border-bottom-width: 2px;
++  transform: translateY(2px);
++  box-shadow: inset 0 2px 3px #0b1210;
++}
++
++.terminal-function-key[aria-pressed='true'] i {
++  background: #a1e8cb;
++  box-shadow: 0 0 0.4rem #8cbfaa;
++}
++
++.terminal-function-key:active {
++  transform: translateY(2px);
++}
++
++.terminal-transmit-control {
++  position: relative;
++  display: grid;
++  justify-items: center;
++  gap: 0.35rem;
++  min-width: 6.5rem;
++  margin-left: auto;
++  padding-left: 0.7rem;
++  border-left: 1px solid #4c5550;
++}
++
++.terminal-transmit-button {
++  width: 2.8rem;
++  height: 2.8rem;
++  border: 4px solid #353c36;
++  border-radius: 50%;
++  color: #ffe0da;
++  background: radial-gradient(circle at 38% 30%, #f27066, #ac2826 60%, #4b1516);
++  box-shadow:
++    0 3px #070c0c,
++    inset 0 1px #ffaaa0;
++  font:
++    700 0.7rem ui-monospace,
++    monospace;
++  cursor: pointer;
++  touch-action: manipulation;
++}
++
++.terminal-transmit-button:disabled {
++  color: #baaaa2;
++  background: radial-gradient(circle at 38% 30%, #783932, #431c1b);
++  cursor: not-allowed;
++}
++
++.terminal-transmit-button:active:not(:disabled) {
++  transform: translateY(2px);
++  box-shadow: 0 1px #070c0c;
++}
++
++.terminal-transmit-control small {
++  color: #c5cab7;
++  font-size: 0.6rem;
++}
++
++.terminal-safety-cover {
++  position: absolute;
++  top: -0.1rem;
++  width: 3.5rem;
++  height: 3rem;
++  margin-left: 0.7rem;
++  border: 2px solid #979681;
++  border-top: 5px solid #50584e;
++  border-radius: 3px 3px 7px 7px;
++  background: repeating-linear-gradient(
++    135deg,
++    rgb(184 182 149 / 12%) 0 3px,
++    transparent 3px 10px
++  );
++  box-shadow: inset 0 0 0.5rem rgb(192 216 197 / 25%);
++  transform-origin: top;
++  transition:
++    transform 200ms ease,
++    opacity 200ms ease;
++  pointer-events: none;
++}
++
++.terminal-instrument[data-transmission-ready='true'] .terminal-safety-cover {
++  opacity: 0.25;
++  transform: scaleY(0.12) translateY(-1rem);
++}
++
++.terminal-instrument button:focus-visible,
++.terminal-instrument [tabindex]:focus-visible {
++  outline: 2px solid #f3f9db;
++  outline-offset: 3px;
++}
++
++.terminal-readings dl {
++  display: grid;
++  gap: 0.5rem;
++  margin: 0;
++}
++
++.terminal-readings dl > div {
++  display: grid;
++  grid-template-columns: minmax(8rem, 0.65fr) minmax(0, 1.35fr);
++  gap: 0.5rem;
++  align-items: baseline;
++  padding: 0.5rem 0;
++  border-bottom: 1px solid #223b37;
++}
++
++.terminal-readings dt {
++  color: #9fbab2;
++  font-size: 0.8rem;
++}
++
++.terminal-readings dd {
++  margin: 0;
++  color: #d1e8dc;
++  overflow-wrap: anywhere;
++  font-size: 0.95rem;
++}
++
++.terminal-equipment-status {
++  margin: 1rem 0 0;
++  color: #b7cbb6;
++  font-size: 0.76rem;
++}
++
++.terminal-unavailable {
++  display: grid;
++  align-content: center;
++  min-height: 10rem;
++  gap: 0.6rem;
++}
++
++.terminal-unavailable p {
++  margin: 0;
++}
++.terminal-unavailable p:first-child {
++  color: #c3cfb5;
++}
++.terminal-unavailable p:last-child {
++  font:
++    0.9rem system-ui,
++    sans-serif;
++}
++
++.terminal-log-record table {
++  width: 100%;
++  border-collapse: collapse;
++  font-size: 0.8rem;
++}
++
++.terminal-log-record caption {
++  margin-bottom: 1rem;
++  text-align: left;
++  color: #a5c4b9;
++}
++
++.terminal-log-record th,
++.terminal-log-record td {
++  padding: 0.7rem 0.4rem;
++  border-bottom: 1px solid #36534b;
++  text-align: left;
++}
++
++.terminal-packet-record {
++  display: grid;
++  gap: 0.5rem;
++  margin: 0 0 1rem;
++  padding: 0;
++  list-style: none;
++}
++
++.terminal-packet-record li {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 0.35rem 1rem;
++  padding: 0.4rem 0;
++  border-bottom: 1px solid #36534b;
++  font:
++    0.9rem system-ui,
++    sans-serif;
++}
++
++.terminal-packet-record span {
++  min-width: 3rem;
++  color: #a5c4b9;
++  font-family: ui-monospace, monospace;
++}
++
++/* One display, not a second modal or a framed instrument inside the CRT. */
++.terminal-instrument .puzzle-device.is-embedded {
++  min-height: 0;
++  grid-template-rows: auto auto;
++  gap: 0.6rem;
++}
++
++.terminal-instrument .device-workarea {
++  display: block;
++  padding: 0;
++  overflow: visible;
++}
++
++.terminal-instrument .device-feedback,
++.terminal-instrument .device-diagnostic {
++  padding: 0.4rem 0;
++  border: 0;
++  background: none;
++}
++
++.terminal-instrument .carrier-device {
++  width: 100%;
++  padding: 0;
++  border: 0;
++  background: none;
++  box-shadow: none;
++}
++
++.terminal-instrument .carrier-readout {
++  font-size: 0.75rem;
++}
++
++.terminal-instrument .wave-rail {
++  grid-template-columns: 6rem minmax(5rem, 1fr) 7.5rem;
++  gap: 0.5rem;
++  font-size: 0.75rem;
++}
++
++.terminal-instrument .wave-track {
++  min-height: 2.75rem;
++}
++.terminal-instrument .wave-rail output {
++  grid-column: auto;
++}
++
++.terminal-instrument .signal-investigation-device:has(.trace-device) {
++  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
++  align-items: start;
++  gap: 1rem;
++}
++
++.terminal-instrument .log-columns {
++  gap: 0.4rem;
++}
++.terminal-instrument .patch-cords {
++  font-size: 0.65rem;
++}
++.terminal-instrument .jack {
++  min-height: 3.1rem;
++}
++.terminal-instrument .offset-reveal {
++  grid-template-columns: 1fr;
++  font-size: 0.7rem;
++}
++
++.terminal-instrument .facility-map {
++  padding: 0;
++  border: 0;
++  background: none;
++}
++
++.terminal-instrument .facility-map figcaption {
++  font-size: 0.72rem;
++  letter-spacing: 0.03em;
++}
++
++.terminal-instrument .map-finding {
++  font-size: 0.75rem;
++}
++.terminal-instrument .facility-conduit-layer {
++  grid-template-columns: 1fr;
++}
++.terminal-instrument .facility-conduit-layer small {
++  grid-column: auto;
++}
++.terminal-instrument .trace-path {
++  gap: 0.35rem;
++}
++.terminal-instrument .trace-path button {
++  min-height: 2.75rem;
++}
++.terminal-instrument .packet-plugs small {
++  font-size: 0.75rem;
++}
++
++@container (max-height: 560px) {
++  .terminal-machine {
++    display: grid;
++    width: calc(100% - 0.7rem);
++    height: calc(100% - 0.7rem);
++    grid-template-rows: minmax(0, 1fr) auto;
++  }
++
++  /* A closer inspection framing, rather than shrinking the whole device. */
++  .terminal-viewer {
++    aspect-ratio: auto;
++  }
++  .terminal-chassis {
++    top: 50%;
++    transform: translateY(-44%);
++  }
++  .terminal-glass {
++    inset: 2.8rem 0.7rem 0.5rem;
++  }
++  .terminal-readout-header {
++    margin-inline: 0.65rem;
++    padding: 0.4rem 0;
++  }
++  .terminal-readout-header h2 {
++    font-size: 0.85rem;
++  }
++  .terminal-observation {
++    padding: 0.6rem 0.65rem;
++  }
++  .terminal-console {
++    min-height: 4.5rem;
++    padding: 0.35rem 0.6rem;
++    gap: 0.6rem;
++  }
++  .terminal-nameplate {
++    padding: 0.3rem;
++  }
++  .terminal-nameplate span {
++    display: none;
++  }
++  .terminal-function-keys {
++    gap: 0.4rem;
++  }
++  .terminal-function-key {
++    min-width: 3.4rem;
++    min-height: 2.75rem;
++    padding: 0.3rem;
++  }
++  .terminal-transmit-control {
++    min-width: 5.5rem;
++  }
++  .terminal-readings dl > div {
++    padding: 0.25rem 0;
++  }
++}
++
++@container (max-width: 650px) {
++  .terminal-nameplate {
++    position: absolute;
++    top: -1.65rem;
++    left: 1.2rem;
++    padding: 0;
++    border: 0;
++    background: none;
++  }
++  .terminal-nameplate strong {
++    font-size: 0.6rem;
++  }
++  .terminal-nameplate span {
++    display: none;
++  }
++  .terminal-console {
++    gap: 0.4rem;
++    padding-inline: 0.4rem;
++  }
++  .terminal-function-keys {
++    flex: 1;
++    gap: 0.3rem;
++  }
++  .terminal-function-key {
++    min-width: 0;
++    font-size: 0.6rem;
++  }
++  .terminal-function-key small {
++    font-size: 0.55rem;
++  }
++  .terminal-transmit-control {
++    min-width: 4.8rem;
++    padding-left: 0.3rem;
++  }
++  .terminal-transmit-control small {
++    font-size: 0.5rem;
++  }
++  .terminal-instrument .wave-rail {
++    grid-template-columns: 5rem minmax(4rem, 1fr);
++  }
++  .terminal-instrument .wave-rail output {
++    grid-column: 2;
++  }
++  .terminal-instrument .signal-investigation-device:has(.trace-device) {
++    grid-template-columns: 1fr;
++  }
++  .terminal-readings dl > div {
++    grid-template-columns: 1fr;
++  }
++  .terminal-readings dd {
++    font-size: 0.8rem;
++  }
++  .terminal-log-record table {
++    font-size: 0.68rem;
++  }
++  .terminal-log-record td {
++    overflow-wrap: anywhere;
++  }
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .terminal-scan.is-switching {
++    animation: none;
++    background: none;
++  }
++  .terminal-safety-cover {
++    transition: none;
++  }
++}
++
++[data-reduced-motion='true'] .terminal-scan.is-switching {
++  animation: none;
++  background: none;
++}
++[data-reduced-motion='true'] .terminal-safety-cover {
++  transition: none;
++}
