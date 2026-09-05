@@ -1,0 +1,304 @@
+diff --git a/src/app/App.tsx b/src/app/App.tsx
+index e48d810..8d56785 100644
+--- a/src/app/App.tsx
++++ b/src/app/App.tsx
+@@ -494,9 +494,10 @@ export function App() {
+         setSystemMenuOpen(false);
+         actorRef.send({ type: 'RETURNED_TO_TITLE' });
+       }}
+-      onTerminalMenu={(menuId) =>
+-        actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
+-      }
++      onTerminalMenu={(menuId) => {
++        soundManager.playEffect('terminal_connect');
++        actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId });
++      }}
+       onInventoryOpen={() => {
+         setSystemMenuOpen(false);
+         setInventoryOpen(true);
+diff --git a/src/game/puzzles/signalRecords.ts b/src/game/puzzles/signalRecords.ts
+new file mode 100644
+index 0000000..c01b96f
+--- /dev/null
++++ b/src/game/puzzles/signalRecords.ts
+@@ -0,0 +1,31 @@
++// The same recorded observations are used during investigation and after it.
++// Pairing is derived from the visible signature, not a second answer table.
++export const receiveRecords = [
++  { id: 'r1', time: '02:11:04', signature: '短・長・短' },
++  { id: 'r2', time: '02:14:32', signature: '長・短・短' },
++  { id: 'r3', time: '02:17:18', signature: '短・短・長' },
++] as const;
++
++export const sourceRecords = [
++  { id: 's-a', time: '02:37:18', signature: '短・短・長' },
++  { id: 's-b', time: '02:31:04', signature: '短・長・短' },
++  { id: 's-c', time: '02:34:32', signature: '長・短・短' },
++] as const;
++
++type RecordId =
++  (typeof receiveRecords)[number]['id'] | (typeof sourceRecords)[number]['id'];
++type Signature = (typeof receiveRecords)[number]['signature'];
++
++export const recordSignatures = Object.fromEntries(
++  [...receiveRecords, ...sourceRecords].map(({ id, signature }) => [
++    id,
++    signature,
++  ]),
++) as Record<RecordId, Signature>;
++
++export const matchedRecords = receiveRecords.map((receive) => ({
++  receive,
++  source: sourceRecords.find(
++    (source) => source.signature === receive.signature,
++  )!,
++}));
+diff --git a/src/main.tsx b/src/main.tsx
+index 47ff009..a6705ed 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
+ import { App } from './app/App';
+ import { ErrorBoundary } from './app/ErrorBoundary';
+ import './styles/global.css';
++import './ui/terminal/terminal.css';
+ 
+ const root = document.getElementById('root');
+ 
+diff --git a/src/ui/GameScreen.tsx b/src/ui/GameScreen.tsx
+index c982e58..5d53312 100644
+--- a/src/ui/GameScreen.tsx
++++ b/src/ui/GameScreen.tsx
+@@ -407,7 +407,7 @@ export function GameScreen(props: Props) {
+           const target = event.target;
+           if (!(target instanceof Element)) return;
+           const button = target.closest('button:not(:disabled)');
+-          if (!button) return;
++          if (!button || button.closest('.terminal-function-keys')) return;
+           const device = button.closest<HTMLElement>('[data-puzzle-id]');
+           const puzzleId = device?.dataset.puzzleId as PuzzleId | undefined;
+           if (puzzleId) props.onPuzzleInteraction(puzzleId);
+diff --git a/src/ui/accessibility/ModalFocusScope.tsx b/src/ui/accessibility/ModalFocusScope.tsx
+index 20fde52..630a1e7 100644
+--- a/src/ui/accessibility/ModalFocusScope.tsx
++++ b/src/ui/accessibility/ModalFocusScope.tsx
+@@ -13,6 +13,14 @@ type Props = {
+   fallbackFocusRef: RefObject<HTMLElement | null>;
+ };
+ 
++function focusableControls(scope: HTMLElement | null) {
++  return Array.from(
++    scope?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
++  ).filter(
++    (element) => !element.closest('[hidden], [inert], [aria-hidden="true"]'),
++  );
++}
++
+ const focusableSelector =
+   'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+ 
+@@ -36,15 +44,13 @@ export function ModalFocusScope({
+   useEffect(() => {
+     const scope = scopeRef.current;
+     if (!scope?.contains(document.activeElement)) {
+-      scope?.querySelector<HTMLElement>(focusableSelector)?.focus();
++      focusableControls(scope)[0]?.focus();
+     }
+   }, [focusKey]);
+ 
+   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+     if (event.key !== 'Tab') return;
+-    const controls = Array.from(
+-      scopeRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
+-    );
++    const controls = focusableControls(scopeRef.current);
+     if (controls.length === 0) return;
+     const first = controls[0];
+     const last = controls.at(-1);
+diff --git a/src/ui/evidence/FacilityMap.tsx b/src/ui/evidence/FacilityMap.tsx
+index 26b9237..58fc673 100644
+--- a/src/ui/evidence/FacilityMap.tsx
++++ b/src/ui/evidence/FacilityMap.tsx
+@@ -1,18 +1,21 @@
++import { useId } from 'react';
++
+ export function FacilityMap({
+   compact = false,
+   conduitLayer = false,
+-  revealRoute = true,
++  revealRoute = false,
+ }: {
+   compact?: boolean;
+   conduitLayer?: boolean;
+   revealRoute?: boolean;
+ }) {
++  const titleId = useId();
+   return (
+     <figure
+       className={`facility-map${compact ? ' is-compact' : ''}`}
+-      aria-labelledby="facility-map-title"
++      aria-labelledby={titleId}
+     >
+-      <figcaption id="facility-map-title">FACILITY MAP / ROOM E-01</figcaption>
++      <figcaption id={titleId}>FACILITY MAP / ROOM E-01</figcaption>
+       <div className="facility-map-grid">
+         <div className="map-zone map-machine-west">
+           MACHINE
+diff --git a/src/ui/puzzles/PuzzleDevice.tsx b/src/ui/puzzles/PuzzleDevice.tsx
+index 50ea502..1641375 100644
+--- a/src/ui/puzzles/PuzzleDevice.tsx
++++ b/src/ui/puzzles/PuzzleDevice.tsx
+@@ -15,6 +15,10 @@ import {
+   PUZZLE_DEVICE_COPY,
+   type PuzzleId,
+ } from '../../game/puzzles/storyPuzzles';
++import {
++  matchedRecords,
++  recordSignatures as signatures,
++} from '../../game/puzzles/signalRecords';
+ import { ContextBackButton } from '../common/ContextBackButton';
+ import { FacilityMap } from '../evidence/FacilityMap';
+ 
+@@ -138,7 +142,8 @@ function DeviceFrame({
+       className={`puzzle-device device-${puzzleId}${embedded ? ' is-embedded' : ' device-closeup'}`}
+       role={embedded ? 'region' : 'dialog'}
+       aria-modal={embedded ? undefined : true}
+-      aria-labelledby={titleId}
++      aria-labelledby={embedded ? undefined : titleId}
++      aria-label={embedded ? copy.title : undefined}
+       data-puzzle-id={puzzleId}
+       data-diagnostic-available={diagnosticAvailable || undefined}
+       style={closeupStyle}
+@@ -148,10 +153,12 @@ function DeviceFrame({
+       {!embedded && (
+         <ContextBackButton destination="部屋に戻る" onClick={onClose} />
+       )}
+-      <header className="device-identity">
+-        <p>{copy.eyebrow}</p>
+-        <h2 id={titleId}>{copy.title}</h2>
+-      </header>
++      {!embedded && (
++        <header className="device-identity">
++          <p>{copy.eyebrow}</p>
++          <h2 id={titleId}>{copy.title}</h2>
++        </header>
++      )}
+       <div className="device-workarea">{children}</div>
+       {puzzleId !== 'puzzle_power_route' && (
+         <p
+@@ -529,15 +536,6 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
+   );
+ }
+ 
+-const signatures = {
+-  r1: '短・長・短',
+-  r2: '長・短・短',
+-  r3: '短・短・長',
+-  's-a': '短・短・長',
+-  's-b': '短・長・短',
+-  's-c': '長・短・短',
+-} as const;
+-
+ function WaveSignature({
+   value,
+ }: {
+@@ -647,9 +645,11 @@ function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
+             role="status"
+             aria-label="3組すべて送信は受信の20分後"
+           >
+-            <span>02:11:04 ─ 02:31:04</span>
+-            <span>02:14:32 ─ 02:34:32</span>
+-            <span>02:17:18 ─ 02:37:18</span>
++            {matchedRecords.map(({ receive, source }) => (
++              <span key={receive.id}>
++                {receive.time} ─ {source.time}
++              </span>
++            ))}
+             <strong>+20:00 / OFFSET CONFIRMED</strong>
+           </div>
+         )}
+diff --git a/src/ui/terminal/terminalTelemetry.ts b/src/ui/terminal/terminalTelemetry.ts
+new file mode 100644
+index 0000000..3b40b18
+--- /dev/null
++++ b/src/ui/terminal/terminalTelemetry.ts
+@@ -0,0 +1,79 @@
++import type {
++  StoryStage,
++  TerminalMenuId,
++} from '../../game/machine/gameMachine';
++import { stagePuzzle } from '../../game/machine/gameMachine';
++import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
++
++export const terminalModes = [
++  { id: 'system', label: 'SYSTEM', caption: '設備・送信' },
++  { id: 'log', label: 'LOG', caption: '通信記録' },
++  { id: 'audio', label: 'SIGNAL', caption: '受信データ' },
++  { id: 'security', label: 'SECURITY', caption: '施設配線' },
++] as const;
++
++const puzzleModes: Partial<Record<PuzzleId, TerminalMenuId>> = {
++  puzzle_carrier_sync: 'system',
++  puzzle_signal_investigation: 'log',
++  puzzle_packet_repair: 'audio',
++  puzzle_transmission_window: 'system',
++};
++
++const stageStatus: Partial<Record<StoryStage, string>> = {
++  puzzle_carrier_sync: 'CARRIER / NO LOCK',
++  puzzle_maintenance_lock: 'WEST MAINTENANCE LOCK / LOCAL CONTROL',
++  puzzle_signal_investigation: 'LOG / RECORDS AVAILABLE',
++  puzzle_packet_repair: 'SIGNAL / DAMAGED FRAME DETECTED',
++  puzzle_voiceprint_calibration: 'VOICEPRINT DATA / EXTERNAL PANEL',
++  puzzle_transmission_window: 'TRANSMIT / INTERLOCK ENGAGED',
++  transmission_ready: 'TRANSMIT / INTERLOCK RELEASED',
++};
++
++// A read-only projection of game progress; never a second progression machine.
++export function getTerminalTelemetry(
++  stage: StoryStage,
++  completed: readonly PuzzleId[],
++) {
++  const has = (id: PuzzleId) => completed.includes(id);
++  const investigated = has('puzzle_signal_investigation');
++  const frameRestored = has('puzzle_packet_repair');
++  const recordsAvailable = has('puzzle_maintenance_lock');
++  const voiceMatched = has('puzzle_voiceprint_calibration');
++  const puzzleId = stagePuzzle[stage];
++  const puzzleMode = puzzleId ? puzzleModes[puzzleId] : undefined;
++  const transmissionReady = stage === 'transmission_ready';
++  const readings = [
++    {
++      label: 'CARRIER',
++      value: has('puzzle_carrier_sync') ? 'LOCKED' : 'NO LOCK',
++    },
++    { label: 'LOCAL CLOCK', value: '02:17 / STOPPED' },
++    {
++      label: 'NEGATIVE DELAY',
++      value: investigated ? '-00:20:00' : '--:--:-- / CALIBRATION ERROR',
++    },
++  ];
++  if (investigated) {
++    readings.push(
++      { label: 'RETURN BUS', value: 'ECHO BUFFER RETURN' },
++      { label: 'FRAME', value: frameRestored ? 'RESTORED' : 'DAMAGED' },
++    );
++  }
++  if (frameRestored)
++    readings.push({
++      label: 'VOICEPRINT',
++      value: voiceMatched ? 'MATCH / E-01 OCCUPANT' : 'AWAITING CALIBRATION',
++    });
++
++  return {
++    puzzleId: puzzleMode ? puzzleId : undefined,
++    puzzleMode,
++    recordsAvailable,
++    investigated,
++    frameRestored,
++    voiceMatched,
++    transmissionReady,
++    readings,
++    status: stageStatus[stage] ?? 'TRANSMISSION BUS / STANDBY',
++  };
++}
