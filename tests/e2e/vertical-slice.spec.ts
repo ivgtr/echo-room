@@ -368,22 +368,12 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
   expect(intercomLabelBox!.x + intercomLabelBox!.width).toBeLessThanOrEqual(
     stageBox!.x + stageBox!.width,
   );
-  await page.evaluate(() => {
-    const nativeSetTimeout = window.setTimeout.bind(window);
-    let inspectionTimerExtended = false;
-    window.setTimeout = ((
-      handler: TimerHandler,
-      timeout?: number,
-      ...args: unknown[]
-    ) => {
-      if (timeout === 380 && !inspectionTimerExtended) {
-        inspectionTimerExtended = true;
-        return nativeSetTimeout(handler, 3000, ...args);
-      }
-      return nativeSetTimeout(handler, timeout, ...args);
-    }) as typeof window.setTimeout;
-  });
+  // Inspect the actual 380ms approach at a deterministic point; a wall-clock
+  // extension can still expire between assertions on software-rendered CI.
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1_000));
   await intercom.dispatchEvent('click');
+  await page.clock.runFor(120);
   const transitionMarker = page.locator('.inspection-transition-marker');
   await expect(transitionMarker).toBeVisible();
   await expect(transitionMarker).toHaveAttribute('data-trace-duration', '110');
@@ -446,6 +436,8 @@ test('normal exploration exposes only edge turns and direct hotspots', async ({
     stageBox!.x + stageBox!.width,
   );
   expect(transitionMetrics!.paintedPixels).toBeGreaterThan(0);
+  await page.clock.runFor(260);
+  await page.clock.resume();
   await page.getByRole('button', { name: '文章をすべて表示' }).click();
   await expect(page.locator('.narrative-text')).toHaveAttribute(
     'data-text-complete',
@@ -490,7 +482,10 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   await expect(worldCanvas).toHaveAttribute('aria-label', /東側/);
   await page.keyboard.press('ArrowRight');
   await expect(worldCanvas).toHaveAttribute('aria-label', /東側/);
-  const firstControl = terminal.getByRole('button', { name: 'SYSTEM' });
+  const firstControl = terminal.getByRole('region', {
+    name: '端末表示器',
+    exact: true,
+  });
   await expect(firstControl).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(

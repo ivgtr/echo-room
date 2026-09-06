@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { ErrorBoundary } from './app/ErrorBoundary';
 import './styles/global.css';
+import './ui/terminal/terminal.css';
 
 const root = document.getElementById('root');
 

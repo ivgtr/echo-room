@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { createSettingsSave, installSettingsSave } from './saveFixture';
+
 test('sound lifecycle follows play, SYSTEM, visibility, and master settings', async ({
   page,
 }) => {
@@ -76,6 +78,13 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
         ).__soundAudit,
     );
 
+  await page.addInitScript(
+    installSettingsSave,
+    createSettingsSave({
+      motionReduced: false,
+      subtitleSettings: { size: 'medium', background: 'soft', speed: 'fast' },
+    }),
+  );
   await page.goto('/');
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
   const environmentStarts = async () =>
@@ -91,6 +100,21 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
     .poll(async () => (await readAudit()).started.includes(520))
     .toBe(true);
   expect((await readAudit()).resumed).toBe(1);
+
+  // The opening narrative owns the full-screen pointer surface. Finish it
+  // before exercising the SYSTEM control rather than clicking through it.
+  for (let index = 0; index < 6; index += 1) {
+    await expect(page.locator('.narrative-text')).toHaveAttribute(
+      'data-text-complete',
+      'true',
+    );
+    await page.getByRole('button', { name: '次の文章へ' }).click();
+  }
+  await expect(page.locator('.narrative-text')).toHaveAttribute(
+    'data-text-complete',
+    'true',
+  );
+  await page.getByRole('button', { name: '探索を始める' }).click();
 
   await page.getByRole('button', { name: 'SYSTEM' }).click();
   await expect
@@ -124,6 +148,7 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
     .getByRole('button', { name: 'TEXT & SOUND / 字幕・サウンド設定' })
     .click();
   await system.getByRole('button', { name: /MASTER \/ サウンド ON/ }).click();
+  await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
   await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
   await expect.poll(environmentStarts).toBe(6);
 });

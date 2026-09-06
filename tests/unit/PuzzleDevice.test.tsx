@@ -1,5 +1,6 @@
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -10,9 +11,44 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PuzzleDevice } from '../../src/ui/puzzles/PuzzleDevice';
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe('PuzzleDevice', () => {
+  it('defers automatic detection for an inactive display and submits once when reactivated', () => {
+    const onSubmit = vi.fn();
+    const props = {
+      puzzleId: 'puzzle_carrier_sync' as const,
+      failures: 0,
+      onSubmit,
+      onClose: vi.fn(),
+      embedded: true,
+    };
+    const view = render(<PuzzleDevice {...props} active={false} />);
+    // Model an input update arriving at the visibility boundary.
+    fireEvent.keyDown(screen.getByRole('slider', { name: 'CHANNEL A' }), {
+      key: 'ArrowRight',
+    });
+    fireEvent.keyDown(screen.getByRole('slider', { name: 'CHANNEL A' }), {
+      key: 'ArrowRight',
+    });
+    fireEvent.keyDown(screen.getByRole('slider', { name: 'CHANNEL C' }), {
+      key: 'ArrowLeft',
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+    view.rerender(<PuzzleDevice {...props} active />);
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith('puzzle_carrier_sync', [
+      'right-2',
+      'none',
+      'left-1',
+    ]);
+    view.rerender(<PuzzleDevice {...props} active={false} />);
+    view.rerender(<PuzzleDevice {...props} active />);
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
   it('isolates DOOR, rejects an out-of-order circuit, then restores power upstream first', async () => {
     const onSubmit = vi.fn();
     const view = render(
@@ -251,7 +287,24 @@ describe('PuzzleDevice', () => {
         name: 'レール2の断片Aを持ち上げる',
       }),
     ).toBeInTheDocument();
-    expect(device.getByText('CONTINUITY / BROKEN')).toBeInTheDocument();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    fireEvent.click(device.getByRole('button', { name: 'EJECT / 取り出す' }));
+    for (const [fragment, rail] of [
+      ['D', 2],
+      ['A', 3],
+      ['B', 4],
+    ] as const) {
+      fireEvent.click(
+        device.getByRole('button', { name: `断片${fragment}を持つ` }),
+      );
+      fireEvent.click(
+        device.getByRole('button', {
+          name: `レール${rail}へ断片${fragment}を置く`,
+        }),
+      );
+    }
+    expect(device.getByText('FRAME RESTORED')).toBeInTheDocument();
+    expect(device.queryByText(/BROKEN|SIGNAL BREAK/)).not.toBeInTheDocument();
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 

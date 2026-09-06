@@ -229,15 +229,25 @@ export function App() {
   useEffect(() => {
     if (!isPlaying || systemMenuOpen || !pageVisible) return;
     let previousTime = performance.now();
+    let clockVisible = document.visibilityState === 'visible';
     const commitElapsedTime = () => {
       const currentTime = performance.now();
       const deltaMs = Math.max(0, currentTime - previousTime);
       previousTime = currentTime;
-      if (deltaMs > 0) actorRef.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs });
+      if (clockVisible && deltaMs > 0)
+        actorRef.send({ type: 'ACTIVE_TIME_ELAPSED', deltaMs });
     };
+    // Flush at the visibility event itself, before React's deferred cleanup.
+    // Hidden time must not be charged when timers or effects resume later.
+    const syncClockVisibility = () => {
+      commitElapsedTime();
+      clockVisible = document.visibilityState === 'visible';
+    };
+    document.addEventListener('visibilitychange', syncClockVisibility);
     const timer = window.setInterval(commitElapsedTime, 250);
     return () => {
       window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', syncClockVisibility);
       commitElapsedTime();
     };
   }, [actorRef, isPlaying, pageVisible, systemMenuOpen]);
@@ -494,9 +504,10 @@ export function App() {
         setSystemMenuOpen(false);
         actorRef.send({ type: 'RETURNED_TO_TITLE' });
       }}
-      onTerminalMenu={(menuId) =>
-        actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId })
-      }
+      onTerminalMenu={(menuId) => {
+        soundManager.playEffect('terminal_connect');
+        actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId });
+      }}
       onInventoryOpen={() => {
         setSystemMenuOpen(false);
         setInventoryOpen(true);

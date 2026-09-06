@@ -15,6 +15,10 @@ import {
   PUZZLE_DEVICE_COPY,
   type PuzzleId,
 } from '../../game/puzzles/storyPuzzles';
+import {
+  matchedRecords,
+  recordSignatures as signatures,
+} from '../../game/puzzles/signalRecords';
 import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 
@@ -22,11 +26,13 @@ type Props = {
   puzzleId: PuzzleId;
   failures: number;
   embedded?: boolean;
+  active?: boolean;
   onSubmit: (puzzleId: PuzzleId, answer: string[]) => void;
   onClose: () => void;
 };
 
 type DeviceProps = {
+  active: boolean;
   failures: number;
   submit: (answer: string[]) => void;
 };
@@ -35,12 +41,15 @@ export function PuzzleDevice({
   puzzleId,
   failures,
   embedded = false,
+  active = true,
   onSubmit,
   onClose,
 }: Props) {
   const submit = useCallback(
-    (answer: string[]) => onSubmit(puzzleId, answer),
-    [onSubmit, puzzleId],
+    (answer: string[]) => {
+      if (active) onSubmit(puzzleId, answer);
+    },
+    [active, onSubmit, puzzleId],
   );
   const Device = deviceComponents[puzzleId];
   const [diagnosticPuzzleId, setDiagnosticPuzzleId] = useState<PuzzleId | null>(
@@ -49,7 +58,7 @@ export function PuzzleDevice({
   const diagnosticAvailable = diagnosticPuzzleId === puzzleId;
   const inactivityTimerRef = useRef<number | null>(null);
   const restartInactivityTimer = () => {
-    if (diagnosticAvailable) return;
+    if (!active || diagnosticAvailable) return;
     if (inactivityTimerRef.current !== null)
       window.clearTimeout(inactivityTimerRef.current);
     inactivityTimerRef.current = window.setTimeout(
@@ -58,6 +67,7 @@ export function PuzzleDevice({
     );
   };
   useEffect(() => {
+    if (!active) return;
     inactivityTimerRef.current = window.setTimeout(
       () => setDiagnosticPuzzleId(puzzleId),
       60_000,
@@ -71,7 +81,7 @@ export function PuzzleDevice({
         window.clearTimeout(inactivityTimerRef.current);
       window.clearTimeout(sessionTimer);
     };
-  }, [puzzleId]);
+  }, [active, puzzleId]);
 
   return (
     <DeviceFrame
@@ -82,7 +92,7 @@ export function PuzzleDevice({
       diagnosticAvailable={diagnosticAvailable}
       onActivity={restartInactivityTimer}
     >
-      <Device failures={failures} submit={submit} />
+      <Device active={active} failures={failures} submit={submit} />
     </DeviceFrame>
   );
 }
@@ -126,7 +136,6 @@ function DeviceFrame({
   const closeupImage = closeupImages[puzzleId];
   const errorCode: Partial<Record<PuzzleId, string>> = {
     puzzle_maintenance_lock: 'LOCK / JAMMED',
-    puzzle_packet_repair: 'CONTINUITY / BROKEN',
   };
   const closeupStyle = closeupImage
     ? ({
@@ -138,7 +147,8 @@ function DeviceFrame({
       className={`puzzle-device device-${puzzleId}${embedded ? ' is-embedded' : ' device-closeup'}`}
       role={embedded ? 'region' : 'dialog'}
       aria-modal={embedded ? undefined : true}
-      aria-labelledby={titleId}
+      aria-labelledby={embedded ? undefined : titleId}
+      aria-label={embedded ? copy.title : undefined}
       data-puzzle-id={puzzleId}
       data-diagnostic-available={diagnosticAvailable || undefined}
       style={closeupStyle}
@@ -148,21 +158,24 @@ function DeviceFrame({
       {!embedded && (
         <ContextBackButton destination="部屋に戻る" onClick={onClose} />
       )}
-      <header className="device-identity">
-        <p>{copy.eyebrow}</p>
-        <h2 id={titleId}>{copy.title}</h2>
-      </header>
-      <div className="device-workarea">{children}</div>
-      {puzzleId !== 'puzzle_power_route' && (
-        <p
-          className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
-          aria-live="assertive"
-        >
-          {failures > 0
-            ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
-            : 'STATUS / STANDBY'}
-        </p>
+      {!embedded && (
+        <header className="device-identity">
+          <p>{copy.eyebrow}</p>
+          <h2 id={titleId}>{copy.title}</h2>
+        </header>
       )}
+      <div className="device-workarea">{children}</div>
+      {puzzleId !== 'puzzle_power_route' &&
+        puzzleId !== 'puzzle_packet_repair' && (
+          <p
+            className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
+            aria-live="assertive"
+          >
+            {failures > 0
+              ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
+              : 'STATUS / STANDBY'}
+          </p>
+        )}
       {diagnosticAvailable && (
         <p className="device-diagnostic" role="status">
           DIAGNOSTIC AVAILABLE / SYSTEMのヒントを確認できます
@@ -334,10 +347,10 @@ function PowerRouteDevice({ submit }: DeviceProps) {
   );
 }
 
-function CarrierSyncDevice({ failures, submit }: DeviceProps) {
+function CarrierSyncDevice({ active, failures, submit }: DeviceProps) {
   const [positions, setPositions] = useState([-2, 0, 1]);
   useAutoAnswer(
-    positions.every((position) => position === 0)
+    active && positions.every((position) => position === 0)
       ? ['right-2', 'none', 'left-1']
       : null,
     submit,
@@ -529,15 +542,6 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
   );
 }
 
-const signatures = {
-  r1: '短・長・短',
-  r2: '長・短・短',
-  r3: '短・短・長',
-  's-a': '短・短・長',
-  's-b': '短・長・短',
-  's-c': '長・短・短',
-} as const;
-
 function WaveSignature({
   value,
 }: {
@@ -556,7 +560,7 @@ function WaveSignature({
   );
 }
 
-function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
+function SignalInvestigationDevice({ active, failures, submit }: DeviceProps) {
   const [activeReceive, setActiveReceive] = useState<number | null>(null);
   const [patches, setPatches] = useState<(string | null)[]>([null, null, null]);
   const [trace, setTrace] = useState<string[]>([]);
@@ -568,7 +572,7 @@ function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
     );
   });
   useAutoAnswer(
-    pairingComplete && trace.length === 3
+    active && pairingComplete && trace.length === 3
       ? [...patches.filter(isString), ...trace]
       : null,
     submit,
@@ -647,9 +651,11 @@ function SignalInvestigationDevice({ failures, submit }: DeviceProps) {
             role="status"
             aria-label="3組すべて送信は受信の20分後"
           >
-            <span>02:11:04 ─ 02:31:04</span>
-            <span>02:14:32 ─ 02:34:32</span>
-            <span>02:17:18 ─ 02:37:18</span>
+            {matchedRecords.map(({ receive, source }) => (
+              <span key={receive.id}>
+                {receive.time} ─ {source.time}
+              </span>
+            ))}
             <strong>+20:00 / OFFSET CONFIRMED</strong>
           </div>
         )}
@@ -701,11 +707,12 @@ const fragments = [
   { id: 'd', label: 'D', left: 'triangle', right: 'diamond' },
 ] as const;
 
-function PacketRailDevice({ submit }: DeviceProps) {
+function PacketRailDevice({ active, submit }: DeviceProps) {
   const [rail, setRail] = useState<(string | null)[]>([null, null, null]);
   const [selected, setSelected] = useState<string | null>(null);
   const complete = rail.every(isString);
   const submittedSignatureRef = useRef('');
+  const confirmationRef = useRef<HTMLButtonElement>(null);
 
   const placedFragments = [
     fragments.find(({ id }) => id === 'c')!,
@@ -721,12 +728,18 @@ function PacketRailDevice({ submit }: DeviceProps) {
   const jointSignature = joints.map(Number).join('');
   const restored = complete && jointSignature === '111';
   useEffect(() => {
-    if (!complete || restored) return;
+    // The placement controls disappear on restoration; keep keyboard focus
+    // on the result's remaining action rather than the document body.
+    if (active && restored && document.activeElement === document.body)
+      confirmationRef.current?.focus();
+  }, [active, restored]);
+  useEffect(() => {
+    if (!active || !complete || restored) return;
     const answer = answerSignature.split('|');
     if (submittedSignatureRef.current === answerSignature) return;
     submittedSignatureRef.current = answerSignature;
     submit(answer);
-  }, [answerSignature, complete, restored, submit]);
+  }, [active, answerSignature, complete, restored, submit]);
 
   function placeFragment(slot: number, fragmentId: string) {
     setRail((current) =>
@@ -866,6 +879,7 @@ function PacketRailDevice({ submit }: DeviceProps) {
           <button
             type="button"
             className="packet-confirm"
+            ref={confirmationRef}
             onClick={() => submit(['c', ...rail.filter(isString)])}
           >
             ACCEPT FRAME / 復元内容を確認する

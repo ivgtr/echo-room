@@ -35,8 +35,9 @@ describe('InventoryPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /CONDUIT MAP 施設図/ }));
     fireEvent.click(screen.getByRole('button', { name: '図を広げる' }));
     expect(onInspectMap).toHaveBeenCalledOnce();
-    expect(screen.getByText(/通信線は機械設備区画へ/)).toBeVisible();
-    expect(screen.getByText('ECHO BUFFER RETURN ○')).toBeVisible();
+    expect(screen.getByText(/インターホンから線をたどる/)).toBeVisible();
+    expect(screen.getByText('RETURN ○ / E-02 ┃')).toBeVisible();
+    expect(screen.queryByText('ECHO BUFFER RETURN ○')).not.toBeInTheDocument();
     expect(screen.getByText('CONTROL ROOM')).toBeVisible();
     expect(screen.getByText('MACHINE ROOM')).toBeVisible();
   });
