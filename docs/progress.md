@@ -1,6 +1,13 @@
 # ECHO ROOM 実装進捗
 
-最終更新: 2026-09-06
+最終更新: 2026-09-14
+
+## タイトルの刷新・初回サウンド選択
+
+状態: verification。前回のWebUI寄りの案を置き換え、既存E-01背景、二段ロゴ、文字メニュー、全画面の初回音声選択、設定階層、確認付きの再開始を実装した。[判断記録](./decisions/cinematic-title.md)参照。
+
+Node 24.20.0、リポジトリ指定React 19.2.8と固定依存でtypecheck・lintを確認。全件checkとPlaywrightの検証結果はPRに記録する。検証用workflowと運搬用patchは最終差分に残さず、本番deployは変更しない。
+
 
 ## Issue #13：端末の装置化
 

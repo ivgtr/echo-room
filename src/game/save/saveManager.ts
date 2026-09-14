@@ -73,7 +73,7 @@ const soundLevelsSchema = z.object({
   environment: z.number().min(0).max(100),
 });
 
-const settingsSchema = z.object({
+export const settingsSchema = z.object({
   schemaVersion: z.literal(4),
   soundEnabled: z.boolean(),
   visualAssist: z.boolean(),

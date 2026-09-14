@@ -1,7 +1,8 @@
+import { openTitle } from './titleFixture';
 import { expect, test, type Page } from '@playwright/test';
 
 async function enterRoom(page: Page) {
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
   for (let index = 0; index < 6; index += 1) {
     await expect(page.locator('.narrative-text')).toHaveAttribute(

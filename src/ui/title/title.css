@@ -1,0 +1,427 @@
+.title-screen {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: #ece9df;
+  background: #050709;
+}
+
+.title-scene,
+.title-scene__shade,
+.title-scene__scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.title-scene__room {
+  position: absolute;
+  top: 0;
+  left: 16%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  filter: saturate(0.72) brightness(0.95);
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.title-scene__shade {
+  background:
+    linear-gradient(
+      90deg,
+      #050709 0%,
+      rgb(5 7 9 / 94%) 13%,
+      rgb(5 7 9 / 64%) 34%,
+      transparent 66%
+    ),
+    linear-gradient(
+      0deg,
+      rgb(2 4 5 / 80%),
+      transparent 26%,
+      transparent 78%,
+      rgb(2 4 5 / 38%)
+    );
+}
+
+.title-scene__scanlines {
+  opacity: 0.12;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, #000 3px 4px);
+}
+
+.title-composition {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+  height: 100%;
+  padding: max(2rem, env(safe-area-inset-top))
+    max(6.5vw, env(safe-area-inset-right))
+    max(2rem, env(safe-area-inset-bottom)) max(8vw, env(safe-area-inset-left));
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.title-identity {
+  flex: 0 0 auto;
+  max-width: 100%;
+  margin-block: auto;
+  padding-block: 1rem;
+}
+
+.title-logo {
+  position: relative;
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(4.3rem, min(10.4vw, 15.5vh), 10rem);
+  font-weight: 500;
+  line-height: 0.89;
+  letter-spacing: 0.055em;
+  text-shadow:
+    1px 0 rgb(206 80 69 / 50%),
+    -1px 0 rgb(122 211 222 / 62%),
+    0 0 22px rgb(174 207 211 / 10%);
+}
+
+.title-logo span {
+  display: block;
+}
+.title-logo span + span {
+  margin-top: 0.13em;
+}
+
+.title-logo::after {
+  content: '';
+  position: absolute;
+  top: 46%;
+  left: -0.9em;
+  width: 123%;
+  height: 1px;
+  opacity: 0.5;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #97c8cc 24%,
+    transparent 45%,
+    transparent 67%,
+    #9bbec3,
+    transparent
+  );
+}
+
+.title-japanese {
+  margin: 1.25rem 0 0;
+  padding-left: 0.25em;
+  font-size: clamp(0.9rem, 1.6vw, 1.15rem);
+  letter-spacing: 0.65em;
+  color: #c7c9c4;
+}
+
+.title-menu {
+  display: grid;
+  justify-items: start;
+  margin-top: clamp(1.25rem, 7vh, 4.4rem);
+  gap: 0.25rem;
+}
+
+.title-command {
+  position: relative;
+  display: block;
+  min-height: 48px;
+  max-width: 100%;
+  padding: 0.7rem 1rem 0.7rem 1.8rem;
+  border: 0;
+  border-radius: 0;
+  color: #b7bdbb;
+  background: transparent;
+  font-size: clamp(0.95rem, 1.55vw, 1.25rem);
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    color 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.title-command::before {
+  content: '';
+  position: absolute;
+  left: 0.2rem;
+  top: calc(50% - 5px);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid currentcolor;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.title-command--lead {
+  color: #ece9df;
+}
+.title-command--lead::before {
+  opacity: 0.75;
+  transform: none;
+}
+
+.title-command:hover,
+.title-command:focus-visible {
+  color: #f5faf5;
+  text-shadow: 0 0 15px rgb(161 225 223 / 64%);
+}
+
+.title-command:hover::before,
+.title-command:focus-visible::before {
+  opacity: 1;
+  transform: none;
+}
+
+.title-menu:has(.title-command:hover, .title-command:focus-visible)
+  .title-command:not(:hover, :focus-visible)::before,
+.title-dialog__commands:has(.title-command:hover, .title-command:focus-visible)
+  .title-command:not(:hover, :focus-visible)::before {
+  opacity: 0;
+}
+
+.title-command:focus-visible {
+  outline: 1px solid #a7d1d1;
+  outline-offset: 2px;
+}
+
+.title-command[aria-disabled='true'] {
+  color: #b7bdbb;
+  cursor: progress;
+}
+
+.title-location {
+  position: absolute;
+  right: max(2.5rem, env(safe-area-inset-right));
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  margin: 0;
+  color: #9caaa8;
+  font:
+    0.7rem ui-monospace,
+    monospace;
+  letter-spacing: 0.3em;
+}
+
+.title-warning {
+  max-width: 27rem;
+  margin: 1.2rem 0 0;
+  color: #f0b3ac;
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+
+.title-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: max(1.5rem, env(safe-area-inset-top))
+    max(1.5rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom))
+    max(1.5rem, env(safe-area-inset-left));
+  border: 0;
+  color: #e5e8e3;
+  background: rgb(4 7 9 / 86%);
+  overflow-y: auto;
+}
+
+.title-dialog[open] {
+  display: flex;
+}
+.title-dialog::backdrop {
+  background: rgb(0 0 0 / 32%);
+}
+
+.title-dialog__content {
+  position: relative;
+  width: min(100%, 32rem);
+  margin: auto;
+  padding-block: 1rem;
+}
+
+.title-dialog h2 {
+  margin: 0 0 1.5rem;
+  font-size: clamp(1.15rem, 3vw, 1.55rem);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  line-height: 1.6;
+}
+
+.title-dialog p {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: #bac6c4;
+}
+.title-dialog .title-warning {
+  color: #f0b3ac;
+}
+.title-dialog__commands {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  margin-block: 1.4rem;
+}
+.title-dialog .title-dialog__note {
+  margin-top: 1.8rem;
+  font-size: 0.8rem;
+  color: #9aa9a8;
+}
+
+.title-headphones {
+  position: relative;
+  width: 32px;
+  height: 26px;
+  margin: 0 0 1.3rem;
+  border: 2px solid #9eb5b5;
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+}
+
+.title-headphones::before,
+.title-headphones::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  width: 5px;
+  height: 14px;
+  background: #9eb5b5;
+}
+.title-headphones::before {
+  left: -3px;
+}
+.title-headphones::after {
+  right: -3px;
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .title-composition {
+    padding-block: 1rem;
+  }
+  .title-logo {
+    font-size: clamp(3rem, 15vh, 4.5rem);
+  }
+  .title-japanese {
+    margin-top: 0.7rem;
+  }
+  .title-menu {
+    margin-top: 0.8rem;
+    gap: 0;
+  }
+  .title-command {
+    min-height: 44px;
+    padding-block: 0.45rem;
+  }
+  .title-dialog__content {
+    width: min(100%, 40rem);
+  }
+  .title-dialog h2 {
+    margin-bottom: 0.5rem;
+  }
+  .title-dialog__commands {
+    margin-block: 0.6rem;
+  }
+  .title-dialog .title-dialog__note {
+    margin-top: 0.6rem;
+  }
+  .title-headphones {
+    display: none;
+  }
+}
+
+@media (max-width: 599px) and (orientation: portrait) {
+  .title-composition {
+    padding-inline: max(1.8rem, env(safe-area-inset-left));
+  }
+  .title-logo {
+    font-size: clamp(3.4rem, 17vw, 6rem);
+  }
+  .title-scene__room {
+    left: 0;
+    object-position: 65% center;
+    opacity: 0.55;
+  }
+  .title-scene__shade {
+    background:
+      linear-gradient(90deg, rgb(5 7 9 / 85%), rgb(5 7 9 / 20%)),
+      linear-gradient(0deg, #050709, transparent 70%);
+  }
+  .title-menu {
+    margin-top: 2rem;
+  }
+  .title-location {
+    right: 1.5rem;
+  }
+}
+
+@keyframes title-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.title-screen[data-reduced-motion='false'] .title-identity {
+  animation: title-arrive 600ms ease-out both;
+}
+.title-screen[data-reduced-motion='true'] .title-command,
+.title-screen[data-reduced-motion='true'] .title-command::before {
+  transition: none;
+}
+
+@media (forced-colors: active) {
+  .title-logo {
+    text-shadow: none;
+  }
+  .title-command {
+    color: ButtonText;
+  }
+  .title-command:focus-visible {
+    outline: 2px solid Highlight;
+  }
+  .title-dialog {
+    background: Canvas;
+    color: CanvasText;
+  }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .title-dialog__content:has(.title-headphones) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 1.5rem;
+    width: min(100%, 44rem);
+  }
+  .title-dialog__content:has(.title-headphones) h2 {
+    grid-column: 1;
+  }
+  .title-dialog__content:has(.title-headphones) > p {
+    grid-column: 1;
+    margin-block: 0.4rem;
+  }
+  .title-dialog__content:has(.title-headphones) .title-dialog__commands {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .title-dialog__content:has(.title-headphones) .title-dialog__note {
+    grid-column: 1 / -1;
+  }
+}

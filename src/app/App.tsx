@@ -1,6 +1,11 @@
 import { useActorRef, useSelector } from '@xstate/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  AudioUnlockRequest,
+  hasAudioChoice,
+  rememberAudioChoice,
+} from '../audio/audioSetup';
 import { soundManager, type SoundEffectId } from '../audio/soundManager';
 import { type HotspotId, type LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
@@ -59,6 +64,10 @@ export function App() {
   const [environmentSupported] = useState(() => supportsRequiredEnvironment());
   const [loadResult, setLoadResult] = useState(() => loadProgress());
   const [initialSettings] = useState(() => loadSettings());
+  const [audioChoiceMade, setAudioChoiceMade] = useState(() =>
+    hasAudioChoice(),
+  );
+  const [gameAudioRequest] = useState(() => new AudioUnlockRequest());
   const [visualAssist, setVisualAssist] = useState(
     initialSettings.visualAssist,
   );
@@ -68,7 +77,7 @@ export function App() {
   );
   const [introSeen, setIntroSeen] = useState(initialSettings.introSeen);
   const [soundEnabled, setSoundEnabled] = useState(
-    initialSettings.soundEnabled,
+    audioChoiceMade && initialSettings.soundEnabled,
   );
   const [soundLevels, setSoundLevels] = useState<SoundLevels>(
     initialSettings.soundLevels,
@@ -176,10 +185,13 @@ export function App() {
         },
         window.localStorage,
       );
+      // Never mark onboarding complete before its matching preference is saved.
+      if (audioChoiceMade) rememberAudioChoice(window.localStorage);
     } catch {
       // Settings storage failure must not interrupt play.
     }
   }, [
+    audioChoiceMade,
     soundEnabled,
     soundLevels,
     introSeen,
@@ -338,6 +350,19 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [saveMessage]);
 
+  useEffect(() => () => gameAudioRequest.cancel(), [gameAudioRequest]);
+  const unlockGameSound = useCallback(() => {
+    gameAudioRequest.run(
+      () => soundManager.unlock(),
+      (result) => {
+        if (result !== 'ready') {
+          setSoundEnabled(false);
+          setSaveMessage('音を開始できませんでした。SYSTEMから再設定できます');
+        }
+      },
+    );
+  }, [gameAudioRequest]);
+
   const activeEventNarrative = eventNarrativeQueue[0] ?? null;
   const handleStart = useCallback(() => {
     savedProgressRef.current = false;
@@ -348,9 +373,10 @@ export function App() {
     setNarrativeHistory([]);
     setEventNarrativeQueue([]);
     setAcquiredItems([]);
-    void soundManager.unlock().catch(() => undefined);
+    setAudioChoiceMade(true);
+    if (soundEnabled) unlockGameSound();
     actorRef.send({ type: 'GAME_STARTED' });
-  }, [actorRef]);
+  }, [actorRef, soundEnabled, unlockGameSound]);
   const handleUiClick = useCallback(
     () => soundManager.playEffect('ui_click'),
     [],
@@ -405,10 +431,21 @@ export function App() {
     return (
       <TitleScreen
         onStart={handleStart}
+        soundEnabled={soundEnabled}
+        audioChoiceMade={audioChoiceMade}
+        onSoundChoice={(enabled) => {
+          gameAudioRequest.cancel();
+          setSoundEnabled(enabled);
+          setAudioChoiceMade(true);
+        }}
+        onSoundUnlock={() => soundManager.unlock()}
+        motionReduced={motionReduced}
+        onToggleMotion={() => setMotionReduced((value) => !value)}
         {...(loadResult.status === 'valid'
           ? {
               onContinue: () => {
-                void soundManager.unlock().catch(() => undefined);
+                setAudioChoiceMade(true);
+                if (soundEnabled) unlockGameSound();
                 const progress = loadResult.data.progress;
                 savedProgressRef.current = true;
                 progressWritableRef.current = true;
@@ -492,7 +529,12 @@ export function App() {
       onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleMotion={() => setMotionReduced((value) => !value)}
-      onToggleSound={() => setSoundEnabled((value) => !value)}
+      onToggleSound={() => {
+        // Silent starts do not create an AudioContext; enabling needs a gesture.
+        gameAudioRequest.cancel();
+        if (!soundEnabled) unlockGameSound();
+        setSoundEnabled((value) => !value);
+      }}
       onSoundLevelChange={(channel, value) =>
         setSoundLevels((current) => ({ ...current, [channel]: value }))
       }
@@ -500,8 +542,10 @@ export function App() {
         setSubtitleSettings((current) => ({ ...current, [key]: value }))
       }
       onExit={() => {
+        gameAudioRequest.cancel();
         if (powerRestored) persistCurrentProgress();
         setSystemMenuOpen(false);
+        setLoadResult(loadProgress());
         actorRef.send({ type: 'RETURNED_TO_TITLE' });
       }}
       onTerminalMenu={(menuId) => {
