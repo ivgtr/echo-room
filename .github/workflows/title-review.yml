@@ -96,7 +96,7 @@ jobs:
           npm run check 2>&1 | tee tmp/final-check.log
           npm run build -- --base=/echo-room/ 2>&1 | tee tmp/subpath-build.log
           git diff --check
-          test -z "$(git ls-files tmp)"
+          git diff --exit-code origin/main HEAD -- tmp
       - name: Commit review evidence without rewriting history
         run: |
           git config user.name 'github-actions[bot]'
