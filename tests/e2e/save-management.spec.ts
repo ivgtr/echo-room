@@ -1,3 +1,4 @@
+import { openTitle } from './titleFixture';
 import { expect, test } from '@playwright/test';
 
 import { createSettingsSave, installSettingsSave } from './saveFixture';
@@ -23,14 +24,15 @@ test('corrupt progress is protected until confirmed deletion and settings remain
   await page.addInitScript(() => {
     localStorage.setItem('echo-room:progress', '{bad json');
   });
-  await page.goto('/');
+  await openTitle(page);
 
   await expect(page.getByRole('alert')).toContainText(
     'このデータを消すまで新しい進行は保存されません',
   );
   await expect(page.getByRole('button', { name: '続きから' })).toHaveCount(0);
+  await page.getByRole('button', { name: '設定', exact: true }).click();
   await page.getByRole('button', { name: '保存データを消去' }).click();
-  const confirmation = page.getByRole('group', {
+  const confirmation = page.getByRole('dialog', {
     name: '保存データ消去の確認',
   });
   await expect(confirmation).toBeVisible();

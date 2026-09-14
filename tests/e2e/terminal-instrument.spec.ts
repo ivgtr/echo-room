@@ -1,3 +1,4 @@
+import { openTitle } from './titleFixture';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 import { packetTexts, puzzleIds } from '../../src/game/puzzles/storyPuzzles';
@@ -52,7 +53,7 @@ async function openTerminal(page: Page, stage: TerminalStage, quiet = true) {
   await page.emulateMedia({
     reducedMotion: quiet ? 'reduce' : 'no-preference',
   });
-  await page.goto('/');
+  await openTitle(page, quiet ? 'off' : 'on');
   await page.getByRole('button', { name: '続きから' }).click();
   await page.getByRole('button', { name: '端末を調べる' }).click();
   await expect(page.getByRole('dialog', { name: '端末' })).toBeVisible();

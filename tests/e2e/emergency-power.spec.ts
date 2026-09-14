@@ -1,3 +1,4 @@
+import { openTitle } from './titleFixture';
 import { expect, test } from '@playwright/test';
 
 import { createProgressSave, installProgressSave } from './saveFixture';
@@ -12,7 +13,7 @@ test('active-time warnings pause safely and reserve power survives reload', asyn
     createProgressSave({ activeElapsedMs: 560_000 }),
   );
 
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
   const hud = page.locator('.status-cluster');

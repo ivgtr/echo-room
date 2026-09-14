@@ -176,11 +176,15 @@ export class SoundManager {
       new AudioContext(),
   ) {}
 
-  async unlock() {
+  async unlock(): Promise<boolean> {
     this.ensureContext();
-    if (this.context?.state === 'suspended') await this.context.resume();
+    if (this.context && this.context.state !== 'running') {
+      await this.context.resume();
+    }
     this.syncBuses();
     this.syncEnvironment();
+    // A resolved resume alone is not proof that the browser is playing audio.
+    return this.context?.state === 'running';
   }
 
   sync(nextState: SoundState) {

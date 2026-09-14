@@ -1,6 +1,14 @@
 # ECHO ROOM 実装進捗
 
-最終更新: 2026-09-06
+最終更新: 2026-09-14
+
+## タイトルの刷新・初回サウンド選択
+
+状態: completed（今回の改修範囲）。既存E-01背景、二段ロゴ、文字メニュー、全画面の初回音声選択、設定階層、確認付きの再開始を実装した。[判断記録](./decisions/cinematic-title.md)参照。
+
+Node 24.20.0 / npm 11.19.0 / React 19.2.8 / Playwright 1.62.1 / 標準Chromium 151.0.7922.34で検証。`npm run check`は21 files / 107 unit tests、型検査、lint、content/assets検証、buildを含め成功。タイトル単独13件に加え、全編41件のE2Eがskip・retryなしで成功した。実行したソースは `3564157bf8e36347beb5778f8f4c572a727d29e2`。1440×900、1280×720、844×390、568×320、390×844、320×568で確認した。
+
+結果と実画面は[PR #20](https://github.com/ivgtr/echo-room/pull/20)に集約。検証後の変更は記録・画像と一時workflowの除去だけで、本番deployは変更しない。実機iOS Safariとスクリーンリーダーの実際の読み上げは未確認。マージ・本番公開は行っていない。
 
 ## Issue #13：端末の装置化
 

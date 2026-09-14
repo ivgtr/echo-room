@@ -1,3 +1,4 @@
+import { openTitle } from './titleFixture';
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -8,7 +9,7 @@ import {
 } from './saveFixture';
 
 async function enterRoom(page: Page) {
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
   for (let index = 0; index < 6; index += 1) {
     await expect(page.locator('.narrative-text')).toHaveAttribute(
@@ -39,7 +40,7 @@ async function dismissEventNarrative(page: Page) {
 test('advances narrative from the full screen without visible action buttons', async ({
   page,
 }) => {
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
   const stage = page.locator('.logical-stage');
   const narrative = page.getByRole('dialog', { name: 'メッセージ' });
@@ -72,7 +73,7 @@ test('aligns locker controls to the close-up artwork coordinate system', async (
       completedPuzzleIds: ['puzzle_power_route', 'puzzle_carrier_sync'],
     }),
   );
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: '続きから' }).click();
   await page.getByRole('button', { name: 'ロッカーを調べる' }).click();
 
@@ -156,7 +157,7 @@ test('keeps one canvas while crossfading all four room views', async ({
 test('keyboard-capable route restores power and resumes after reload', async ({
   page,
 }) => {
-  await page.goto('/');
+  await openTitle(page, 'on');
   await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
   await expect(
     page.getByRole('button', { name: '既読会話をスキップ' }),
@@ -320,7 +321,7 @@ test('read introduction can be skipped without losing its archive', async ({
     installSettingsSave,
     createSettingsSave({ introSeen: true }),
   );
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
   await page.getByRole('button', { name: '既読会話をスキップ' }).press('Enter');
   await expect(page.getByTestId('world-canvas')).toBeVisible();
@@ -459,7 +460,7 @@ test('inspection approach locks duplicate input and restores hotspot focus', asy
   page,
 }) => {
   await page.addInitScript(installProgressSave, createProgressSave());
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
   const terminalHotspot = page.getByRole('button', {
@@ -544,7 +545,7 @@ test('system subviews return one level before resuming exploration', async ({
     installProgressSave,
     createProgressSave({ inventory: ['item_screwdriver'] }),
   );
-  await page.goto('/');
+  await openTitle(page, 'on');
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
   await page.getByRole('button', { name: 'SYSTEM' }).click();
@@ -665,7 +666,7 @@ test.describe('touch input', () => {
   test.use({ hasTouch: true });
 
   test('touch reaches the same breaker puzzle', async ({ page }) => {
-    await page.goto('/');
+    await openTitle(page);
     await page.getByRole('button', { name: 'ゲーム開始' }).tap();
     for (let index = 0; index < 6; index += 1) {
       await expect(page.locator('.narrative-text')).toHaveAttribute(
@@ -701,7 +702,7 @@ test.describe('touch input', () => {
 
   test('touch moves the carrier waveforms themselves', async ({ page }) => {
     await page.addInitScript(installProgressSave, createProgressSave());
-    await page.goto('/');
+    await openTitle(page);
     await page.getByRole('button', { name: '続きから' }).tap();
     await page.getByRole('button', { name: '端末を調べる' }).tap();
 

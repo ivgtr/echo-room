@@ -1,3 +1,4 @@
+import { openTitle } from './titleFixture';
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -19,7 +20,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
     installSettingsSave,
     createSettingsSave({ motionReduced: true, soundEnabled: false }),
   );
-  await page.goto('/');
+  await openTitle(page);
   await page.getByRole('button', { name: '続きから' }).press('Enter');
 
   await openHotspot(page, '端末を調べる');

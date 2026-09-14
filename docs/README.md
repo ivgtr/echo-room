@@ -56,6 +56,8 @@
 | `docs/decisions/*.md` | 重要な設計判断の記録 | 判断が発生したとき |
 | [端末の装置化](./decisions/terminal-instrument.md) | Issue #13の表示・操作・情報解禁と検証記録 | 端末UIを変更するとき |
 
+| [タイトルの刷新](./decisions/cinematic-title.md) | タイトルの構図・初回音声選択・検証方針 | タイトルUIを変更するとき |
+
 これらは実装開始前には存在しなくてよい。
 
 ---

@@ -1,3 +1,4 @@
+import { openTitle } from './titleFixture';
 import { expect, test } from '@playwright/test';
 
 import { createSettingsSave, installSettingsSave } from './saveFixture';
@@ -85,7 +86,7 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
       subtitleSettings: { size: 'medium', background: 'soft', speed: 'fast' },
     }),
   );
-  await page.goto('/');
+  await openTitle(page, 'on');
   await page.getByRole('button', { name: 'ゲーム開始' }).click();
   const environmentStarts = async () =>
     (await readAudit()).started.filter(
