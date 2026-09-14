@@ -5,122 +5,112 @@ on:
     paths: [.github/workflows/title-review.yml]
 permissions:
   contents: write
-concurrency:
-  group: title-final-${{ github.sha }}
-  cancel-in-progress: false
+  actions: read
 jobs:
-  review:
+  finalize:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
+    env:
+      VERIFIED_SHA: 3564157bf8e36347beb5778f8f4c572a727d29e2
     steps:
       - uses: actions/checkout@v4
         with:
           ref: feat/cinematic-title-audio
-      - name: Verify ref and apply refinement
+          fetch-depth: 0
+      - name: Confirm tested source and collect browser evidence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          git apply --check tmp/title-refinement.patch
-          git apply --index tmp/title-refinement.patch
-          git rm tmp/title-refinement.patch
-          git diff --cached --check
+          git diff --exit-code "$VERIFIED_SHA" HEAD -- src tests public package.json package-lock.json tsconfig*.json vite.config.ts vitest.config.ts playwright.config.ts
+          mkdir -p tmp
+          gh run download 34819030510 --repo ivgtr/echo-room --name title-browser-preview --dir tmp/verified-preview
+          gh run download 34819030510 --repo ivgtr/echo-room --name title-full-verification --dir tmp/verified-full
+          gh api repos/ivgtr/echo-room/actions/runs/34819030510/jobs > tmp/verified-jobs.json
+      - name: Record results and promote reviewed screenshots
+        run: |
+          python3 - <<'PY'
+          import json, os, re, shutil
+          from pathlib import Path
+          preview = Path('tmp/verified-preview')
+          full = Path('tmp/verified-full')
+          expected = os.environ['VERIFIED_SHA']
+          for root in (preview, full):
+              assert (root / 'review-metadata.txt').read_text().splitlines()[0] == expected
+          steps = json.loads(Path('tmp/verified-jobs.json').read_text())['jobs'][0]['steps']
+          for name in ['Check implementation', 'Verify title and capture real screens', 'Verify full game regression suite']:
+              assert next(s for s in steps if s['name'] == name)['conclusion'] == 'success', name
+          clean = lambda text: re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', text)
+          title_log = clean((preview / 'title-browser.log').read_text())
+          full_log = clean((full / 'full-browser.log').read_text())
+          assert re.search(r'^\s*13 passed \([^)]+\)', title_log, re.M)
+          summary = re.search(r'^\s*41 passed \([^)]+\)', full_log, re.M)
+          assert summary and not re.search(r'^\s*\d+ (failed|flaky|skipped)', full_log, re.M)
+          assert '107 passed' in clean((full / 'check.log').read_text())
+          print(summary.group(0).strip())
+          dest = Path('docs/assets/title')
+          dest.mkdir(parents=True, exist_ok=True)
+          for name in ['title-1440x900.png', 'title-844x390.png', 'title-568x320.png', 'title-390x844.png', 'sound-1440x900.png', 'sound-568x320.png']:
+              matches = list((preview / 'title-results').rglob(name))
+              assert len(matches) == 1, name
+              shutil.copy2(matches[0], dest / name)
+          progress = Path('docs/progress.md')
+          text = progress.read_text()
+          start = text.index('## タイトルの刷新・初回サウンド選択')
+          end = text.index('## Issue #13：端末の装置化', start)
+          section = '''## タイトルの刷新・初回サウンド選択
+
+          状態: completed（今回の改修範囲）。既存E-01背景、二段ロゴ、文字メニュー、全画面の初回音声選択、設定階層、確認付きの再開始を実装した。[判断記録](./decisions/cinematic-title.md)参照。
+
+          Node 24.20.0 / npm 11.19.0 / React 19.2.8 / Playwright 1.62.1 / 標準Chromium 151.0.7922.34で検証。`npm run check`は21 files / 107 unit tests、型検査、lint、content/assets検証、buildを含め成功。タイトル単独13件に加え、全編41件のE2Eがskip・retryなしで成功した。実行したソースは `3564157bf8e36347beb5778f8f4c572a727d29e2`。1440×900、1280×720、844×390、568×320、390×844、320×568で確認した。
+
+          結果と実画面は[PR #20](https://github.com/ivgtr/echo-room/pull/20)に集約。検証後の変更は記録・画像と一時workflowの除去だけで、本番deployは変更しない。実機iOS Safariとスクリーンリーダーの実際の読み上げは未確認。マージ・本番公開は行っていない。
+
+          '''
+          progress.write_text(text[:start] + section.replace('\n          ', '\n') + text[end:])
+          decision = Path('docs/decisions/cinematic-title.md')
+          details = '''
+
+          ## 実行結果（2026-09-14）
+
+          - 検証ソース: `3564157bf8e36347beb5778f8f4c572a727d29e2`。
+          - Node 24.20.0 / npm 11.19.0 / React 19.2.8。`npm run check`成功、107 unit tests。
+          - Playwright 1.62.1 / 標準Chromium 151.0.7922.34。タイトル単独13件と全編41件がskip・retryなしで成功。software WebGLのためSwiftShaderを指定した。
+          - 検証run: https://github.com/ivgtr/echo-room/actions/runs/34819030510 。ソース検証とブラウザ検証の各stepは成功。後続の画像pushはブランチ先行更新で拒否されたため、検証ソースとの一致を再確認した別jobで画像と記録を反映した。
+          - 6種類の画面サイズを自動確認し、PC・横持ち・縦持ちの実画面を確認。画像は `docs/assets/title/` に保存。
+          - 前回の分離プレビューや生成モックは検証画像に使用していない。音声は実Web Audio開始と失敗・無音経路を確認し、マイク権限は追加していない。
+          - 実機iOS Safari、実機音響の聴取、スクリーンリーダーでの実際の読み上げは未確認。既存の大きなJSチャンク警告と、固定依存のinstall時に報告された4件（moderate 2 / high 2）のaudit警告は残る。依存更新は本改修へ混在させていない。
+          - 一時workflow・運搬patchは最終差分から除去する。依存lockfile、本番deploy、七つの謎、シナリオは変更しない。
+          '''
+          decision.write_text(decision.read_text() + details.replace('\n          ', '\n'))
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - name: Check implementation
+      - name: Check final review content
         run: |
           set -o pipefail
-          npm run check 2>&1 | tee tmp/check.log
-      - name: Publish checked source on feature branch
-        id: publish
+          npm run check 2>&1 | tee tmp/final-check.log
+          npm run build -- --base=/echo-room/ 2>&1 | tee tmp/subpath-build.log
+          git diff --check
+          test -z "$(git ls-files tmp)"
+      - name: Commit review evidence without rewriting history
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix(title): simplify first-visit composition and preserve audio test intent'
+          git add docs/progress.md docs/decisions/cinematic-title.md docs/assets/title
+          git commit -m 'docs(title): record verified game flow and real title captures'
           git push origin HEAD:feat/cinematic-title-audio
-          {
-            git rev-parse HEAD
-            node --version
-            npm --version
-            npx playwright --version
-          } > tmp/review-metadata.txt
-      - name: Install browser and Japanese font
-        id: browser
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y fonts-noto-cjk
-          npx playwright install --with-deps chromium
-      - name: Prepare isolated browser configuration
-        run: |
-          cat > tmp/playwright.review.config.ts <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          import base from '../playwright.config';
-          export default defineConfig({
-            ...base,
-            testDir: '../tests/e2e',
-            retries: 0,
-            reporter: [['list'], ['json', { outputFile: `${process.cwd()}/${process.env.REVIEW_RESULT || 'tmp/review-results.json'}` }]],
-            projects: [{
-              name: 'chromium',
-              use: {
-                ...base.projects?.[0]?.use,
-                launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
-              },
-            }],
-          });
-          EOF
-          node --input-type=module -e "import {chromium} from '@playwright/test'; const b=await chromium.launch(); console.log(await b.version()); await b.close();" >> tmp/review-metadata.txt
-      - name: Verify title and capture real screens
-        id: title
-        env:
-          REVIEW_RESULT: tmp/title-results.json
-        run: |
-          set -o pipefail
-          npx playwright test tests/e2e/title-audio.spec.ts --config tmp/playwright.review.config.ts --output tmp/title-results --retries=0 2>&1 | tee tmp/title-browser.log
+          git rev-parse HEAD > tmp/final-head.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: title-browser-preview
+          name: title-final-check
           path: |
-            tmp/title-results
-            tmp/title-results.json
-            tmp/title-browser.log
-            tmp/review-metadata.txt
-            tmp/check.log
-          retention-days: 7
-      - name: Verify full game regression suite
-        if: ${{ !cancelled() && steps.publish.outcome == 'success' && steps.browser.outcome == 'success' }}
-        id: full
-        env:
-          REVIEW_RESULT: tmp/full-results.json
-        run: |
-          set -o pipefail
-          npx playwright test --config tmp/playwright.review.config.ts --output tmp/full-results --retries=0 2>&1 | tee tmp/full-browser.log
-      - name: Store verified title captures for review
-        if: ${{ steps.title.outcome == 'success' && steps.full.outcome == 'success' }}
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import shutil
-          dest = Path('docs/assets/title')
-          dest.mkdir(parents=True, exist_ok=True)
-          for name in ['title-1440x900.png', 'title-844x390.png', 'title-568x320.png', 'title-390x844.png', 'sound-1440x900.png', 'sound-568x320.png']:
-              source = next(Path('tmp/title-results').rglob(name))
-              shutil.copy2(source, dest / name)
-          PY
-          git add docs/assets/title
-          git commit -m 'test(title): attach verified desktop and mobile captures'
-          git push origin HEAD:feat/cinematic-title-audio
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: title-full-verification
-          path: |
-            tmp/full-results
-            tmp/full-results.json
-            tmp/full-browser.log
-            tmp/review-metadata.txt
-            tmp/check.log
+            tmp/final-check.log
+            tmp/subpath-build.log
+            tmp/final-head.txt
           retention-days: 7
