@@ -6,8 +6,8 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: temporary-title-review
-  cancel-in-progress: true
+  group: title-final-${{ github.sha }}
+  cancel-in-progress: false
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -61,7 +61,7 @@ jobs:
             ...base,
             testDir: '../tests/e2e',
             retries: 0,
-            reporter: [['list'], ['json', { outputFile: process.env.REVIEW_RESULT || 'tmp/review-results.json' }]],
+            reporter: [['list'], ['json', { outputFile: `${process.cwd()}/${process.env.REVIEW_RESULT || 'tmp/review-results.json'}` }]],
             projects: [{
               name: 'chromium',
               use: {
@@ -91,7 +91,7 @@ jobs:
             tmp/check.log
           retention-days: 7
       - name: Verify full game regression suite
-        if: ${{ always() && steps.publish.outcome == 'success' && steps.browser.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.publish.outcome == 'success' && steps.browser.outcome == 'success' }}
         id: full
         env:
           REVIEW_RESULT: tmp/full-results.json
