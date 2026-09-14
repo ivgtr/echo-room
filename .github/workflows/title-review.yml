@@ -7,7 +7,7 @@ permissions:
   contents: write
 concurrency:
   group: temporary-title-review
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -16,16 +16,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feat/cinematic-title-audio
-      - name: Verify ref and apply implementation
+      - name: Verify ref and apply refinement
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          mkdir -p tmp
-          cat tmp/title-part-{1,2,3}.b64 | base64 -d | xz -d > tmp/title-change.patch
-          echo 'd5b6e683ca45316f88d94aabf03f9b47295b1e08e6aa2541472999f76d48a3d1  tmp/title-change.patch' | sha256sum -c -
-          git apply --check tmp/title-change.patch
-          git apply --index tmp/title-change.patch
-          git rm tmp/title-part-{1,2,3}.b64
+          git apply --check tmp/title-refinement.patch
+          git apply --index tmp/title-refinement.patch
+          git rm tmp/title-refinement.patch
           git diff --cached --check
       - uses: actions/setup-node@v4
         with:
@@ -41,7 +38,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'feat(title): cinematic game menu and first-visit sound choice'
+          git commit -m 'fix(title): simplify first-visit composition and preserve audio test intent'
           git push origin HEAD:feat/cinematic-title-audio
           {
             git rev-parse HEAD
@@ -54,12 +51,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y fonts-noto-cjk
-          if timeout 240s npx playwright install --with-deps chromium; then
-            echo 'Standard Playwright Chromium' >> tmp/review-metadata.txt
-          else
-            google-chrome --version | tee -a tmp/review-metadata.txt
-            echo 'TITLE_USE_CHROME=1' >> "$GITHUB_ENV"
-          fi
+          npx playwright install --with-deps chromium
       - name: Prepare isolated browser configuration
         run: |
           cat > tmp/playwright.review.config.ts <<'EOF'
@@ -74,12 +66,12 @@ jobs:
               name: 'chromium',
               use: {
                 ...base.projects?.[0]?.use,
-                ...(process.env.TITLE_USE_CHROME ? { channel: 'chrome' } : {}),
                 launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
               },
             }],
           });
           EOF
+          node --input-type=module -e "import {chromium} from '@playwright/test'; const b=await chromium.launch(); console.log(await b.version()); await b.close();" >> tmp/review-metadata.txt
       - name: Verify title and capture real screens
         id: title
         env:
