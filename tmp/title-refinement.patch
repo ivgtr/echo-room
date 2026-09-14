@@ -1,0 +1,50 @@
+diff --git a/src/ui/TitleScreen.tsx b/src/ui/TitleScreen.tsx
+index 8b49c95..7af11a2 100644
+--- a/src/ui/TitleScreen.tsx
++++ b/src/ui/TitleScreen.tsx
+@@ -203,7 +203,7 @@ export function TitleScreen({
+           <p>
+             環境音と効果音が流れます。
+             <br />
+-            音なしでも、すべての謎を解けます。
++            音なしでも最後まで遊べます。
+           </p>
+           <div className="title-dialog__commands">
+             <button
+diff --git a/src/ui/title/title.css b/src/ui/title/title.css
+index 75412ee..b99d1a4 100644
+--- a/src/ui/title/title.css
++++ b/src/ui/title/title.css
+@@ -66,6 +66,10 @@
+   scrollbar-width: thin;
+ }
+ 
++.title-composition[inert] {
++  visibility: hidden;
++}
++
+ .title-identity {
+   flex: 0 0 auto;
+   max-width: 100%;
+diff --git a/tests/e2e/vertical-slice.spec.ts b/tests/e2e/vertical-slice.spec.ts
+index c04c9cb..51848be 100644
+--- a/tests/e2e/vertical-slice.spec.ts
++++ b/tests/e2e/vertical-slice.spec.ts
+@@ -157,7 +157,7 @@ test('keeps one canvas while crossfading all four room views', async ({
+ test('keyboard-capable route restores power and resumes after reload', async ({
+   page,
+ }) => {
+-  await openTitle(page);
++  await openTitle(page, 'on');
+   await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
+   await expect(
+     page.getByRole('button', { name: '既読会話をスキップ' }),
+@@ -545,7 +545,7 @@ test('system subviews return one level before resuming exploration', async ({
+     installProgressSave,
+     createProgressSave({ inventory: ['item_screwdriver'] }),
+   );
+-  await openTitle(page);
++  await openTitle(page, 'on');
+   await page.getByRole('button', { name: '続きから' }).click();
+   const stage = page.locator('.logical-stage');
+   await page.getByRole('button', { name: 'SYSTEM' }).click();
