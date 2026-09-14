@@ -15,3 +15,15 @@
 ## 検証
 
 コンポーネントの初回・再訪・設定・削除・再開始、音声の拒否・timeout・遅延応答、保存の異常系をunit testする。E2Eは既存の通しルートでも実際の初回選択を経由し、新規テストで無操作時と無音時のAudioContext未生成、実Web Audioの再訪unlock、モーダルfocus、6画面サイズ、背景読込失敗を検証する。結果と残制約はprogress.mdおよびPRへ記録する。
+
+
+## 実行結果（2026-09-14）
+
+- 検証ソース: `3564157bf8e36347beb5778f8f4c572a727d29e2`。
+- Node 24.20.0 / npm 11.19.0 / React 19.2.8。`npm run check`成功、107 unit tests。
+- Playwright 1.62.1 / 標準Chromium 151.0.7922.34。タイトル単独13件と全編41件がskip・retryなしで成功。software WebGLのためSwiftShaderを指定した。
+- 検証run: https://github.com/ivgtr/echo-room/actions/runs/34819030510 。ソース検証とブラウザ検証の各stepは成功。後続の画像pushはブランチ先行更新で拒否されたため、検証ソースとの一致を再確認した別jobで画像と記録を反映した。
+- 6種類の画面サイズを自動確認し、PC・横持ち・縦持ちの実画面を確認。画像は `docs/assets/title/` に保存。
+- 前回の分離プレビューや生成モックは検証画像に使用していない。音声は実Web Audio開始と失敗・無音経路を確認し、マイク権限は追加していない。
+- 実機iOS Safari、実機音響の聴取、スクリーンリーダーでの実際の読み上げは未確認。既存の大きなJSチャンク警告と、固定依存のinstall時に報告された4件（moderate 2 / high 2）のaudit警告は残る。依存更新は本改修へ混在させていない。
+- 一時workflow・運搬patchは最終差分から除去する。依存lockfile、本番deploy、七つの謎、シナリオは変更しない。
