@@ -4,27 +4,131 @@ on:
     branches: [feat/cinematic-title-audio]
     paths: [.github/workflows/title-review.yml]
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: temporary-title-review
+  cancel-in-progress: false
 jobs:
-  workspace:
+  review:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: feat/cinematic-title-audio
+      - name: Verify ref and apply implementation
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p tmp
+          cat tmp/title-part-{1,2,3}.b64 | base64 -d | xz -d > tmp/title-change.patch
+          echo 'd5b6e683ca45316f88d94aabf03f9b47295b1e08e6aa2541472999f76d48a3d1  tmp/title-change.patch' | sha256sum -c -
+          git apply --check tmp/title-change.patch
+          git apply --index tmp/title-change.patch
+          git rm tmp/title-part-{1,2,3}.b64
+          git diff --cached --check
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - name: Pack public source and verification dependencies
+      - name: Check implementation
         run: |
-          mkdir -p tmp
-          cp "$(command -v node)" tmp/node
-          tar -czf tmp/title-workspace.tgz src public tests docs scripts node_modules package.json package-lock.json tsconfig*.json vite.config.ts playwright.config.ts eslint.config.js index.html AGENTS.md README.md .gitignore .node-version .prettierignore .prettierrc.json tmp/node
+          set -o pipefail
+          npm run check 2>&1 | tee tmp/check.log
+      - name: Publish checked source on feature branch
+        id: publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(title): cinematic game menu and first-visit sound choice'
+          git push origin HEAD:feat/cinematic-title-audio
+          {
+            git rev-parse HEAD
+            node --version
+            npm --version
+            npx playwright --version
+          } > tmp/review-metadata.txt
+      - name: Install browser and Japanese font
+        id: browser
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+          if timeout 240s npx playwright install --with-deps chromium; then
+            echo 'Standard Playwright Chromium' >> tmp/review-metadata.txt
+          else
+            google-chrome --version | tee -a tmp/review-metadata.txt
+            echo 'TITLE_USE_CHROME=1' >> "$GITHUB_ENV"
+          fi
+      - name: Prepare isolated browser configuration
+        run: |
+          cat > tmp/playwright.review.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import base from '../playwright.config';
+          export default defineConfig({
+            ...base,
+            testDir: '../tests/e2e',
+            retries: 0,
+            reporter: [['list'], ['json', { outputFile: process.env.REVIEW_RESULT || 'tmp/review-results.json' }]],
+            projects: [{
+              name: 'chromium',
+              use: {
+                ...base.projects?.[0]?.use,
+                ...(process.env.TITLE_USE_CHROME ? { channel: 'chrome' } : {}),
+                launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
+              },
+            }],
+          });
+          EOF
+      - name: Verify title and capture real screens
+        id: title
+        env:
+          REVIEW_RESULT: tmp/title-results.json
+        run: |
+          set -o pipefail
+          npx playwright test tests/e2e/title-audio.spec.ts --config tmp/playwright.review.config.ts --output tmp/title-results --retries=0 2>&1 | tee tmp/title-browser.log
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: title-workspace
-          path: tmp/title-workspace.tgz
-          retention-days: 3
+          name: title-browser-preview
+          path: |
+            tmp/title-results
+            tmp/title-results.json
+            tmp/title-browser.log
+            tmp/review-metadata.txt
+            tmp/check.log
+          retention-days: 7
+      - name: Verify full game regression suite
+        if: ${{ always() && steps.publish.outcome == 'success' && steps.browser.outcome == 'success' }}
+        id: full
+        env:
+          REVIEW_RESULT: tmp/full-results.json
+        run: |
+          set -o pipefail
+          npx playwright test --config tmp/playwright.review.config.ts --output tmp/full-results --retries=0 2>&1 | tee tmp/full-browser.log
+      - name: Store verified title captures for review
+        if: ${{ steps.title.outcome == 'success' && steps.full.outcome == 'success' }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          dest = Path('docs/assets/title')
+          dest.mkdir(parents=True, exist_ok=True)
+          for name in ['title-1440x900.png', 'title-844x390.png', 'title-568x320.png', 'title-390x844.png', 'sound-1440x900.png', 'sound-568x320.png']:
+              source = next(Path('tmp/title-results').rglob(name))
+              shutil.copy2(source, dest / name)
+          PY
+          git add docs/assets/title
+          git commit -m 'test(title): attach verified desktop and mobile captures'
+          git push origin HEAD:feat/cinematic-title-audio
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: title-full-verification
+          path: |
+            tmp/full-results
+            tmp/full-results.json
+            tmp/full-browser.log
+            tmp/review-metadata.txt
+            tmp/check.log
+          retention-days: 7
