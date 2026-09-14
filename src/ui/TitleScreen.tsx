@@ -203,7 +203,7 @@ export function TitleScreen({
           <p>
             環境音と効果音が流れます。
             <br />
-            音なしでも、すべての謎を解けます。
+            音なしでも最後まで遊べます。
           </p>
           <div className="title-dialog__commands">
             <button

@@ -66,6 +66,10 @@
   scrollbar-width: thin;
 }
 
+.title-composition[inert] {
+  visibility: hidden;
+}
+
 .title-identity {
   flex: 0 0 auto;
   max-width: 100%;

@@ -157,7 +157,7 @@ test('keeps one canvas while crossfading all four room views', async ({
 test('keyboard-capable route restores power and resumes after reload', async ({
   page,
 }) => {
-  await openTitle(page);
+  await openTitle(page, 'on');
   await page.getByRole('button', { name: 'ゲーム開始' }).press('Enter');
   await expect(
     page.getByRole('button', { name: '既読会話をスキップ' }),
@@ -545,7 +545,7 @@ test('system subviews return one level before resuming exploration', async ({
     installProgressSave,
     createProgressSave({ inventory: ['item_screwdriver'] }),
   );
-  await openTitle(page);
+  await openTitle(page, 'on');
   await page.getByRole('button', { name: '続きから' }).click();
   const stage = page.locator('.logical-stage');
   await page.getByRole('button', { name: 'SYSTEM' }).click();
