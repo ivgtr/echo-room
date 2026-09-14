@@ -1,0 +1,30 @@
+name: Temporary title review
+on:
+  push:
+    branches: [feat/cinematic-title-audio]
+    paths: [.github/workflows/title-review.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Pack public source and verification dependencies
+        run: |
+          mkdir -p tmp
+          cp "$(command -v node)" tmp/node
+          tar -czf tmp/title-workspace.tgz src public tests docs scripts node_modules package.json package-lock.json tsconfig*.json vite.config.ts playwright.config.ts eslint.config.js index.html AGENTS.md README.md .gitignore .node-version .prettierignore .prettierrc.json tmp/node
+      - uses: actions/upload-artifact@v4
+        with:
+          name: title-workspace
+          path: tmp/title-workspace.tgz
+          retention-days: 3
