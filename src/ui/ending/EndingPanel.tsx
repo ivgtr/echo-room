@@ -1,34 +1,38 @@
 import { useCallback, useState } from 'react';
 
 import { NarrativeText } from '../narrative/NarrativeText';
-import { introEntries } from '../narrative/narrativeArchive';
+import { endingEntries } from '../narrative/narrativeArchive';
+import { VoiceStatus } from '../narrative/VoiceStatus';
+import type { VoicePlayback } from '../../audio/voiceManifest';
 import type { TextSpeed } from '../system/uiSettings';
-
-const lines = [
-  'PACKET 01 SENT / PACKET 02 SENT / PACKET 03 SENT / PACKET 04 SENT',
-  `20分前の自分「${introEntries[0].text}${introEntries[2].text}」`,
-  `現在の自分「${introEntries[3].text}」`,
-  `現在の自分「${introEntries[4].text}」`,
-  `20分前の自分「${introEntries[5].text}」`,
-  `現在の自分「${introEntries[6].text}」`,
-];
 
 export function EndingPanel({
   lineIndex,
   completed,
+  onOpenSystem,
+  obscured,
   onAdvance,
   textSpeed,
   motionReduced,
   onTextBlip,
+  voicePlayback,
 }: {
   lineIndex: number;
   completed: boolean;
+  onOpenSystem?: () => void;
+  obscured?: boolean;
   onAdvance: () => void;
   textSpeed: TextSpeed;
   motionReduced: boolean;
   onTextBlip: () => void;
+  voicePlayback?: VoicePlayback;
 }) {
-  const text = lines[lineIndex] ?? '';
+  const entry = endingEntries[lineIndex];
+  const text = entry
+    ? entry.speaker
+      ? `${entry.speaker}「${entry.text}」`
+      : entry.text
+    : '';
   const [completedText, setCompletedText] = useState<string | null>(null);
   const [forceCompleteText, setForceCompleteText] = useState<string | null>(
     null,
@@ -46,6 +50,8 @@ export function EndingPanel({
   return (
     <section
       className={completed ? 'ending-panel is-complete' : 'ending-panel'}
+      inert={obscured || undefined}
+      aria-hidden={obscured || undefined}
       role="dialog"
       aria-modal="true"
       aria-label={completed ? 'TRANSMISSION COMPLETE' : '最終通信'}
@@ -56,6 +62,9 @@ export function EndingPanel({
         <>
           <h1>ECHO ROOM</h1>
           <p>TRANSMISSION COMPLETE</p>
+          <button type="button" onClick={onOpenSystem} autoFocus>
+            SYSTEM / 会話履歴・設定
+          </button>
         </>
       ) : (
         <>
@@ -73,12 +82,15 @@ export function EndingPanel({
               onComplete={handleTextComplete}
             />
           </p>
+          {voicePlayback && (
+            <VoiceStatus playback={voicePlayback} entryId={entry?.id} />
+          )}
           <button
             type="button"
             className="ending-advance-surface"
             aria-label={
               textComplete
-                ? lineIndex === lines.length - 1
+                ? lineIndex === endingEntries.length - 1
                   ? '通信を終える'
                   : '次の文章へ'
                 : '文章をすべて表示'

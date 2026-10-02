@@ -86,7 +86,7 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
     .press('Enter');
   await expectSavedCheckpoint(page, 'checkpoint_transmission_started');
 
-  for (let index = 0; index < 5; index += 1) {
+  for (let index = 0; index < 7; index += 1) {
     await expect(page.locator('.ending-text')).toHaveAttribute(
       'data-text-complete',
       'true',

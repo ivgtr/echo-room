@@ -48,7 +48,7 @@ export function createSettingsSave(
     visualAssist: false,
     motionReduced: false,
     introSeen: false,
-    soundLevels: { effects: 100, environment: 70 },
+    soundLevels: { voice: 85, effects: 100, environment: 70 },
     subtitleSettings: {
       size: 'medium',
       background: 'soft',

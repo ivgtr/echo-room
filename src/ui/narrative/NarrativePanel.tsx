@@ -1,3 +1,5 @@
+import type { VoicePlayback } from '../../audio/voiceManifest';
+import { VoiceStatus } from './VoiceStatus';
 import { useCallback, useState } from 'react';
 
 import type { TextSpeed } from '../system/uiSettings';
@@ -6,6 +8,8 @@ import { NarrativeText } from './NarrativeText';
 
 type Props = {
   kind: NarrativeKind;
+  entryId?: string;
+  voicePlayback?: VoicePlayback;
   speaker?: string;
   text: string;
   advanceLabel: string;
@@ -19,6 +23,8 @@ type Props = {
 
 export function NarrativePanel({
   kind,
+  entryId,
+  voicePlayback,
   speaker,
   text,
   advanceLabel,
@@ -83,6 +89,9 @@ export function NarrativePanel({
             onComplete={handleTextComplete}
           />
         </p>
+        {voicePlayback && (
+          <VoiceStatus playback={voicePlayback} entryId={entryId} />
+        )}
         <span className="narrative-advance-mark" aria-hidden="true">
           {textComplete ? '▼' : '…'}
         </span>

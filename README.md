@@ -16,3 +16,5 @@
 npm ci
 npm run dev
 ```
+
+音声にはIrodori-TTS / Irodori-v4.1-Smallによる合成音声を使用しています。[制作元・利用条件](audio/voice/README.md)

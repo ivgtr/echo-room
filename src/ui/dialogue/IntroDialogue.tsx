@@ -1,9 +1,11 @@
+import type { VoicePlayback } from '../../audio/voiceManifest';
 import { NarrativePanel } from '../narrative/NarrativePanel';
 import { introEntries } from '../narrative/narrativeArchive';
 import type { TextSpeed } from '../system/uiSettings';
 
 type Props = {
   lineIndex: number;
+  voicePlayback?: VoicePlayback;
   canSkip: boolean;
   onAdvance: () => void;
   onSkip: () => void;
@@ -14,6 +16,7 @@ type Props = {
 
 export function IntroDialogue({
   lineIndex,
+  voicePlayback,
   canSkip,
   onAdvance,
   onSkip,
@@ -28,6 +31,8 @@ export function IntroDialogue({
   return (
     <NarrativePanel
       kind={line.kind}
+      entryId={line.id}
+      {...(voicePlayback ? { voicePlayback } : {})}
       {...(speaker ? { speaker } : {})}
       text={line.text}
       advanceLabel={

@@ -13,7 +13,7 @@ test('corrupt progress is protected until confirmed deletion and settings remain
       visualAssist: true,
       motionReduced: true,
       introSeen: true,
-      soundLevels: { effects: 35, environment: 55 },
+      soundLevels: { voice: 85, effects: 35, environment: 55 },
       subtitleSettings: {
         size: 'large',
         background: 'solid',

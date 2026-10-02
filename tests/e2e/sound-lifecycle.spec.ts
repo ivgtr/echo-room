@@ -16,6 +16,10 @@ test('sound lifecycle follows play, SYSTEM, visibility, and master settings', as
 
     class FakeParam {
       value = 1;
+      cancelScheduledValues() {}
+      setTargetAtTime(value: number) {
+        this.value = value;
+      }
       setValueAtTime(value: number) {
         this.value = value;
       }

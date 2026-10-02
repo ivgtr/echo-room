@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { voiceAssets, voiceCues } from '../../src/audio/voiceManifest';
+import {
+  endingEntries,
+  introEntries,
+} from '../../src/ui/narrative/narrativeArchive';
 
 import {
   SOUND_CUES,
@@ -8,6 +13,16 @@ import {
 
 class FakeAudioParam {
   value = 1;
+
+  cancelScheduledValues() {}
+
+  setTargetAtTime(value: number) {
+    this.value = value;
+  }
+
+  linearRampToValueAtTime(value: number) {
+    this.value = value;
+  }
 
   setValueAtTime(value: number) {
     this.value = value;
@@ -45,6 +60,25 @@ class FakeOscillator extends FakeNode {
   }
 }
 
+class FakeBufferSource extends FakeNode {
+  buffer: AudioBuffer | null = null;
+  onended: (() => void) | null = null;
+  started = false;
+  stopped = false;
+  start() {
+    this.started = true;
+  }
+  stop() {
+    this.stopped = true;
+  }
+}
+
+class FakeFilter extends FakeNode {
+  frequency = new FakeAudioParam();
+  Q = new FakeAudioParam();
+  type = '';
+}
+
 class FakeAudioContext {
   currentTime = 10;
   destination = new FakeNode();
@@ -52,6 +86,26 @@ class FakeAudioContext {
   gains: FakeGain[] = [];
   oscillators: FakeOscillator[] = [];
   resumeCount = 0;
+  sampleRate = 24000;
+  sources: FakeBufferSource[] = [];
+  filters: FakeFilter[] = [];
+  createBufferSource() {
+    const source = new FakeBufferSource();
+    this.sources.push(source);
+    return source;
+  }
+  createBiquadFilter() {
+    const filter = new FakeFilter();
+    this.filters.push(filter);
+    return filter;
+  }
+  createWaveShaper() {
+    return new FakeNode();
+  }
+  createBuffer(_channels: number, length: number) {
+    return { getChannelData: () => new Float32Array(length) };
+  }
+  decodeAudioData = vi.fn(async () => ({ duration: 2 }) as AudioBuffer);
 
   createGain() {
     const gain = new FakeGain();
@@ -79,14 +133,22 @@ const activeState: SoundState = {
   active: true,
   enabled: true,
   effectsVolume: 35,
+  voiceVolume: 85,
   environmentVolume: 55,
   powered: false,
   powerPhase: 'normal',
 };
 
-const createManager = () => {
+const createManager = (
+  fetchAudio: typeof fetch = vi.fn(
+    async () => new Response(new ArrayBuffer(4)),
+  ),
+) => {
   const context = new FakeAudioContext();
-  const manager = new SoundManager(() => context as unknown as AudioContext);
+  const manager = new SoundManager(
+    () => context as unknown as AudioContext,
+    fetchAudio,
+  );
   return { context, manager };
 };
 
@@ -165,5 +227,131 @@ describe('SoundManager', () => {
       'voice_scan',
       'transmit_charge',
     ]);
+  });
+});
+
+describe('three-scene voice playback', () => {
+  it('reuses one decoded take for radio opening and near final, and ducks the mix', async () => {
+    expect(endingEntries[2]?.text).toBe(introEntries[1].text);
+    expect(voiceCues.ending_first_contact?.asset).toBe(
+      voiceCues.intro_02?.asset,
+    );
+    const fetchAudio = vi.fn(async () => new Response(new ArrayBuffer(4)));
+    const { manager, context } = createManager(fetchAudio);
+    manager.sync(activeState);
+    await manager.unlock();
+    manager.playVoice('intro_02');
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('playing'),
+    );
+    const master = context.sources[0]?.buffer;
+    expect(context.filters.map((filter) => filter.type)).toEqual([
+      'highpass',
+      'lowpass',
+    ]);
+    expect(context.gains[0]?.gain.value).toBeCloseTo(0.35 * 0.2);
+    const oscillators = context.oscillators.length;
+    manager.playEffect('text_blip');
+    expect(context.oscillators).toHaveLength(oscillators);
+    manager.playVoice('ending_first_contact');
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('playing'),
+    );
+    expect(context.sources[0]?.stopped).toBe(true);
+    expect(context.sources[1]?.stopped).toBe(true);
+    expect(context.sources[2]?.buffer).toBe(master);
+    expect(fetchAudio).toHaveBeenCalledExactlyOnceWith(
+      voiceAssets.first_contact,
+      expect.any(Object),
+    );
+    context.sources[2]?.onended?.();
+    expect(manager.getVoicePlayback().status).toBe('idle');
+    expect(context.gains[0]?.gain.value).toBe(0.35);
+  });
+
+  it('cancels pending reads and ignores late decoded audio after a scene changes', async () => {
+    let resolveDecode!: (buffer: AudioBuffer) => void;
+    const { manager, context } = createManager();
+    context.decodeAudioData.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDecode = resolve;
+        }),
+    );
+    manager.sync(activeState);
+    await manager.unlock();
+    const cancel = manager.playVoice('identity_answer');
+    await vi.waitFor(() =>
+      expect(context.decodeAudioData).toHaveBeenCalledOnce(),
+    );
+    cancel();
+    resolveDecode({ duration: 2 } as AudioBuffer);
+    await Promise.resolve();
+    expect(context.sources).toHaveLength(0);
+    expect(manager.getVoicePlayback().status).toBe('idle');
+    manager.playVoice('identity_answer');
+    await vi.waitFor(() =>
+      expect(context.decodeAudioData).toHaveBeenCalledTimes(2),
+    );
+    context.state = 'suspended';
+    resolveDecode({ duration: 2 } as AudioBuffer);
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('unavailable'),
+    );
+    expect(context.sources).toHaveLength(0);
+  });
+
+  it('stops on pause, hidden/master mute/voice zero and allows explicit archive playback while paused', async () => {
+    const { manager, context } = createManager();
+    manager.sync(activeState);
+    await manager.unlock();
+    manager.playVoice('identity_answer');
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('playing'),
+    );
+    expect(context.gains[1]?.gain.value).toBeCloseTo(0.55 * 0.04);
+    manager.sync({ ...activeState, paused: true });
+    expect(manager.getVoicePlayback().status).toBe('idle');
+    manager.playVoice('identity_answer', 'archive');
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('playing'),
+    );
+    expect(context.gains[1]?.gain.value).toBe(0);
+    for (const state of [
+      { ...activeState, enabled: false },
+      { ...activeState, active: false },
+      { ...activeState, voiceVolume: 0 },
+    ]) {
+      manager.sync(state);
+      manager.playVoice('intro_02');
+      expect(manager.getVoicePlayback().status).toBe('idle');
+    }
+    expect(context.sources.every((source) => source.stopped)).toBe(true);
+  });
+
+  it('never fetches unvoiced text, exposes failures without blocking, and permits retry', async () => {
+    const fetchAudio = vi.fn(async () => new Response('', { status: 404 }));
+    const { manager } = createManager(fetchAudio);
+    manager.sync(activeState);
+    await manager.unlock();
+    manager.playVoice('packet_04');
+    manager.playVoice('intro_01');
+    expect(fetchAudio).not.toHaveBeenCalled();
+    expect(Object.keys(voiceCues)).toEqual([
+      'intro_02',
+      'identity_answer',
+      'ending_first_contact',
+    ]);
+    manager.playVoice('intro_02');
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('unavailable'),
+    );
+    fetchAudio.mockImplementation(async () => new Response(new ArrayBuffer(4)));
+    manager.playVoice('intro_02');
+    await vi.waitFor(() =>
+      expect(manager.getVoicePlayback().status).toBe('playing'),
+    );
+    manager.dispose();
+    expect(manager.getVoicePlayback().status).toBe('idle');
   });
 });

@@ -73,7 +73,7 @@ describe('seven-puzzle story progression', () => {
     );
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
     expect(actor.getSnapshot().context.storyStage).toBe('ending_transmission');
-    for (let index = 0; index < 6; index += 1)
+    for (let index = 0; index < 8; index += 1)
       actor.send({ type: 'ENDING_ADVANCED' });
     expect(actor.getSnapshot().context.storyStage).toBe('ending_door');
     actor.send({ type: 'ENDING_DOOR_SELECTED' });

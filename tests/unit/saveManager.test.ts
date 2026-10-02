@@ -113,3 +113,17 @@ describe('saveManager', () => {
     expect(getCheckpointId('completed', [])).toBe('checkpoint_completed');
   });
 });
+
+it('adds the voice level to existing v4 settings without resetting other choices', () => {
+  const storage = createStorage();
+  const prior = {
+    ...defaultSettings,
+    soundEnabled: false,
+    soundLevels: { effects: 35, environment: 55 },
+  };
+  storage.setItem(SETTINGS_KEY, JSON.stringify(prior));
+  expect(loadSettings(storage)).toMatchObject({
+    soundEnabled: false,
+    soundLevels: { effects: 35, environment: 55, voice: 85 },
+  });
+});

@@ -55,7 +55,7 @@ const progressSchema = z.object({
     .max(3),
   completedPuzzleIds: z.array(puzzleIdSchema).max(7),
   puzzleFailures: puzzleFailuresSchema,
-  endingLineIndex: z.number().int().min(0).max(6),
+  endingLineIndex: z.number().int().min(0).max(8),
   hintLevel: z.number().int().min(0).max(3),
   activeElapsedMs: z.number().nonnegative(),
   reservePower: z.boolean(),
@@ -69,6 +69,7 @@ const saveSchemaV4 = z.object({
 });
 
 const soundLevelsSchema = z.object({
+  voice: z.number().min(0).max(100).default(85),
   effects: z.number().min(0).max(100),
   environment: z.number().min(0).max(100),
 });
@@ -102,7 +103,7 @@ export const defaultSettings: SettingsData = {
   visualAssist: false,
   motionReduced: false,
   introSeen: false,
-  soundLevels: { effects: 100, environment: 70 },
+  soundLevels: { effects: 100, environment: 70, voice: 85 },
   subtitleSettings: {
     size: 'medium',
     background: 'soft',

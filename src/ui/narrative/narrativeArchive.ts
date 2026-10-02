@@ -49,6 +49,57 @@ export const introEntries = [
   },
 ] as const satisfies readonly NarrativeEntry[];
 
+/** The current-side line reuses the opening take, including its breath and pause. */
+export const endingEntries: readonly NarrativeEntry[] = [
+  {
+    id: 'ending_packets',
+    kind: 'system',
+    text: 'PACKET 01 SENT / PACKET 02 SENT / PACKET 03 SENT / PACKET 04 SENT',
+  },
+  {
+    id: 'ending_wakeup',
+    kind: 'monologue',
+    speaker: '20分前の自分',
+    text: introEntries[0].text,
+  },
+  {
+    id: 'ending_first_contact',
+    kind: 'communication',
+    speaker: '現在の自分',
+    text: introEntries[1].text,
+  },
+  {
+    id: 'ending_who',
+    kind: 'monologue',
+    speaker: '20分前の自分',
+    text: introEntries[2].text,
+  },
+  {
+    id: 'ending_room',
+    kind: 'communication',
+    speaker: '現在の自分',
+    text: introEntries[3].text,
+  },
+  {
+    id: 'ending_exit',
+    kind: 'communication',
+    speaker: '現在の自分',
+    text: introEntries[4].text,
+  },
+  {
+    id: 'ending_why',
+    kind: 'monologue',
+    speaker: '20分前の自分',
+    text: introEntries[5].text,
+  },
+  {
+    id: 'ending_power',
+    kind: 'communication',
+    speaker: '現在の自分',
+    text: introEntries[6].text,
+  },
+];
+
 export const powerRestoredEntry: NarrativeEntry = {
   id: 'system_power_restored',
   kind: 'system',
@@ -184,5 +235,10 @@ export function getRestoredNarrativeHistory(progress: SavedProgress) {
   const history: NarrativeEntry[] = [...introEntries, powerRestoredEntry];
   for (const puzzleId of progress.completedPuzzleIds)
     history.push(...getPuzzleCompletionEntries(puzzleId));
+  if (
+    progress.storyStage === 'ending_door' ||
+    progress.storyStage === 'completed'
+  )
+    history.push(...endingEntries);
   return history;
 }

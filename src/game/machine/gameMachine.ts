@@ -119,7 +119,7 @@ export const gameMachine = setup({
       isPuzzleAnswerCorrect(event.puzzleId, event.answer),
     transmissionReady: ({ context }) =>
       context.storyStage === 'transmission_ready',
-    endingHasMoreLines: ({ context }) => context.endingLineIndex < 5,
+    endingHasMoreLines: ({ context }) => context.endingLineIndex < 7,
   },
   actions: {
     advanceIntro: assign({

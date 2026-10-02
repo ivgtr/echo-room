@@ -1,11 +1,18 @@
 import { useActorRef, useSelector } from '@xstate/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import {
   AudioUnlockRequest,
   hasAudioChoice,
   rememberAudioChoice,
 } from '../audio/audioSetup';
+import { voiceCues } from '../audio/voiceManifest';
 import { soundManager, type SoundEffectId } from '../audio/soundManager';
 import { type HotspotId, type LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
@@ -49,6 +56,7 @@ import {
   getArchiveDocuments,
   getRestoredNarrativeHistory,
   introEntries,
+  endingEntries,
   getPuzzleCompletionEntries,
   powerRestoredEntry,
   type NarrativeEntry,
@@ -85,6 +93,15 @@ export function App() {
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(
     initialSettings.subtitleSettings,
   );
+  const voicePlayback = useSyncExternalStore(
+    soundManager.subscribeVoice,
+    soundManager.getVoicePlayback,
+  );
+  const [archiveAudioRequest] = useState(() => new AudioUnlockRequest());
+  const handleStopVoice = useCallback(() => {
+    archiveAudioRequest.cancel();
+    soundManager.stopVoice();
+  }, [archiveAudioRequest]);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [narrativeHistory, setNarrativeHistory] = useState<NarrativeEntry[]>(
     [],
@@ -137,7 +154,7 @@ export function App() {
     inventory: [...inventory],
     completedPuzzleIds: [...completedPuzzleIds],
     puzzleFailures: { ...puzzleFailures },
-    endingLineIndex: storyStage === 'completed' ? 6 : 0,
+    endingLineIndex: storyStage === 'completed' ? endingEntries.length : 0,
     hintLevel,
     activeElapsedMs,
     reservePower,
@@ -208,10 +225,14 @@ export function App() {
   }, [motionReduced]);
 
   useEffect(() => {
+    if (!isPlaying || !pageVisible || !soundEnabled || soundLevels.voice === 0)
+      handleStopVoice();
     soundManager.sync({
-      active: isPlaying && pageVisible && !systemMenuOpen,
+      active: isPlaying && pageVisible,
+      paused: systemMenuOpen,
       enabled: soundEnabled,
       effectsVolume: soundLevels.effects,
+      voiceVolume: soundLevels.voice,
       environmentVolume: soundLevels.environment,
       powered: powerRestored,
       powerPhase: reservePower
@@ -226,8 +247,10 @@ export function App() {
     reservePower,
     soundEnabled,
     soundLevels.effects,
+    soundLevels.voice,
     soundLevels.environment,
     systemMenuOpen,
+    handleStopVoice,
   ]);
 
   useEffect(() => {
@@ -364,6 +387,46 @@ export function App() {
   }, [gameAudioRequest]);
 
   const activeEventNarrative = eventNarrativeQueue[0] ?? null;
+  const currentEntryId = !isPlaying
+    ? null
+    : intro
+      ? introEntries[introLineIndex]?.id
+      : (activeEventNarrative?.id ??
+        (storyStage === 'ending_transmission' || storyStage === 'ending_replay'
+          ? endingEntries[endingLineIndex]?.id
+          : null));
+  const sceneVoiceId =
+    currentEntryId && voiceCues[currentEntryId] ? currentEntryId : null;
+  useEffect(() => {
+    if (sceneVoiceId) return soundManager.playVoice(sceneVoiceId);
+  }, [sceneVoiceId]);
+  useEffect(() => handleStopVoice, [handleStopVoice]);
+  const handleReplayVoice = useCallback(
+    (entryId: string) => {
+      // The manifest is not authority to expose a line: only read history is.
+      if (
+        !systemMenuOpen ||
+        !narrativeHistory.some((entry) => entry.id === entryId) ||
+        !voiceCues[entryId]
+      )
+        return;
+      const current = soundManager.getVoicePlayback();
+      handleStopVoice();
+      if (
+        current.entryId === entryId &&
+        (current.status === 'playing' || current.status === 'loading')
+      )
+        return;
+      archiveAudioRequest.run(
+        () => soundManager.unlock(),
+        (result) => {
+          if (result === 'ready') soundManager.playVoice(entryId, 'archive');
+          else setSaveMessage('音声を開始できませんでした。字幕で続けられます');
+        },
+      );
+    },
+    [systemMenuOpen, narrativeHistory, handleStopVoice, archiveAudioRequest],
+  );
   const handleStart = useCallback(() => {
     savedProgressRef.current = false;
     lastSavedFingerprintRef.current = null;
@@ -493,6 +556,9 @@ export function App() {
       visualAssist={visualAssist}
       motionReduced={motionReduced}
       soundEnabled={soundEnabled}
+      voicePlayback={voicePlayback}
+      onReplayVoice={handleReplayVoice}
+      onStopVoice={handleStopVoice}
       soundLevels={soundLevels}
       subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
@@ -519,6 +585,7 @@ export function App() {
         actorRef.send({ type: 'DIALOGUE_ADVANCED' });
       }}
       onDialogueSkip={() => {
+        handleStopVoice();
         appendHistory(introEntries);
         setIntroSeen(true);
         actorRef.send({ type: 'DIALOGUE_SKIPPED' });
@@ -565,9 +632,13 @@ export function App() {
         actorRef.send({ type: 'TRANSMISSION_CONFIRMED' });
       }}
       onEndingAdvance={() => {
+        handleStopVoice();
+        const entry = endingEntries[endingLineIndex];
+        if (entry) appendHistory([entry]);
         if (endingLineIndex === 0)
           soundManager.playEffect('communication_noise');
-        if (endingLineIndex >= 5) soundManager.playEffect('door_unlock');
+        if (endingLineIndex >= endingEntries.length - 1)
+          soundManager.playEffect('door_unlock');
         actorRef.send({ type: 'ENDING_ADVANCED' });
       }}
       onHintOpen={() => {

@@ -1,6 +1,12 @@
 # ECHO ROOM 実装進捗
 
-最終更新: 2026-09-14
+最終更新: 2026-10-02
+
+## Issue #21：3場面の音声試作
+
+状態: verification。冒頭、本人判明、最終送信の既存台詞へ音声を接続し、冒頭と最後は同一WAVを通信加工／近い声で再生する。音声はGitの固定commit URLから取得し、Viteの出力へ含めない。[判断記録](./decisions/narration-pilot.md)参照。
+
+`npm run check`成功（既存107件＋音声・設定互換の5件＝112 unit tests）。読込取消、遅延decode、同一原音、mix、pause／mute、失敗後の再生を検証した。E2Eは標準Chromiumの未配置・取得失敗、導入済みChromiumのsocket作成制限でブラウザ起動前に停止した。Cloud Browserもlocal previewを拒否しており、今回の実画面・実聴取、iOS Safariは未確認。常設／一時CI、検証画像は追加しない。音声の試聴判断はDraft PRで行い、PACKET全音声化や残SEへは広げない。固定commit `63773e5c291841491c2623497fc117f3c73cc969` の2音源は実取得でHTTP 200・CORS許可・SHA-256一致を確認し、`dist`に音源がないことも確認した。
 
 ## タイトルの刷新・初回サウンド選択
 
@@ -44,7 +50,7 @@ Node 24.20.0 / npm 11.19.0 / React 19.2.8 / Playwright 1.62.1 / 標準Chromium 1
 - P5-01は完了。主要7体験の完了IDを進行schema v4へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。旧schemaの互換層は持たない。
 - P5-02は完了。現行の単一Hotspot View Modelから意味を持つDOMを生成し、modal中の探索無効化、focus trap・復帰、通知role、SYSTEMの動き軽減設定、keyboardのみの全編ルートを完成した。
 - P5-03は完了。冒頭7台詞を通常に読み終えた時だけ既読状態を保存し、次回以降は単一Narrative UIからskip可能にした。skip後のSYSTEMへのfocus移動と、全7台詞のARCHIVE復元も統合した。
-- 発話音声を使用しない方針を2026-08-11に確定。台詞はHTML字幕、PACKETは文章と声紋特徴量、音響は環境音・効果音・通信ノイズだけの単一構造とする。
+- 2026-08-11の字幕のみ方針は、Issue #21で3場面に限って音声を追加する方針へ更新した。全パズルの無音進行と単一Sound Managerを維持する。
 - P4-04は完了。旧tone playerを削除し、非常電源・復旧後の環境音と通信・接続・回路・電源・ロック・解析・送信・ドア解錠cueを単一Sound Managerへ統合した。
 - P4-04の操作音を拡張し、話者差のないレトロゲーム風text blipと共通UI clickをeffectsへ追加。字幕速度と句読点へ同期する文字送り、早押し全文表示、動き軽減時の即時表示へ接続した。
 - P5は全作業完了。次の着手点はP4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残演出。
@@ -117,7 +123,7 @@ Node 24.20.0 / npm 11.19.0 / React 19.2.8 / Playwright 1.62.1 / 標準Chromium 1
 ## 次作業者への引き継ぎ
 
 1. `docs/README.md`のグラフィック・テストルーティングに従い、`graphics-production.md`、`graphics-generation.yaml`、`requirements.md` 6・8〜10・15・16章、`technical-design.md` 7・13・14・18章、`implementation-plan.md`のP4-02〜05とP6を読む。
-2. P4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残視覚演出を完了してP4 Gateを閉じる。P4-04の単一Sound Managerへ別playerや発話音声を追加しない。
+2. P4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残視覚演出を完了してP4 Gateを閉じる。音声はIssue #21の3場面で試聴してから拡大を判断し、別playerは追加しない。
 3. P5は完了。進行・設定ともv4だけを正規形式とし、旧fixtureや旧読込分岐を追加しない。
 4. `tmp/voice-match-99-8.png`、`tmp/ending-door-control.png`、`tmp/p5-02-motion-settings.png`、`tmp/p5-03-intro-skip.png`、`tmp/p4-04-sound-settings.png`、`tmp/p4-05-text-blip.png`は実画面確認用。その他の一時画像も引き続きignore済みの`tmp/`へ集約する。
 5. 主要7体験の初見所要時間、偶然正解、詰まり、ヒント使用箇所をP7-01で測る。机上時間だけで難易度完了としない。

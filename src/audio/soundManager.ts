@@ -1,3 +1,10 @@
+import {
+  voiceAssets,
+  voiceCues,
+  type VoiceAssetId,
+  type VoicePlayback,
+} from './voiceManifest';
+
 export type SoundEffectId =
   | 'ui_click'
   | 'text_blip'
@@ -21,6 +28,8 @@ export type SoundState = {
   active: boolean;
   enabled: boolean;
   effectsVolume: number;
+  voiceVolume: number;
+  paused?: boolean;
   environmentVolume: number;
   powered: boolean;
   powerPhase: 'normal' | 'low' | 'critical' | 'reserve';
@@ -150,6 +159,7 @@ const DEFAULT_STATE: SoundState = {
   active: false,
   enabled: true,
   effectsVolume: 100,
+  voiceVolume: 85,
   environmentVolume: 70,
   powered: false,
   powerPhase: 'normal',
@@ -165,6 +175,23 @@ type EffectSource = EnvironmentSource;
 export class SoundManager {
   private context: AudioContext | null = null;
   private effectsBus: GainNode | null = null;
+  private voiceBus: GainNode | null = null;
+  private voiceBufferCache = new Map<VoiceAssetId, AudioBuffer>();
+  private voiceGeneration = 0;
+  private voiceAbort: AbortController | null = null;
+  private voiceNodes: AudioNode[] = [];
+  private voiceSources: AudioBufferSourceNode[] = [];
+  private voiceScope: 'scene' | 'archive' = 'scene';
+  private voiceDucking = false;
+  private revealDucking = false;
+  private voicePlayback: VoicePlayback = { entryId: null, status: 'idle' };
+  private voiceListeners = new Set<() => void>();
+
+  readonly getVoicePlayback = () => this.voicePlayback;
+  readonly subscribeVoice = (listener: () => void) => {
+    this.voiceListeners.add(listener);
+    return () => this.voiceListeners.delete(listener);
+  };
   private environmentBus: GainNode | null = null;
   private environmentSources: EnvironmentSource[] = [];
   private effectSources = new Set<EffectSource>();
@@ -174,6 +201,7 @@ export class SoundManager {
   constructor(
     private readonly createContext: AudioContextFactory = () =>
       new AudioContext(),
+    private readonly fetchAudio: typeof fetch = (...args) => fetch(...args),
   ) {}
 
   async unlock(): Promise<boolean> {
@@ -189,21 +217,27 @@ export class SoundManager {
 
   sync(nextState: SoundState) {
     this.state = nextState;
-    if (!nextState.active || !nextState.enabled) this.stopEffects();
+    if (!nextState.active || !nextState.enabled || nextState.paused)
+      this.stopEffects();
+    if (!this.canPlayVoice(this.voiceScope)) this.stopVoice();
     this.syncBuses();
     this.syncEnvironment();
   }
 
   playEffect(effectId: SoundEffectId) {
+    if (effectId === 'text_blip' && this.voiceDucking) return;
     this.playTones(SOUND_CUES[effectId]);
   }
 
   dispose() {
+    this.stopVoice();
+    this.voiceBufferCache.clear();
     this.stopEnvironment();
     this.stopEffects();
     const context = this.context;
     this.context = null;
     this.effectsBus = null;
+    this.voiceBus = null;
     this.environmentBus = null;
     if (context) void context.close();
   }
@@ -213,24 +247,199 @@ export class SoundManager {
     this.context = this.createContext();
     this.effectsBus = this.context.createGain();
     this.environmentBus = this.context.createGain();
+    this.voiceBus = this.context.createGain();
+    this.voiceBus.connect(this.context.destination);
     this.effectsBus.connect(this.context.destination);
     this.environmentBus.connect(this.context.destination);
   }
 
   private syncBuses() {
-    if (!this.effectsBus || !this.environmentBus) return;
+    if (!this.effectsBus || !this.environmentBus || !this.voiceBus) return;
     const audible = this.state.active && this.state.enabled;
-    this.effectsBus.gain.value = audible
-      ? normalizeVolume(this.state.effectsVolume)
-      : 0;
-    this.environmentBus.gain.value = audible
-      ? normalizeVolume(this.state.environmentVolume)
-      : 0;
+    const worldAudible = audible && !this.state.paused;
+    this.setLevel(
+      this.effectsBus,
+      worldAudible
+        ? normalizeVolume(this.state.effectsVolume) *
+            (this.voiceDucking ? 0.2 : 1)
+        : 0,
+    );
+    this.setLevel(
+      this.environmentBus,
+      worldAudible
+        ? normalizeVolume(this.state.environmentVolume) *
+            (this.voiceDucking ? (this.revealDucking ? 0.04 : 0.2) : 1)
+        : 0,
+    );
+    // Masters retain their watermark and peaks; headroom is applied at playback.
+    this.setLevel(
+      this.voiceBus,
+      audible ? normalizeVolume(this.state.voiceVolume) * 0.65 : 0,
+    );
+  }
+
+  private setLevel(node: GainNode, level: number) {
+    const now = this.context!.currentTime;
+    node.gain.cancelScheduledValues(now);
+    node.gain.setTargetAtTime(level, now, 0.04);
+  }
+
+  private canPlayVoice(scope: 'scene' | 'archive') {
+    return (
+      this.state.active &&
+      this.state.enabled &&
+      this.state.voiceVolume > 0 &&
+      (!this.state.paused || scope === 'archive') &&
+      this.context?.state === 'running'
+    );
+  }
+
+  private setVoicePlayback(playback: VoicePlayback) {
+    this.voicePlayback = playback;
+    for (const listener of this.voiceListeners) listener();
+  }
+
+  /** The caller must pass a currently shown or explicitly selected, read entry. */
+  playVoice(entryId: string, scope: 'scene' | 'archive' = 'scene'): () => void {
+    const cue = voiceCues[entryId];
+    this.stopVoice();
+    if (!cue || !this.canPlayVoice(scope)) return () => {};
+    const generation = this.voiceGeneration;
+    this.voiceScope = scope;
+    const controller = new AbortController();
+    this.voiceAbort = controller;
+    this.setVoicePlayback({ entryId, status: 'loading' });
+    // A slow/unavailable asset never holds a subtitle or a game transition open.
+    const timeout = setTimeout(() => {
+      if (generation !== this.voiceGeneration) return;
+      this.stopVoice();
+      this.setVoicePlayback({ entryId, status: 'unavailable' });
+    }, 8000);
+    void (async () => {
+      try {
+        let buffer = this.voiceBufferCache.get(cue.asset);
+        if (!buffer) {
+          const response = await this.fetchAudio(voiceAssets[cue.asset], {
+            signal: controller.signal,
+            credentials: 'omit',
+            referrerPolicy: 'no-referrer',
+          });
+          if (!response.ok) throw new Error('Voice asset unavailable');
+          const bytes = await response.arrayBuffer();
+          if (generation !== this.voiceGeneration || controller.signal.aborted)
+            return;
+          buffer = await this.context!.decodeAudioData(bytes);
+          if (generation !== this.voiceGeneration || controller.signal.aborted)
+            return;
+          this.voiceBufferCache.set(cue.asset, buffer);
+        }
+        if (generation !== this.voiceGeneration || controller.signal.aborted)
+          return;
+        if (!this.canPlayVoice(scope)) {
+          this.stopVoice();
+          this.setVoicePlayback({ entryId, status: 'unavailable' });
+          return;
+        }
+        this.voiceAbort = null;
+        const context = this.context!;
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        this.voiceSources = [source];
+        const envelope = context.createGain();
+        this.voiceNodes = [source, envelope];
+        const now = context.currentTime;
+        envelope.gain.setValueAtTime(0, now);
+        envelope.gain.linearRampToValueAtTime(1, now + 0.02);
+        envelope.gain.setValueAtTime(
+          1,
+          now + Math.max(0.02, buffer.duration - 0.04),
+        );
+        envelope.gain.linearRampToValueAtTime(0, now + buffer.duration);
+        envelope.connect(this.voiceBus!);
+        if (cue.treatment === 'radio') {
+          const highpass = context.createBiquadFilter();
+          highpass.type = 'highpass';
+          highpass.frequency.value = 260;
+          highpass.Q.value = 0.6;
+          const lowpass = context.createBiquadFilter();
+          lowpass.type = 'lowpass';
+          lowpass.frequency.value = 3400;
+          lowpass.Q.value = 0.6;
+          const warmth = context.createWaveShaper();
+          warmth.curve = Float32Array.from({ length: 1024 }, (_, index) => {
+            const value = (index / 1023) * 2 - 1;
+            return Math.tanh(value * 1.15) / 1.15;
+          });
+          source
+            .connect(highpass)
+            .connect(lowpass)
+            .connect(warmth)
+            .connect(envelope);
+          const noise = context.createBufferSource();
+          const noiseBuffer = context.createBuffer(
+            1,
+            Math.ceil(context.sampleRate * buffer.duration),
+            context.sampleRate,
+          );
+          const samples = noiseBuffer.getChannelData(0);
+          let seed = 21;
+          for (let index = 0; index < samples.length; index += 1) {
+            seed = (seed * 1664525 + 1013904223) >>> 0;
+            samples[index] = ((seed / 0xffffffff) * 2 - 1) * 0.003;
+          }
+          noise.buffer = noiseBuffer;
+          noise.connect(highpass);
+          this.voiceSources.push(noise);
+          this.voiceNodes.push(highpass, lowpass, warmth, noise);
+        } else source.connect(envelope);
+        this.voiceDucking = true;
+        this.revealDucking = Boolean(cue.reveal);
+        this.syncBuses();
+        this.setVoicePlayback({ entryId, status: 'playing' });
+        source.onended = () => {
+          if (generation === this.voiceGeneration) this.stopVoice();
+        };
+        for (const current of this.voiceSources) current.start(now);
+      } catch {
+        if (generation === this.voiceGeneration) {
+          this.stopVoice();
+          this.setVoicePlayback({ entryId, status: 'unavailable' });
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    })();
+    return () => {
+      if (generation === this.voiceGeneration) this.stopVoice();
+    };
+  }
+
+  stopVoice() {
+    this.voiceGeneration += 1;
+    this.voiceAbort?.abort();
+    this.voiceAbort = null;
+    for (const source of this.voiceSources) {
+      source.onended = null;
+      try {
+        source.stop();
+      } catch {
+        /* The source may have ended already. */
+      }
+    }
+    for (const node of this.voiceNodes) node.disconnect();
+    this.voiceSources = [];
+    this.voiceNodes = [];
+    this.voiceDucking = false;
+    this.revealDucking = false;
+    if (this.voicePlayback.status !== 'idle')
+      this.setVoicePlayback({ entryId: null, status: 'idle' });
+    this.syncBuses();
   }
 
   private syncEnvironment() {
     const shouldPlay =
       this.state.active &&
+      !this.state.paused &&
       this.state.enabled &&
       this.state.environmentVolume > 0 &&
       this.context?.state === 'running';
@@ -287,6 +496,7 @@ export class SoundManager {
   private playTones(tones: readonly Tone[]) {
     if (
       !this.state.active ||
+      this.state.paused ||
       !this.state.enabled ||
       this.state.effectsVolume <= 0 ||
       !this.context ||

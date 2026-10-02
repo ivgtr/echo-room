@@ -13,13 +13,17 @@ describe('SystemMenu', () => {
     const onSoundLevelChange = vi.fn();
     const onSubtitleSettingChange = vi.fn();
     const onToggleMotion = vi.fn();
+    const onReplayVoice = vi.fn();
     render(
       <SystemMenu
         objective="端末を確認する。"
         activeElapsedMs={0}
         powerRestored
         reservePower={false}
-        soundEnabled={false}
+        soundEnabled
+        voicePlayback={{ entryId: null, status: 'idle' }}
+        onReplayVoice={onReplayVoice}
+        onStopVoice={vi.fn()}
         soundLevels={defaultSoundLevels}
         subtitleSettings={defaultSubtitleSettings}
         visualAssist={false}
@@ -29,7 +33,7 @@ describe('SystemMenu', () => {
         hintUnlocked={false}
         narrativeHistory={[
           {
-            id: 'seen_line',
+            id: 'intro_02',
             kind: 'communication',
             speaker: 'UNKNOWN',
             text: '……聞こえるか？',
@@ -62,6 +66,14 @@ describe('SystemMenu', () => {
       }),
     );
     expect(screen.getByText('……聞こえるか？')).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: '……聞こえるか？ 音声を再生' }),
+    ).toBeEnabled();
+    expect(screen.queryByText('20分後のお前だ。')).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: '……聞こえるか？ 音声を再生' }),
+    );
+    expect(onReplayVoice).toHaveBeenCalledExactlyOnceWith('intro_02');
     expect(screen.getByText('EMERGENCY POWER TEST')).toBeVisible();
     expect(
       screen.queryByRole('button', { name: 'RESUME / ゲームへ戻る' }),
@@ -77,9 +89,9 @@ describe('SystemMenu', () => {
         name: 'TEXT & SOUND / 字幕・サウンド設定',
       }),
     );
-    expect(screen.queryByText(/VOICE \/ 会話/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/VOICE \/ 会話/)).toBeVisible();
     expect(
-      screen.getByRole('button', { name: 'MASTER / サウンド OFF' }),
+      screen.getByRole('button', { name: 'MASTER / サウンド ON' }),
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /^大$/ }));
     expect(onSubtitleSettingChange).toHaveBeenCalledWith('size', 'large');
