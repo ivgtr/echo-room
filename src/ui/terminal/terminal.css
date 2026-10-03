@@ -398,20 +398,6 @@
   font-family: ui-monospace, monospace;
 }
 
-.terminal-packet-record button {
-  min-height: 2rem;
-  margin-left: auto;
-  padding: 0.25rem 0.6rem;
-  border: 1px solid #66877d;
-  color: #d4e6df;
-  background: #142721;
-  font-size: 0.8rem;
-}
-
-.terminal-packet-record .voice-status {
-  flex-basis: 100%;
-}
-
 /* One display, not a second modal or a framed instrument inside the CRT. */
 .terminal-instrument .puzzle-device.is-embedded {
   min-height: 0;

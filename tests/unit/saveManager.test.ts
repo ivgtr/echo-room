@@ -92,17 +92,30 @@ describe('saveManager', () => {
     expect(loadSettings(storage)).toEqual(defaultSettings);
   });
 
-  it('adds the voice level to existing v4 settings without resetting other choices', () => {
+  it('ignores the removed voice level without resetting v4 settings or end-game progress', () => {
     const storage = createStorage();
     const prior = {
       ...defaultSettings,
       soundEnabled: false,
-      soundLevels: { effects: 35, environment: 55 },
+      soundLevels: { effects: 35, environment: 55, voice: 85 },
     };
     storage.setItem(SETTINGS_KEY, JSON.stringify(prior));
     expect(loadSettings(storage)).toMatchObject({
       soundEnabled: false,
-      soundLevels: { effects: 35, environment: 55, voice: 85 },
+      soundLevels: { effects: 35, environment: 55 },
     });
+    expect(loadSettings(storage).soundLevels).not.toHaveProperty('voice');
+    const progress = createPowerRestoredProgress({
+      storyStage: 'completed',
+      checkpointId: 'checkpoint_completed',
+      endingLineIndex: 8,
+    });
+    saveProgress(progress, storage);
+    const raw = storage.getItem(SAVE_KEY);
+    expect(loadProgress(storage)).toMatchObject({
+      status: 'valid',
+      data: { progress },
+    });
+    expect(storage.getItem(SAVE_KEY)).toBe(raw);
   });
 });

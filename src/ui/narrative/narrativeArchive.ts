@@ -1,5 +1,5 @@
 import type { ItemId } from '../../game/machine/gameMachine';
-import { packetTexts, type PuzzleId } from '../../game/puzzles/storyPuzzles';
+import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
 import type { SavedProgress } from '../../game/save/saveManager';
 import { archivedDeskDocuments } from '../evidence/deskEvidence';
 
@@ -49,7 +49,6 @@ export const introEntries = [
   },
 ] as const satisfies readonly NarrativeEntry[];
 
-/** The current-side line reuses the opening take, including its breath and pause. */
 export const endingEntries: readonly NarrativeEntry[] = [
   {
     id: 'ending_packets',
@@ -106,16 +105,6 @@ export const powerRestoredEntry: NarrativeEntry = {
   speaker: 'FACILITY SYSTEM',
   text: '非常電源がつながった。端末と転送装置が起動する。',
 };
-
-/** These entries are revealed one at a time only after a correct frame repair. */
-export const packetEntries: readonly NarrativeEntry[] = packetTexts.map(
-  (text, index) => ({
-    id: `packet_0${index + 1}`,
-    kind: 'communication',
-    speaker: `PACKET 0${index + 1}`,
-    text,
-  }),
-);
 
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
   {
@@ -249,15 +238,7 @@ export function getArchiveDocuments(
 
 export function getRestoredNarrativeHistory(progress: SavedProgress) {
   const history: NarrativeEntry[] = [...introEntries, powerRestoredEntry];
-  for (const puzzleId of progress.completedPuzzleIds) {
-    // ACCEPT FRAME is reachable only after all four restored lines were shown.
-    if (puzzleId === 'puzzle_packet_repair') history.push(...packetEntries);
+  for (const puzzleId of progress.completedPuzzleIds)
     history.push(...getPuzzleCompletionEntries(puzzleId));
-  }
-  if (
-    progress.storyStage === 'ending_door' ||
-    progress.storyStage === 'completed'
-  )
-    history.push(...endingEntries);
   return history;
 }

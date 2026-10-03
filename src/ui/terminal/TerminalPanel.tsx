@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import type { VoicePlayback } from '../../audio/voiceManifest';
 
 import type {
   StoryStage,
@@ -7,14 +6,13 @@ import type {
 } from '../../game/machine/gameMachine';
 import { matchedRecords } from '../../game/puzzles/signalRecords';
 import {
+  packetTexts,
   PUZZLE_DEVICE_COPY,
   type PuzzleId,
 } from '../../game/puzzles/storyPuzzles';
 import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
 import { PuzzleDevice } from '../puzzles/PuzzleDevice';
-import { packetEntries } from '../narrative/narrativeArchive';
-import { VoiceStatus } from '../narrative/VoiceStatus';
 import { getTerminalTelemetry, terminalModes } from './terminalTelemetry';
 
 type Props = {
@@ -26,13 +24,6 @@ type Props = {
   onClose: () => void;
   onPuzzleSubmit: (puzzleId: PuzzleId, answer: string[]) => void;
   onTransmit: () => void;
-  onPacketEntryChange: (entryId: string | null) => void;
-} & PacketPlaybackProps;
-
-type PacketPlaybackProps = {
-  voicePlayback: VoicePlayback;
-  voiceEnabled: boolean;
-  onReplayVoice: (entryId: string) => void;
 };
 
 type Telemetry = ReturnType<typeof getTerminalTelemetry>;
@@ -100,19 +91,11 @@ export function TerminalPanel(props: Props) {
                     failures={props.puzzleFailures[puzzleId]}
                     onSubmit={props.onPuzzleSubmit}
                     onClose={props.onClose}
-                    voicePlayback={props.voicePlayback}
-                    onPacketEntryChange={props.onPacketEntryChange}
                   />
                 </div>
               )}
               {!puzzleVisible && (
-                <TerminalReadout
-                  menuId={props.menuId}
-                  telemetry={telemetry}
-                  voicePlayback={props.voicePlayback}
-                  voiceEnabled={props.voiceEnabled}
-                  onReplayVoice={props.onReplayVoice}
-                />
+                <TerminalReadout menuId={props.menuId} telemetry={telemetry} />
               )}
             </div>
             <span
@@ -182,11 +165,10 @@ export function TerminalPanel(props: Props) {
 function TerminalReadout({
   menuId,
   telemetry,
-  ...playbackProps
 }: {
   menuId: TerminalMenuId;
   telemetry: Telemetry;
-} & PacketPlaybackProps) {
+}) {
   if (menuId === 'system') {
     const readings = telemetry.transmissionReady
       ? telemetry.readings.filter(
@@ -195,9 +177,7 @@ function TerminalReadout({
       : telemetry.readings;
     return (
       <div className="terminal-readings">
-        {telemetry.transmissionReady && (
-          <PacketReadout transmission {...playbackProps} />
-        )}
+        {telemetry.transmissionReady && <PacketReadout transmission />}
         <dl>
           {readings.map(({ label, value }) => (
             <div key={label}>
@@ -265,7 +245,7 @@ function TerminalReadout({
 
   return telemetry.frameRestored ? (
     <div className="terminal-signal-record">
-      <PacketReadout {...playbackProps} />
+      <PacketReadout />
       <p className="terminal-equipment-status">FRAME / RESTORED</p>
       <p>
         {telemetry.voiceMatched
@@ -283,34 +263,16 @@ function TerminalReadout({
   );
 }
 
-function PacketReadout({
-  transmission = false,
-  voicePlayback,
-  voiceEnabled,
-  onReplayVoice,
-}: { transmission?: boolean } & PacketPlaybackProps) {
+function PacketReadout({ transmission = false }: { transmission?: boolean }) {
   return (
     <ol
       className="terminal-packet-record"
       aria-label={transmission ? '送信パケット4枠' : '復元済みパケット'}
     >
-      {packetEntries.map(({ id, text }, index) => (
-        <li key={id}>
+      {packetTexts.map((text, index) => (
+        <li key={text}>
           <span>{transmission ? `W${index + 1}` : `PACKET 0${index + 1}`}</span>
           {text}
-          <button
-            type="button"
-            disabled={!voiceEnabled}
-            data-sound="voice"
-            aria-label={`PACKET 0${index + 1} 音声${voicePlayback.entryId === id && ['loading', 'playing'].includes(voicePlayback.status) ? 'を停止' : 'を再生'}`}
-            onClick={() => onReplayVoice(id)}
-          >
-            {voicePlayback.entryId === id &&
-            ['loading', 'playing'].includes(voicePlayback.status)
-              ? '音声を停止'
-              : '音声を再生'}
-          </button>
-          <VoiceStatus playback={voicePlayback} entryId={id} />
         </li>
       ))}
     </ol>

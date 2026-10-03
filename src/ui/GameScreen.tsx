@@ -1,5 +1,3 @@
-import type { VoicePlayback } from '../audio/voiceManifest';
-import type { EffectScope } from '../audio/soundManager';
 import {
   useCallback,
   useEffect,
@@ -70,10 +68,6 @@ type Props = {
   visualAssist: boolean;
   motionReduced: boolean;
   soundEnabled: boolean;
-  voicePlayback: VoicePlayback;
-  onReplayVoice: (entryId: string) => void;
-  onStopVoice: () => void;
-  onPacketEntryChange: (entryId: string | null) => void;
   soundLevels: SoundLevels;
   subtitleSettings: SubtitleSettings;
   saveMessage: string | null;
@@ -115,7 +109,7 @@ type Props = {
   onHintReveal: () => void;
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
-  onUiClick: (scope?: EffectScope) => void;
+  onUiClick: () => void;
   onPuzzleInteraction: (puzzleId: PuzzleId) => void;
   onTextBlip: () => void;
   onEventNarrativeAdvance: () => void;
@@ -372,10 +366,6 @@ export function GameScreen(props: Props) {
       onClose={closeInspection}
       onPuzzleSubmit={handlePuzzleSubmit}
       onTransmit={handleTransmit}
-      voicePlayback={props.voicePlayback}
-      voiceEnabled={props.soundEnabled && props.soundLevels.voice > 0}
-      onReplayVoice={props.onReplayVoice}
-      onPacketEntryChange={props.onPacketEntryChange}
     />
   ) : props.selectedHotspotId === 'hotspot_locker' &&
     props.storyStage === 'puzzle_maintenance_lock' ? (
@@ -416,13 +406,8 @@ export function GameScreen(props: Props) {
         onClickCapture={(event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;
-          const button = target.closest<HTMLElement>('button:not(:disabled)');
+          const button = target.closest('button:not(:disabled)');
           if (!button || button.closest('.terminal-function-keys')) return;
-          if (button.dataset.sound === 'voice') return;
-          if (button.dataset.sound === 'dialogue') {
-            props.onUiClick('dialogue');
-            return;
-          }
           const device = button.closest<HTMLElement>('[data-puzzle-id]');
           const puzzleId = device?.dataset.puzzleId as PuzzleId | undefined;
           if (puzzleId) props.onPuzzleInteraction(puzzleId);
@@ -444,7 +429,7 @@ export function GameScreen(props: Props) {
             />
           </div>
           <div className="hud-actions">
-            {!ending && (
+            {!ending && !doorEscape && (
               <button
                 type="button"
                 className="system-entry"
@@ -547,7 +532,6 @@ export function GameScreen(props: Props) {
         {props.intro && (
           <IntroDialogue
             lineIndex={props.introLineIndex}
-            voicePlayback={props.voicePlayback}
             canSkip={props.introSeen}
             onAdvance={props.onDialogueAdvance}
             onSkip={props.onDialogueSkip}
@@ -564,8 +548,6 @@ export function GameScreen(props: Props) {
           >
             <NarrativePanel
               kind={props.eventNarrative.kind}
-              entryId={props.eventNarrative.id}
-              voicePlayback={props.voicePlayback}
               {...(props.eventNarrative.speaker
                 ? { speaker: props.eventNarrative.speaker }
                 : {})}
@@ -639,17 +621,12 @@ export function GameScreen(props: Props) {
             powerRestored={props.powerRestored}
             reservePower={props.reservePower}
             soundEnabled={props.soundEnabled}
-            voicePlayback={props.voicePlayback}
-            onReplayVoice={props.onReplayVoice}
-            onStopVoice={props.onStopVoice}
             soundLevels={props.soundLevels}
             subtitleSettings={props.subtitleSettings}
             visualAssist={props.visualAssist}
             motionReduced={props.motionReduced}
-            inventoryAvailable={
-              !ending && !doorEscape && props.inventory.length > 0
-            }
-            hintAvailable={!ending && !doorEscape && props.powerRestored}
+            inventoryAvailable={props.inventory.length > 0}
+            hintAvailable={props.powerRestored}
             hintUnlocked={Object.values(props.puzzleFailures).some(
               (failures) => failures > 0,
             )}
@@ -677,10 +654,7 @@ export function GameScreen(props: Props) {
         {(endingSequence || props.storyStage === 'completed') && (
           <EndingPanel
             lineIndex={props.endingLineIndex}
-            voicePlayback={props.voicePlayback}
             completed={props.storyStage === 'completed'}
-            onOpenSystem={toggleSystemMenu}
-            obscured={props.systemMenuOpen}
             onAdvance={props.onEndingAdvance}
             textSpeed={props.subtitleSettings.speed}
             motionReduced={props.motionReduced}

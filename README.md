@@ -18,5 +18,3 @@ npm run dev
 ```
 
 検証は`npm run check`（型・lint・整合性・unit・build）。ブラウザの代表3経路は`npm run test:e2e`で別途実行します。
-
-音声にはIrodori-TTS / Irodori-v4.1-Smallによる合成音声を使用しています。[制作元・利用条件](audio/voice/README.md)

@@ -3746,32 +3746,3 @@ button:focus-visible {
     transform: none;
   }
 }
-
-.voice-status {
-  display: block;
-  margin-top: 0.65rem;
-  color: var(--text-muted, #a4b5b8);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  pointer-events: none;
-}
-.ending-panel > .voice-status {
-  position: absolute;
-  bottom: 15%;
-}
-.archive-list button {
-  margin-bottom: 0.5rem;
-  min-height: 2.5rem;
-}
-.ending-panel.is-complete button {
-  justify-self: center;
-  min-height: 44px;
-  padding: 0.75rem 1rem;
-  border: 0;
-  border-bottom: 1px solid currentColor;
-  color: inherit;
-  background: transparent;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}

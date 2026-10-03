@@ -1,7 +1,5 @@
 import { access, readFile } from 'node:fs/promises';
 import process from 'node:process';
-import { basename } from 'node:path';
-import { voiceAssets } from '../src/audio/voiceManifest.ts';
 
 import { z } from 'zod';
 
@@ -48,25 +46,8 @@ try {
     }
   }
 
-  for (const url of Object.values(voiceAssets)) {
-    if (
-      !/^https:\/\/raw\.githubusercontent\.com\/ivgtr\/echo-room\/[a-f0-9]{40}\/audio\/voice\//.test(
-        url,
-      )
-    )
-      throw new Error('Voice assets must use a fixed Git commit');
-    const bytes = await readFile(
-      new URL(`../audio/voice/${basename(url)}`, import.meta.url),
-    );
-    if (
-      bytes.toString('ascii', 0, 4) !== 'RIFF' ||
-      bytes.toString('ascii', 8, 12) !== 'WAVE'
-    )
-      throw new Error(`Invalid voice WAV: ${basename(url)}`);
-  }
-
   console.log(
-    `Asset validation passed (${bundleIds.size} bundles, ${imageIds.size} images, ${Object.keys(voiceAssets).length} Git-hosted voice masters, all files present).`,
+    `Asset validation passed (${bundleIds.size} bundles, ${imageIds.size} images, all files present).`,
   );
 } catch (error) {
   console.error('Asset validation failed.');

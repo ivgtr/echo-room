@@ -9,9 +9,7 @@ import {
 } from '../../src/ui/system/uiSettings';
 
 describe('SystemMenu', () => {
-  it('replays only read voice entries and stops playback on leaving the archive', () => {
-    const onStopVoice = vi.fn();
-    const onReplayVoice = vi.fn();
+  it('shows read subtitles and returns from the archive without voice controls', () => {
     render(
       <SystemMenu
         objective="端末を確認する。"
@@ -19,9 +17,6 @@ describe('SystemMenu', () => {
         powerRestored
         reservePower={false}
         soundEnabled
-        voicePlayback={{ entryId: null, status: 'idle' }}
-        onReplayVoice={onReplayVoice}
-        onStopVoice={onStopVoice}
         soundLevels={defaultSoundLevels}
         subtitleSettings={defaultSubtitleSettings}
         visualAssist={false}
@@ -65,16 +60,14 @@ describe('SystemMenu', () => {
     );
     expect(screen.getByText('……聞こえるか？')).toBeVisible();
     expect(
-      screen.getByRole('button', { name: '……聞こえるか？ 音声を再生' }),
-    ).toBeEnabled();
+      screen.queryByRole('button', { name: /音声を再生/ }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText('20分後のお前だ。')).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole('button', { name: '……聞こえるか？ 音声を再生' }),
-    );
-    expect(onReplayVoice).toHaveBeenCalledExactlyOnceWith('intro_02');
     fireEvent.click(
       screen.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }),
     );
-    expect(onStopVoice).toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: 'RESUME / ゲームへ戻る' }),
+    ).toBeVisible();
   });
 });
