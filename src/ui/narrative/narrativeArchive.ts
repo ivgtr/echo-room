@@ -131,7 +131,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'locker_cue',
         kind: 'discovery',
-        text: '回線がそろった。西壁から、ロックの外れる音がした。',
+        text: '西壁のロッカーが反応した。',
       },
     ],
     puzzle_maintenance_lock: [
@@ -146,7 +146,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'offset_discovered',
         kind: 'monologue',
-        text: '3つとも、送信時刻が受信時刻のちょうど20分後だ。隣の部屋なんてない。回線はこの部屋へ戻っている。',
+        text: '戻ってる……？',
       },
       {
         id: 'offset_warning',
@@ -171,7 +171,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'packet_question',
         kind: 'monologue',
-        text: '……赤いボタン？ そんなものは、まだ見ていない。',
+        text: '……あの赤いボタンを、最後に押す？',
       },
       {
         id: 'voiceprint_cue',
@@ -184,7 +184,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       {
         id: 'identity_question',
         kind: 'monologue',
-        text: 'この波の形は……俺の職員記録と同じだ。',
+        text: '……俺？',
       },
       {
         id: 'identity_answer',
@@ -204,7 +204,7 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         id: 'transmission_ready_cue',
         kind: 'system',
         speaker: 'FACILITY SYSTEM',
-        text: '送信テスト完了。赤い送信ボタンを使用できる。',
+        text: '送信カバーのロックが外れた。',
       },
     ],
   };

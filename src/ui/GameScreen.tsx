@@ -417,6 +417,7 @@ export function GameScreen(props: Props) {
         <WorldCanvas
           locationId={props.locationId}
           powerRestored={props.powerRestored}
+          completedPuzzleIds={props.completedPuzzleIds}
           motionReduced={props.motionReduced}
           onHotspotSelected={requestHotspot}
         />
