@@ -1,5 +1,5 @@
 /** Git-hosted masters are deliberately outside public/ and the Vite asset graph. */
-const VOICE_ASSET_COMMIT = '63773e5c291841491c2623497fc117f3c73cc969';
+const VOICE_ASSET_COMMIT = '3636342f65b453f0da207b6bf5cb2fb7ff31767e';
 export const VOICE_BASE_URL = `https://raw.githubusercontent.com/ivgtr/echo-room/${VOICE_ASSET_COMMIT}/audio/voice`;
 
 export const voiceAssets = {
