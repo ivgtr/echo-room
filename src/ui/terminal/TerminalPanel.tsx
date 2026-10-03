@@ -81,7 +81,7 @@ export function TerminalPanel(props: Props) {
                 <h2>{screenTitle}</h2>
                 <button
                   type="button"
-                  className="terminal-history-button"
+                  className="terminal-history-button console-key"
                   ref={historyButtonRef}
                   aria-haspopup="dialog"
                   aria-expanded={historyOpen}
@@ -132,8 +132,8 @@ export function TerminalPanel(props: Props) {
               />
             </div>
           </div>
-          <div className="terminal-console">
-            <div className="terminal-nameplate">
+          <div className="terminal-console console-record">
+            <div className="terminal-nameplate console-record">
               <span>ECHO BUFFER</span>
               <strong>TERMINAL ║</strong>
             </div>
@@ -144,7 +144,7 @@ export function TerminalPanel(props: Props) {
             >
               {terminalModes.map(({ id, label, caption }) => (
                 <button
-                  className="terminal-function-key"
+                  className="terminal-function-key console-key"
                   type="button"
                   key={id}
                   aria-label={label}
@@ -189,7 +189,7 @@ export function TerminalPanel(props: Props) {
           fallbackFocusRef={historyButtonRef}
         >
           <section
-            className="system-menu terminal-history"
+            className="terminal-history"
             role="dialog"
             aria-modal="true"
             aria-label="会話履歴"
@@ -205,17 +205,20 @@ export function TerminalPanel(props: Props) {
               destination="端末に戻る"
               onClick={() => setHistoryOpen(false)}
             />
-            <header>
-              <h2>会話履歴</h2>
-              <p>端末の配置を保ったまま、読んだ会話を確認できます。</p>
-            </header>
-            <div
-              className="system-scroll"
-              role="region"
-              aria-label="記録された会話"
-              tabIndex={0}
-            >
-              <ConversationHistory history={props.narrativeHistory} />
+            <div className="terminal-history-reader console-display">
+              <header>
+                <span>ECHO BUFFER / RECORD READER</span>
+                <h2>会話履歴</h2>
+                <p>端末の配置を保ったまま、読んだ会話を確認できます。</p>
+              </header>
+              <div
+                className="system-scroll"
+                role="region"
+                aria-label="記録された会話"
+                tabIndex={0}
+              >
+                <ConversationHistory history={props.narrativeHistory} />
+              </div>
             </div>
           </section>
         </ModalFocusScope>

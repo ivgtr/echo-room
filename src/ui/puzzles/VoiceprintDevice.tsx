@@ -173,7 +173,7 @@ export function VoiceprintDevice({ active, failures, submit }: Props) {
       data-active={running}
       data-failures={failures}
     >
-      <div className="voiceprint-shared-scope">
+      <div className="voiceprint-shared-scope console-display">
         <header className="voiceprint-scope-heading">
           <div className="voiceprint-legend">
             <span>
@@ -252,7 +252,7 @@ export function VoiceprintDevice({ active, failures, submit }: Props) {
         </div>
         {matchProgress !== null && (
           <div
-            className={`voiceprint-identity-readout${matchProgress === 100 ? ' is-match' : ''}`}
+            className={`voiceprint-identity-readout console-record${matchProgress === 100 ? ' is-match' : ''}`}
             role="status"
             aria-live="polite"
           >
@@ -282,7 +282,7 @@ export function VoiceprintDevice({ active, failures, submit }: Props) {
           </div>
         )}
       </div>
-      <div className="voiceprint-mechanical-controls">
+      <div className="voiceprint-mechanical-controls console-record">
         <div className="voiceprint-timebase-control">
           <div
             className="voiceprint-timebase-knob"
@@ -306,7 +306,7 @@ export function VoiceprintDevice({ active, failures, submit }: Props) {
           >
             <i className="voiceprint-dial-ticks" aria-hidden="true" />
             <i
-              className="voiceprint-dial-cap"
+              className="voiceprint-dial-cap console-knob-art"
               style={{ transform: `rotate(${(timebase - 1) * 75}deg)` }}
               aria-hidden="true"
             />
@@ -324,7 +324,7 @@ export function VoiceprintDevice({ active, failures, submit }: Props) {
           aria-label="波の上下反転"
           aria-checked={inverted}
           disabled={!canAdjust}
-          className="voiceprint-polarity-switch"
+          className="voiceprint-polarity-switch console-key"
           onClick={() => {
             if (canAdjust && !document.hidden) setInverted((value) => !value);
           }}
@@ -346,7 +346,7 @@ export function VoiceprintDevice({ active, failures, submit }: Props) {
       {matchProgress === 100 && (
         <button
           type="button"
-          className="voice-match-confirm"
+          className="voice-match-confirm console-key"
           ref={confirmationRef}
           disabled={!running || accepted}
           onClick={() => {

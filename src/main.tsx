@@ -8,6 +8,7 @@ import './ui/terminal/terminal.css';
 import './styles/signal-investigation.css';
 import './styles/packet-voiceprint.css';
 import './styles/causal-transmission.css';
+import './styles/console-materials.css';
 
 const root = document.getElementById('root');
 

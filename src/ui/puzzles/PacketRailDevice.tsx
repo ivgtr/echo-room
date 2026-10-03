@@ -153,87 +153,95 @@ export function PacketRailDevice({ active, submit }: Props) {
               : 'DECODER / STANDBY'}
         </strong>
       </header>
-      <div className="packet-data-rail" aria-label="壊れたデータの並べ替え">
-        {placed.map((id, slot) => {
-          const fragment = id ? fragments[id] : null;
-          const fixed = slot === 0;
-          return (
-            <div
-              className={`packet-rail-slot${fixed ? ' is-fixed' : ''}${decoded[slot] ? ' is-decoded' : ''}`}
-              key={slot}
-            >
-              <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
-              <button
-                type="button"
-                data-frame-slot={fixed ? undefined : slot - 1}
-                disabled={fixed || !active || restored}
-                aria-label={
-                  fixed
-                    ? '固定されたHEADER断片C'
-                    : selected
-                      ? `レール${slot + 1}へ断片${selected.toUpperCase()}を置く`
-                      : fragment
-                        ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
-                        : `レール${slot + 1}へ置く`
-                }
-                aria-description={id ? describeFragmentEdges(id) : '未接続'}
-                onClick={() => {
-                  if (!active || restored || fixed || document.hidden) return;
-                  if (selected) placeFragment(slot - 1, selected);
-                  else if (id && isMovableFragment(id)) {
-                    setSelected(id);
-                    setRail((current) =>
-                      current.map((value, index) =>
-                        index === slot - 1 ? null : value,
-                      ),
-                    );
-                  }
-                }}
-                onDragOver={(event) => {
-                  if (!fixed && active && !restored) event.preventDefault();
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const value = event.dataTransfer.getData('text/plain');
-                  if (!fixed && isMovableFragment(value))
-                    placeFragment(slot - 1, value);
-                }}
+      <div
+        className="packet-rail-viewport console-display"
+        role="region"
+        aria-label="壊れたデータの並べ替え"
+        tabIndex={active ? 0 : -1}
+      >
+        <div className="packet-data-rail">
+          {placed.map((id, slot) => {
+            const fragment = id ? fragments[id] : null;
+            const fixed = slot === 0;
+            return (
+              <div
+                className={`packet-rail-slot${fixed ? ' is-fixed' : ''}${decoded[slot] ? ' is-decoded' : ''}`}
+                key={slot}
               >
-                {id ? (
-                  <FragmentGraphic id={id} decoded={decoded[slot] ?? false} />
-                ) : (
-                  <span className="packet-empty-slot" aria-hidden="true">
+                <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
+                <button
+                  type="button"
+                  className="console-record"
+                  data-frame-slot={fixed ? undefined : slot - 1}
+                  disabled={fixed || !active || restored}
+                  aria-label={
+                    fixed
+                      ? '固定されたHEADER断片C'
+                      : selected
+                        ? `レール${slot + 1}へ断片${selected.toUpperCase()}を置く`
+                        : fragment
+                          ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
+                          : `レール${slot + 1}へ置く`
+                  }
+                  aria-description={id ? describeFragmentEdges(id) : '未接続'}
+                  onClick={() => {
+                    if (!active || restored || fixed || document.hidden) return;
+                    if (selected) placeFragment(slot - 1, selected);
+                    else if (id && isMovableFragment(id)) {
+                      setSelected(id);
+                      setRail((current) =>
+                        current.map((value, index) =>
+                          index === slot - 1 ? null : value,
+                        ),
+                      );
+                    }
+                  }}
+                  onDragOver={(event) => {
+                    if (!fixed && active && !restored) event.preventDefault();
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const value = event.dataTransfer.getData('text/plain');
+                    if (!fixed && isMovableFragment(value))
+                      placeFragment(slot - 1, value);
+                  }}
+                >
+                  {id ? (
+                    <FragmentGraphic id={id} decoded={decoded[slot] ?? false} />
+                  ) : (
+                    <span className="packet-empty-slot" aria-hidden="true">
+                      <i />
+                      CONTACT OPEN
+                    </span>
+                  )}
+                </button>
+                {slot < 3 && (
+                  <span
+                    className={`packet-seam is-${seams[slot]}`}
+                    style={
+                      {
+                        '--seam-height': `${fragment ? fragment.heights[4] : 50}%`,
+                      } as CSSProperties
+                    }
+                    aria-label={`継ぎ目${slot + 1}: ${seams[slot] === 'connected' ? '接続・復号' : seams[slot] === 'broken' ? '断線' : '未接続'}`}
+                  >
                     <i />
-                    CONTACT OPEN
+                    <b>
+                      {seams[slot] === 'connected'
+                        ? '●'
+                        : seams[slot] === 'broken'
+                          ? '×'
+                          : '·'}
+                    </b>
                   </span>
                 )}
-              </button>
-              {slot < 3 && (
-                <span
-                  className={`packet-seam is-${seams[slot]}`}
-                  style={
-                    {
-                      '--seam-height': `${fragment ? fragment.heights[4] : 50}%`,
-                    } as CSSProperties
-                  }
-                  aria-label={`継ぎ目${slot + 1}: ${seams[slot] === 'connected' ? '接続・復号' : seams[slot] === 'broken' ? '断線' : '未接続'}`}
-                >
-                  <i />
-                  <b>
-                    {seams[slot] === 'connected'
-                      ? '●'
-                      : seams[slot] === 'broken'
-                        ? '×'
-                        : '·'}
-                  </b>
-                </span>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
+        </div>
       </div>
       <div
-        className={`packet-decoder-line${restored ? ' is-complete' : ''}`}
+        className={`packet-decoder-line console-display${restored ? ' is-complete' : ''}`}
         aria-live="polite"
         aria-atomic="true"
       >
@@ -268,6 +276,7 @@ export function PacketRailDevice({ active, submit }: Props) {
             <button
               type="button"
               key={id}
+              className="console-record"
               draggable={active && !rail.includes(id)}
               disabled={!active || rail.includes(id)}
               aria-pressed={selected === id}
@@ -287,7 +296,7 @@ export function PacketRailDevice({ active, submit }: Props) {
           ))}
           <button
             type="button"
-            className="packet-eject"
+            className="packet-eject console-key"
             aria-label="EJECT / 取り出す"
             disabled={!active}
             onClick={() => {
@@ -311,7 +320,7 @@ export function PacketRailDevice({ active, submit }: Props) {
           </div>
           <button
             type="button"
-            className="packet-confirm"
+            className="packet-confirm console-key"
             ref={confirmationRef}
             disabled={!active || accepted}
             onClick={() => {

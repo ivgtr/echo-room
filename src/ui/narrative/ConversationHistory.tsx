@@ -9,14 +9,18 @@ export function ConversationHistory({
 }) {
   const titleId = useId();
   return (
-    <section aria-labelledby={titleId}>
+    <section className="conversation-history" aria-labelledby={titleId}>
       <h3 id={titleId}>CONVERSATION / 会話履歴</h3>
       {history.length === 0 ? (
         <p>まだ記録された会話はない。</p>
       ) : (
         <ol className="archive-list">
           {history.map((entry) => (
-            <li key={entry.id} data-kind={entry.kind}>
+            <li
+              className="console-record"
+              key={entry.id}
+              data-kind={entry.kind}
+            >
               <span>{entry.speaker ?? kindLabel(entry.kind)}</span>
               <p>{entry.text}</p>
             </li>

@@ -207,6 +207,65 @@
           "height": 640
         }
       ]
+    },
+    {
+      "id": "console_hardware",
+      "images": [
+        {
+          "id": "gfx-console-cover__closed__sprite",
+          "src": "/assets/images/console/gfx-console-cover__closed__sprite.webp",
+          "width": 192,
+          "height": 236
+        },
+        {
+          "id": "gfx-console-glass__blank__fill",
+          "src": "/assets/images/console/gfx-console-glass__blank__fill.webp",
+          "width": 320,
+          "height": 138
+        },
+        {
+          "id": "gfx-console-jack__empty__sprite",
+          "src": "/assets/images/console/gfx-console-jack__empty__sprite.webp",
+          "width": 174,
+          "height": 176
+        },
+        {
+          "id": "gfx-console-key__neutral__sprite",
+          "src": "/assets/images/console/gfx-console-key__neutral__sprite.webp",
+          "width": 252,
+          "height": 120
+        },
+        {
+          "id": "gfx-console-knob__neutral__sprite",
+          "src": "/assets/images/console/gfx-console-knob__neutral__sprite.webp",
+          "width": 192,
+          "height": 192
+        },
+        {
+          "id": "gfx-console-record__blank__carrier",
+          "src": "/assets/images/console/gfx-console-record__blank__carrier.webp",
+          "width": 731,
+          "height": 100
+        },
+        {
+          "id": "gfx-console-screen__blank__frame",
+          "src": "/assets/images/console/gfx-console-screen__blank__frame.webp",
+          "width": 705,
+          "height": 398
+        },
+        {
+          "id": "gfx-console-toggle__neutral__sprite",
+          "src": "/assets/images/console/gfx-console-toggle__neutral__sprite.webp",
+          "width": 144,
+          "height": 196
+        },
+        {
+          "id": "gfx-console-transmit__idle__sprite",
+          "src": "/assets/images/console/gfx-console-transmit__idle__sprite.webp",
+          "width": 192,
+          "height": 196
+        }
+      ]
     }
   ],
   "placeholderPolicy": "missing_assets_only"

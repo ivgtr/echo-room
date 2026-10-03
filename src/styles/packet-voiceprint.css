@@ -4,7 +4,7 @@
   min-width: 0;
   color: #bdd3ce;
   font:
-    0.76rem ui-monospace,
+    0.9rem ui-monospace,
     monospace;
 }
 
@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  font-size: 0.67rem;
+  font-size: 0.8rem;
 }
 
 .packet-instrument-heading span,
@@ -30,12 +30,12 @@
 .packet-instrument-heading small {
   margin-top: 0.2rem;
   color: #809993;
-  font-size: 0.57rem;
+  font-size: 0.72rem;
 }
 
 .packet-instrument-heading strong {
   color: #b4d1c9;
-  font-size: 0.68rem;
+  font-size: 0.84rem;
   letter-spacing: 0.06em;
 }
 
@@ -43,41 +43,50 @@
   color: #afffec;
 }
 
+.packet-rail-viewport {
+  --console-display-padding: 0.75rem;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: #78928a #101b18;
+}
 .packet-data-rail {
+  --console-record-border: 8px;
+  --packet-carrier-inline-border: calc(var(--console-record-border) * 2.12);
+  --packet-slot-label-height: 1.25rem;
+  --packet-slot-label-gap: 0.5rem;
+  --packet-carrier-title-height: 2.1rem;
+  --packet-rail-gap: 1.25rem;
   display: grid;
-  padding: 0.55rem 0.5rem;
-  border-block: 1px solid #51685e;
-  background: linear-gradient(#17241f, #0b1513 22%, #111c18 80%, #24312a);
+  min-width: 46rem;
+  padding: 0.25rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--packet-rail-gap);
 }
 
 .packet-rail-slot {
   position: relative;
   display: grid;
   min-width: 0;
-  gap: 0.35rem;
+  grid-template-rows: var(--packet-slot-label-height) 1fr;
+  gap: var(--packet-slot-label-gap);
 }
 
 .packet-rail-slot > small {
   color: #a1b3a5;
-  font-size: 0.56rem;
+  font-size: 0.72rem;
   text-align: center;
 }
 
 .packet-rail-slot > button {
-  display: block;
+  display: grid;
+  align-content: start;
   width: 100%;
   min-width: 0;
-  min-height: 9rem;
-  padding: 0;
-  border: 1px solid #526257;
-  border-radius: 2px;
+  --console-record-padding: 0;
+  min-height: 11rem;
   color: inherit;
-  background: #111c17;
-  box-shadow:
-    0 2px 0 #030806,
-    inset 0 1px #6a7764;
+  text-align: center;
 }
 
 .packet-rail-slot > button:disabled {
@@ -85,22 +94,17 @@
 }
 
 .packet-rail-slot.is-decoded > button {
-  border-color: #8bb5a0;
-  box-shadow:
-    0 2px 0 #030806,
-    inset 0 1px #9cb69d;
+  outline: 1px solid #a0d7c2;
+  outline-offset: -2px;
 }
 
 .packet-fragment {
   display: grid;
   min-width: 0;
   padding: 0.5rem 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent 0 3px,
-    #95b39d05 3px 4px
-  );
-  grid-template-rows: auto 3.2rem minmax(1.8rem, auto) auto;
+  grid-template-rows:
+    var(--packet-carrier-title-height, 2.1rem) 3.2rem minmax(2.7rem, auto)
+    auto;
 }
 
 .packet-fragment-title {
@@ -114,12 +118,12 @@
 
 .packet-fragment-title b {
   color: #b9c7ae;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
 }
 
 .packet-fragment-title small {
   color: #859e88;
-  font-size: 0.48rem;
+  font-size: 0.68rem;
   text-align: right;
   overflow-wrap: anywhere;
 }
@@ -177,7 +181,8 @@
   padding: 0 0.35rem;
   color: #e4f4df;
   font-family: inherit;
-  font-size: clamp(0.72rem, 1.12vw, 0.94rem);
+  font-size: 0.95rem;
+  line-height: 1.5;
   place-items: center;
   overflow-wrap: anywhere;
 }
@@ -189,7 +194,7 @@
 .packet-fragment-check {
   padding: 0.2rem 0.4rem 0;
   color: #64856c;
-  font-size: 0.5rem;
+  font-size: 0.7rem;
   text-align: right;
 }
 .packet-fragment.is-decoded .packet-fragment-check {
@@ -199,9 +204,15 @@
 .packet-seam {
   position: absolute;
   z-index: 2;
-  top: 2.7rem;
-  right: -1.07rem;
-  width: 1.12rem;
+  top: calc(
+    var(--packet-slot-label-height) + var(--packet-slot-label-gap) +
+      var(--console-record-border, 8px) + 0.5rem +
+      var(--packet-carrier-title-height)
+  );
+  right: calc(
+    -1 * (var(--packet-rail-gap) + var(--packet-carrier-inline-border))
+  );
+  width: calc(var(--packet-rail-gap) + 2 * var(--packet-carrier-inline-border));
   height: 3.2rem;
   pointer-events: none;
 }
@@ -220,7 +231,7 @@
   left: 50%;
   color: #698374;
   background: #111c17;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   line-height: 0.7rem;
   transform: translateX(-50%);
 }
@@ -261,15 +272,10 @@
 
 .packet-empty-slot {
   display: grid;
-  min-height: 9rem;
+  min-height: 10rem;
   padding: 0.5rem;
-  color: #60715e;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0 11px,
-    #83937a09 11px 12px
-  );
-  font-size: 0.53rem;
+  color: #9cac9e;
+  font-size: 0.72rem;
   place-content: center;
   gap: 0.8rem;
 }
@@ -281,18 +287,16 @@
   border: 1px dashed #4c6350;
 }
 .packet-decoder-line {
-  padding: 0.65rem 0.75rem;
-  border-left: 2px solid #5b7967;
-  background: #06110d;
+  --console-display-padding: 0.65rem 0.85rem;
 }
 .packet-decoder-line small {
   color: #91b59d;
-  font-size: 0.57rem;
+  font-size: 0.72rem;
 }
 .packet-decoder-line p {
   margin: 0.25rem 0 0;
   color: #e2f3df;
-  font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
   line-height: 1.55;
 }
 .packet-decoder-line .is-scrambled {
@@ -300,8 +304,7 @@
   color: #52735c;
 }
 .packet-decoder-line.is-complete {
-  border-left-color: #d49a77;
-  background: linear-gradient(90deg, #50302566, #151c13);
+  box-shadow: inset 0 0 1.3rem rgb(212 154 119 / 10%);
 }
 .packet-decoder-line.is-complete p {
   margin: 0;
@@ -315,13 +318,10 @@
   gap: 0.6rem;
 }
 .packet-fragment-tray > button {
+  --console-record-padding: 0;
   min-width: 0;
-  padding: 0;
-  border: 1px solid #53614b;
-  border-radius: 2px;
+  min-height: 44px;
   color: inherit;
-  background: #152016;
-  box-shadow: 0 2px 0 #030706;
   cursor: grab;
 }
 .packet-fragment-tray > button:disabled {
@@ -329,25 +329,24 @@
   cursor: default;
 }
 .packet-fragment-tray > button[aria-pressed='true'] {
-  border-color: #c8e6bd;
-  box-shadow: 0 0 0 2px #97b68a;
+  outline: 2px solid #c8e6bd;
+  outline-offset: 2px;
   transform: translateY(-3px);
 }
 .packet-fragment-tray .packet-fragment {
-  grid-template-rows: auto 1.6rem 1.2rem auto;
+  grid-template-rows: 2.3rem 2rem 1.8rem auto;
 }
 .packet-fragment-tray .packet-fragment-signal {
-  height: 1.6rem;
+  height: 2rem;
 }
 .packet-fragment-tray .packet-fragment-content {
-  font-size: 0.65rem;
+  font-size: 0.8rem;
 }
 .packet-fragment-tray > .packet-eject {
   display: grid;
-  padding: 0.5rem;
-  color: #baaea0;
-  background: linear-gradient(#31352d, #171c16);
-  font-size: 0.68rem;
+  --console-key-padding: 0.65rem;
+  color: #d8d5c8;
+  font-size: 0.84rem;
   place-content: center;
   gap: 0.35rem;
   cursor: pointer;
@@ -359,12 +358,12 @@
   border-block: 3px solid #788073;
 }
 .packet-eject span {
-  font-size: 0.58rem;
+  font-size: 0.75rem;
 }
 .packet-rail-status {
   margin: 0;
   color: #94b19d;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   text-align: center;
 }
 .packet-decoded-archive {
@@ -376,11 +375,11 @@
 .packet-decoded-archive p {
   margin: 0.35rem 0;
   color: #9cb8a6;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
 }
 .packet-confirm {
-  padding: 0.55rem;
-  font-size: 0.72rem;
+  --console-key-padding: 0.8rem;
+  font-size: 0.86rem;
 }
 .packet-sr-only {
   position: absolute;
@@ -397,10 +396,8 @@
   gap: 0.65rem;
 }
 .voiceprint-shared-scope {
+  --console-display-padding: 0;
   min-width: 0;
-  border: 1px solid #5d7264;
-  background: #071411;
-  box-shadow: inset 0 0 2rem #0009;
   overflow: hidden;
 }
 .voiceprint-scope-heading {
@@ -411,7 +408,7 @@
 .voiceprint-legend {
   display: flex;
   gap: 1.4rem;
-  font-size: 0.63rem;
+  font-size: 0.78rem;
 }
 .voiceprint-legend span {
   display: flex;
@@ -434,7 +431,7 @@
 .voiceprint-scope-heading > strong {
   display: flex;
   color: #9caa91;
-  font-size: 0.67rem;
+  font-size: 0.8rem;
   align-items: center;
   gap: 0.4rem;
 }
@@ -471,7 +468,7 @@
   left: var(--phase-position);
   display: flex;
   color: #9fe3cf;
-  font-size: 0.55rem;
+  font-size: 0.72rem;
   align-items: center;
   gap: 0.3rem;
   transform: translateX(-50%);
@@ -491,12 +488,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  font-size: 0.64rem;
+  font-size: 0.82rem;
 }
 .voiceprint-observations small {
   margin-left: 0.3rem;
   color: #809e8d;
-  font-size: 0.6rem;
+  font-size: 0.78rem;
 }
 .voiceprint-difference {
   display: flex;
@@ -510,8 +507,7 @@
   background: #a0d1b830;
 }
 .voiceprint-instrument.is-locked .voiceprint-shared-scope {
-  border-color: #96cdb5;
-  box-shadow: inset 0 0 2rem #234f3438;
+  box-shadow: inset 0 0 2rem rgb(104 183 148 / 12%);
 }
 .voiceprint-scan-line {
   position: absolute;
@@ -530,9 +526,7 @@
 .voiceprint-identity-readout {
   display: grid;
   min-height: 5rem;
-  padding: 0.7rem 1rem;
-  border-top: 1px solid #5f8b70;
-  background: linear-gradient(90deg, #14291d, #081611);
+  --console-record-padding: 0.7rem 1rem;
   grid-template-columns: 0.8fr 1.2fr;
   align-items: center;
   gap: 1rem;
@@ -543,7 +537,7 @@
 }
 .voiceprint-identity-readout > div > span {
   color: #85b59c;
-  font-size: 0.64rem;
+  font-size: 0.82rem;
   letter-spacing: 0.1em;
 }
 .voiceprint-identity-readout strong {
@@ -566,18 +560,16 @@
 .voiceprint-identity-readout figcaption {
   max-width: 15rem;
   color: #ddf9d9;
-  font-size: 0.72rem;
+  font-size: 0.86rem;
   line-height: 1.6;
 }
 .voiceprint-scan-status {
   color: #93b69d;
-  font-size: 0.66rem;
+  font-size: 0.82rem;
 }
 .voiceprint-mechanical-controls {
   display: grid;
-  padding: 0.5rem 0.75rem;
-  border-block: 1px solid #50604f;
-  background: linear-gradient(#263026, #171f19);
+  --console-record-padding: 0.75rem;
   grid-template-columns: 1.35fr 0.9fr 1fr;
   align-items: center;
   gap: 1rem;
@@ -592,7 +584,7 @@
 .voiceprint-polarity-switch span,
 .voiceprint-phase-help {
   color: #cad1be;
-  font-size: 0.68rem;
+  font-size: 0.84rem;
   font-weight: 400;
 }
 .voiceprint-timebase-control small,
@@ -601,13 +593,13 @@
   display: block;
   margin-top: 0.4rem;
   color: #9eab94;
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 .voiceprint-timebase-knob {
   position: relative;
-  width: 4.2rem;
-  height: 4.2rem;
+  width: 5rem;
+  height: 5rem;
   flex: 0 0 auto;
   border-radius: 50%;
   touch-action: none;
@@ -630,60 +622,28 @@
 .voiceprint-dial-cap {
   position: absolute;
   inset: 0.5rem;
-  border: 1px solid #747f65;
+  border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #65715a, #333e30 65%, #222a20);
-  box-shadow:
-    0 3px 3px #000b,
-    inset 0 1px #abb693;
   transition: transform 100ms ease;
-}
-.voiceprint-dial-cap::before {
-  content: '';
-  position: absolute;
-  top: 0.15rem;
-  left: calc(50% - 1px);
-  width: 2px;
-  height: 0.85rem;
-  background: #efffe0;
-  box-shadow: 0 0 3px #e2ffcd;
 }
 .voiceprint-polarity-switch {
   display: flex;
-  min-height: 4.2rem;
-  padding: 0.3rem 0.5rem;
-  border: 0;
-  color: #ccd5c5;
-  background: transparent;
+  --console-key-padding: 0.45rem 0.6rem;
+  min-height: 5rem;
+  color: #dde4d7;
   align-items: center;
   gap: 0.8rem;
   text-align: left;
 }
 .voiceprint-polarity-switch > i {
-  position: relative;
-  width: 1.2rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 3rem;
   flex: 0 0 auto;
-  border: 1px solid #6d7a5d;
-  border-radius: 0.25rem;
-  background: #060b07;
-  box-shadow: inset 0 0 3px #000;
-}
-.voiceprint-polarity-switch > i::after {
-  content: '';
-  position: absolute;
-  top: 0.15rem;
-  left: 0.14rem;
-  width: 0.8rem;
-  height: 1.1rem;
-  border: 1px solid #bec5a4;
-  border-radius: 0.15rem;
-  background: linear-gradient(#a9b197, #657258);
-  box-shadow: 0 3px 2px #0009;
+  background: var(--console-lever) center / contain no-repeat;
   transition: transform 120ms ease;
 }
-.voiceprint-polarity-switch[aria-checked='true'] > i::after {
-  transform: translateY(0.8rem);
+.voiceprint-polarity-switch[aria-checked='true'] > i {
+  transform: rotate(180deg);
 }
 .voiceprint-phase-help {
   margin: 0;
@@ -692,12 +652,13 @@
 }
 .voiceprint-instrument .voice-match-confirm {
   width: 100%;
-  padding: 0.6rem;
-  font-size: 0.77rem;
+  --console-key-padding: 0.8rem;
+  font-size: 0.95rem;
 }
 .voiceprint-instrument [aria-disabled='true'] {
   cursor: default;
 }
+.packet-rail-viewport:focus-visible,
 .packet-instrument button:focus-visible,
 .voiceprint-instrument button:focus-visible,
 .voiceprint-instrument [role='slider']:focus-visible {
@@ -718,57 +679,49 @@
 }
 
 @media (max-width: 650px) {
-  .packet-data-rail {
-    padding: 0.5rem 0.25rem;
-    gap: 0.6rem;
-  }
-  .packet-seam {
-    right: -0.65rem;
-    width: 0.7rem;
-  }
-  .packet-fragment-title {
-    padding-inline: 0.25rem;
-    gap: 0.15rem;
-  }
-  .packet-fragment-title small {
-    font-size: 0.43rem;
+  .packet-rail-viewport {
+    --console-display-padding: 0.5rem;
   }
   .packet-fragment-tray {
-    gap: 0.35rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .packet-fragment-tray > .packet-eject {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 0.75rem;
   }
   .packet-decoded-archive {
     grid-template-columns: 1fr;
   }
   .packet-instrument-heading {
-    font-size: 0.55rem;
-  }
-  .packet-instrument-heading strong {
-    font-size: 0.56rem;
+    flex-wrap: wrap;
   }
   .voiceprint-scope-heading {
-    padding: 0.5rem;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.7rem;
+    gap: 0.75rem;
   }
   .voiceprint-legend {
-    flex-direction: column;
-    gap: 0.3rem;
-    font-size: 0.57rem;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
   }
   .voiceprint-observations {
     flex-wrap: wrap;
-    gap: 0.35rem 0.6rem;
+    gap: 0.6rem;
   }
   .voiceprint-mechanical-controls {
-    padding: 0.4rem;
-    gap: 0.4rem;
-    grid-template-columns: 1.2fr 0.9fr;
+    --console-record-padding: 0.65rem;
+    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .voiceprint-timebase-control {
-    gap: 0.4rem;
+  .voiceprint-polarity-switch {
+    justify-content: flex-start;
   }
   .voiceprint-phase-help {
-    grid-column: 1 / -1;
-    padding: 0.4rem 0 0;
+    padding: 0.6rem 0 0;
     border: 0;
     border-top: 1px solid #55634c;
   }
@@ -780,14 +733,9 @@
     display: none;
   }
   .voiceprint-identity-readout {
-    padding: 0.6rem;
-    gap: 0.5rem;
-  }
-  .voiceprint-identity-readout figure {
-    gap: 0.5rem;
-  }
-  .voiceprint-identity-readout figcaption {
-    font-size: 0.62rem;
+    --console-record-padding: 0.7rem;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 }
 

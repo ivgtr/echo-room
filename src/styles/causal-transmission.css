@@ -1,5 +1,5 @@
-/* The final instrument reuses the carrier's movable time rail and the
-   investigation's patch language. No extra window around the terminal glass. */
+/* Identical generated receiver windows preserve the causal deduction.
+   No window gets a target-specific icon, color or partial-correct indicator. */
 .causal-transmission {
   --causal-ink: #b9d9d0;
   --causal-dim: #65827a;
@@ -24,6 +24,7 @@
   opacity: 0.55;
 }
 .causal-transmission button:focus-visible,
+.causal-time-viewport:focus-visible,
 .causal-source-rail:focus-visible {
   outline: 2px solid #d8fff4;
   outline-offset: 3px;
@@ -36,7 +37,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.3rem 0.6rem;
-  font-size: 0.63rem;
+  font-size: 0.75rem;
   letter-spacing: 0.05em;
 }
 .causal-deck-caption output {
@@ -49,15 +50,21 @@
 .causal-time-foot small,
 .causal-bus-caption small {
   font:
-    0.68rem system-ui,
+    0.75rem system-ui,
     sans-serif;
 }
 .causal-time-deck {
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #36534b;
+  --console-display-padding: 0.55rem;
+}
+.causal-time-viewport {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  overscroll-behavior-inline: contain;
 }
 .causal-time-window {
   position: relative;
+  min-width: 30rem;
   margin-block: 0.65rem 0.4rem;
   overflow: hidden;
   padding: 0.15rem 0.25rem 0.25rem;
@@ -84,7 +91,7 @@
   padding-block: 0.2rem;
   color: #a8c9be;
   background: #071213;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
 }
 .causal-rail-label small {
   color: #849b94;
@@ -93,7 +100,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   text-align: center;
-  font-size: 0.73rem;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 .causal-ticks > span {
@@ -174,7 +181,7 @@
 }
 .causal-time-foot {
   color: #89a89e;
-  font-size: 0.59rem;
+  font-size: 0.75rem;
 }
 .causal-bus-caption {
   margin-bottom: 0.3rem;
@@ -193,24 +200,22 @@
   position: relative;
   display: grid;
   justify-items: center;
-  grid-template-rows: auto minmax(3rem, auto) 1.05rem minmax(2.5rem, auto);
+  grid-template-rows: auto minmax(3.5rem, auto) 1.5rem minmax(3rem, auto);
   align-items: center;
   min-width: 0;
-  padding: 0.35rem;
-  border: 0;
-  border-top: 1px solid #536e5d;
-  background: linear-gradient(#172c252b, transparent);
+  --console-display-padding: 0.55rem;
+  text-align: left;
 }
 .causal-scene-label {
   color: #8eb0a3;
   font:
-    0.65rem/1.4 system-ui,
+    0.75rem/1.4 system-ui,
     sans-serif;
 }
 .causal-observation {
   padding-block: 0.3rem;
   font:
-    0.78rem/1.5 system-ui,
+    0.9rem/1.6 system-ui,
     sans-serif;
   overflow-wrap: anywhere;
 }
@@ -218,17 +223,16 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 0.95rem;
-  height: 0.95rem;
-  border: 2px solid #768977;
-  border-radius: 50%;
-  background: #060d0b;
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--console-socket) center / contain no-repeat;
 }
 .causal-scene-jack i {
-  width: 0.35rem;
-  height: 0.35rem;
+  width: 0.3rem;
+  height: 0.3rem;
   border-radius: 50%;
-  background: #2c4035;
+  background: #263d35;
 }
 .causal-packet-tab {
   display: grid;
@@ -238,8 +242,9 @@
   gap: 0.15rem;
   min-width: 0;
   margin-top: 0.25rem;
-  padding: 0.2rem 0.1rem;
-  border-top: 2px solid transparent;
+  width: 100%;
+  --console-record-padding: 0.3rem 0.35rem;
+  --console-record-border: 6px;
 }
 .causal-packet-tab b {
   font-size: 0.7rem;
@@ -248,13 +253,12 @@
 }
 .causal-packet-tab small {
   font:
-    0.72rem/1.4 system-ui,
+    0.85rem/1.5 system-ui,
     sans-serif;
   overflow-wrap: anywhere;
 }
 .is-patched .causal-packet-tab {
-  border-top-color: #7aad9a;
-  background: linear-gradient(#2e59453d, transparent);
+  color: #d5e9e1;
 }
 .is-patched .causal-scene-jack i {
   background: #b5d4ac;
@@ -273,31 +277,25 @@
 }
 .causal-packet-strip {
   display: grid;
-  grid-template-columns: 0.35rem minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.45rem;
   align-items: center;
   min-width: 0;
   min-height: 2.75rem;
-  padding: 0.4rem 0.45rem 0.4rem 0;
-  border: 0;
-  border-top: 1px solid #6c8273;
-  border-bottom: 3px solid #08130f;
-  background: linear-gradient(90deg, #31473a, #183025 60%);
-  box-shadow: 0 2px 2px #030807;
+  --console-record-padding: 0.45rem 0.5rem;
   text-align: left;
   transition: transform 120ms ease;
 }
 .causal-strip-pins {
-  align-self: stretch;
-  background: repeating-linear-gradient(#b9b79a 0 2px, #34463b 3px 6px);
+  display: none;
 }
 .causal-packet-strip > span {
   font:
-    0.77rem/1.4 system-ui,
+    0.9rem/1.5 system-ui,
     sans-serif;
 }
 .causal-packet-strip > small {
-  font-size: 0.51rem;
+  font-size: 0.65rem;
   color: #a4b7a8;
 }
 .causal-packet-strip[aria-pressed='true'] {
@@ -305,7 +303,7 @@
   transform: translateY(-3px);
 }
 .causal-packet-strip:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
   box-shadow: none;
 }
 .causal-return-deck {
@@ -313,8 +311,7 @@
   grid-template-columns: minmax(0, 1fr) 5.3rem;
   gap: 0.6rem;
   align-items: stretch;
-  border-top: 1px solid #36534b;
-  padding-top: 0.5rem;
+  --console-record-padding: 0.45rem;
 }
 .causal-return-patch {
   display: grid;
@@ -334,26 +331,21 @@
   padding: 0.2rem;
   border: 0;
   background: transparent;
-  font-size: 0.57rem;
-  line-height: 1.25;
+  font-size: 0.7rem;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 .causal-return-patch button > small {
-  font-size: 0.5rem;
-  color: #769a86;
+  font-size: 0.63rem;
+  color: #9db8aa;
 }
 .causal-jack-ring {
   position: relative;
   display: grid;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2rem;
+  height: 2rem;
   place-items: center;
-  border: 3px solid #6e7c6b;
-  border-radius: 50%;
-  background: #050c09;
-  box-shadow:
-    0 1px 1px #010605,
-    inset 0 0 0 2px #172d22;
+  background: var(--console-socket) center / contain no-repeat;
 }
 .causal-jack-ring i {
   width: 0.55rem;
@@ -372,7 +364,7 @@
   top: 0.2rem;
   width: 15%;
   height: 2.1rem;
-  border: 4px solid #a5b59a;
+  border: 5px solid #526561;
   border-bottom: 0;
   border-radius: 0.9rem 0.9rem 0 0;
   box-shadow:
@@ -392,9 +384,7 @@
   width: 0.7rem;
   height: 1rem;
   top: 1.05rem;
-  border: 1px solid #809278;
-  border-radius: 2px;
-  background: repeating-linear-gradient(#172e20 0 3px, #3a4e38 4px 5px);
+  background: var(--console-socket) center / contain no-repeat;
 }
 .causal-return-cord::before {
   left: -0.46rem;
@@ -423,62 +413,40 @@
   justify-items: center;
   gap: 0.4rem;
   min-height: 5.5rem;
-  padding: 0.4rem;
-  border: 1px solid #576555;
-  border-bottom: 4px solid #0b160e;
-  background: linear-gradient(110deg, #354233, #1c2c1e);
-  font-size: 0.58rem;
+  --console-key-padding: 0.35rem;
+  font-size: 0.7rem;
 }
 .causal-lever-well {
   display: block;
   position: relative;
-  width: 1rem;
-  height: 2.6rem;
-  border: 2px solid #56664e;
-  border-radius: 40%;
-  background: #07100a;
-  box-shadow: 0 1px #819278;
-}
-.causal-lever-well i {
-  display: block;
-  position: absolute;
-  width: 2.2rem;
-  height: 0.85rem;
-  left: -0.72rem;
-  top: 0.15rem;
-  border: 1px solid #bcc3a3;
-  border-bottom: 3px solid #394633;
-  border-radius: 3px;
-  background: linear-gradient(#a1ae89, #687b5c);
-  box-shadow: 0 3px 3px #000;
+  width: 2.25rem;
+  height: 3rem;
+  background: var(--console-lever) center / contain no-repeat;
+  transform-origin: 50% 80%;
   transition: transform 180ms ease;
 }
-.causal-test-lever:active .causal-lever-well i,
-.is-pulsing .causal-lever-well i {
-  transform: translateY(1.2rem);
+.causal-lever-well i {
+  display: none;
+}
+.causal-test-lever:active:not(:disabled) .causal-lever-well,
+.is-pulsing .causal-lever-well {
+  transform: translateY(0.25rem) scaleY(0.85);
 }
 .causal-test-status {
   min-height: 1rem;
   margin: 0;
   color: #91b29f;
   font:
-    0.63rem/1.5 ui-monospace,
+    0.8rem/1.6 ui-monospace,
     monospace;
   overflow-wrap: anywhere;
 }
-/* Open contacts retain the player's settings while the protection relay
-   mechanically breaks only the failed area. Shape and text also change. */
+/* Failure feedback describes the whole trial, never an individual answer. */
 .causal-transmission [data-contact='open'] {
   --causal-wire: #c19769;
 }
-.causal-memory-bus[data-contact='open'] .causal-scene-jack {
-  border-style: dashed;
-  border-color: #d3a679;
-}
 .causal-memory-bus[data-contact='open'] .causal-packet-tab {
-  transform: translateY(0.3rem);
-  border-top-style: dashed;
-  border-top-color: #ba9068;
+  transform: translateY(0.2rem);
 }
 .causal-time-deck[data-contact='open'] .causal-alignment-pins i {
   height: 35%;
@@ -508,7 +476,7 @@
   box-shadow: 0 0 8px #76e7bd70;
 }
 .causal-transmission.is-continuous .causal-memory-bus {
-  background: linear-gradient(90deg, transparent, #8adcaa16, transparent);
+  color: #d1e9df;
 }
 .causal-transmission.is-pulsing [data-contact='open'] .causal-packet-tab,
 .causal-transmission.is-pulsing [data-contact='open'] .causal-moving-rail {
@@ -550,48 +518,39 @@
     grid-template-columns: 4.5rem minmax(0, 1fr);
     gap: 0.2rem;
   }
-  .causal-ticks {
-    font-size: 0.66rem;
-  }
   .causal-alignment-pins {
     left: 4.95rem;
   }
   .causal-packet-strip {
-    grid-template-columns: 0.35rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
   .causal-packet-strip > small {
     display: none;
   }
   .causal-packet-strip > span {
-    font-size: 0.76rem;
+    font-size: 0.875rem;
   }
   .causal-packet-tab small {
-    font-size: 0.68rem;
+    font-size: 0.875rem;
+  }
+  .causal-scene-sockets {
+    grid-template-columns: 1fr;
   }
   .causal-return-deck {
     grid-template-columns: minmax(0, 1fr) 4.5rem;
     gap: 0.25rem;
   }
   .causal-return-patch button {
-    font-size: 0.56rem;
+    font-size: 0.66rem;
   }
   .causal-return-patch button > small {
-    font-size: 0.47rem;
+    font-size: 0.6rem;
   }
 }
 @media (max-width: 400px) {
-  .causal-deck-caption > span {
-    font-size: 0.55rem;
-  }
   .causal-reference-rail,
   .causal-source-rail {
     grid-template-columns: 3.65rem minmax(0, 1fr);
-  }
-  .causal-rail-label {
-    font-size: 0.56rem;
-  }
-  .causal-ticks {
-    font-size: 0.59rem;
   }
   .causal-alignment-pins {
     left: 4.1rem;
@@ -614,9 +573,6 @@
   }
   .causal-lever-well {
     height: 2rem;
-  }
-  .is-pulsing .causal-lever-well i {
-    transform: translateY(0.7rem);
   }
 }
 :root[data-reduced-motion='true'] .causal-transmission *,

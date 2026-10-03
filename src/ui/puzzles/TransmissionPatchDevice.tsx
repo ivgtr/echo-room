@@ -239,7 +239,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
       data-pulse={pulseCount}
       aria-busy={pulse}
     >
-      <div className="causal-time-deck" data-contact={contact}>
+      <div className="causal-time-deck console-display" data-contact={contact}>
         <div className="causal-deck-caption">
           <span>ECHO BUFFER / TIME BASE</span>
           <output aria-live="polite">
@@ -249,68 +249,75 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
             </small>
           </output>
         </div>
-        <div className="causal-time-window" style={railStyle}>
-          <div className="causal-reference-rail">
-            <span className="causal-rail-label">
-              RECEIVE <small>過去側</small>
-            </span>
-            <div className="causal-ticks">
-              {matchedRecords.map(({ receive }) => (
-                <span key={receive.id}>
-                  <time>{receive.time}</time>
-                  <i />
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="causal-alignment-pins" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </div>
-          <div
-            className="causal-source-rail"
-            role="slider"
-            tabIndex={disabled ? -1 : 0}
-            aria-label="送信側の時間軸"
-            aria-valuemin={-20}
-            aria-valuemax={20}
-            aria-valuenow={delay}
-            aria-valuetext={`${delayText(delay)}、${delay < 0 ? '過去へ送る' : delay > 0 ? '未来へ送る' : '同時刻'}。左右キーで時間軸を動かす`}
-            aria-disabled={disabled}
-            onKeyDown={keyRail}
-            onPointerDown={startRailDrag}
-            onPointerMove={dragRail}
-            onPointerUp={(event) => {
-              if (dragRef.current?.pointerId === event.pointerId)
-                dragRef.current = null;
-            }}
-            onPointerCancel={() => {
-              dragRef.current = null;
-            }}
-            onLostPointerCapture={() => {
-              dragRef.current = null;
-            }}
-          >
-            <span className="causal-rail-label">
-              SOURCE <small>送信側</small>
-            </span>
-            <div className="causal-moving-rail">
+        <div
+          className="causal-time-viewport"
+          role="region"
+          aria-label="送受信の時間軸"
+          tabIndex={0}
+        >
+          <div className="causal-time-window" style={railStyle}>
+            <div className="causal-reference-rail">
+              <span className="causal-rail-label">
+                RECEIVE <small>過去側</small>
+              </span>
               <div className="causal-ticks">
-                {matchedRecords.map(({ source }) => (
-                  <span key={source.id}>
+                {matchedRecords.map(({ receive }) => (
+                  <span key={receive.id}>
+                    <time>{receive.time}</time>
                     <i />
-                    <time>{source.time}</time>
                   </span>
                 ))}
               </div>
-              <span className="causal-rail-grip" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
+            </div>
+            <div className="causal-alignment-pins" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
+            <div
+              className="causal-source-rail"
+              role="slider"
+              tabIndex={disabled ? -1 : 0}
+              aria-label="送信側の時間軸"
+              aria-valuemin={-20}
+              aria-valuemax={20}
+              aria-valuenow={delay}
+              aria-valuetext={`${delayText(delay)}、${delay < 0 ? '過去へ送る' : delay > 0 ? '未来へ送る' : '同時刻'}。左右キーで時間軸を動かす`}
+              aria-disabled={disabled}
+              onKeyDown={keyRail}
+              onPointerDown={startRailDrag}
+              onPointerMove={dragRail}
+              onPointerUp={(event) => {
+                if (dragRef.current?.pointerId === event.pointerId)
+                  dragRef.current = null;
+              }}
+              onPointerCancel={() => {
+                dragRef.current = null;
+              }}
+              onLostPointerCapture={() => {
+                dragRef.current = null;
+              }}
+            >
+              <span className="causal-rail-label">
+                SOURCE <small>送信側</small>
               </span>
+              <div className="causal-moving-rail">
+                <div className="causal-ticks">
+                  {matchedRecords.map(({ source }) => (
+                    <span key={source.id}>
+                      <i />
+                      <time>{source.time}</time>
+                    </span>
+                  ))}
+                </div>
+                <span className="causal-rail-grip" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -338,7 +345,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
             return (
               <button
                 type="button"
-                className={`causal-scene-socket${packet ? ' is-patched' : ''}${heldPacket ? ' can-receive' : ''}`}
+                className={`causal-scene-socket console-display${packet ? ' is-patched' : ''}${heldPacket ? ' can-receive' : ''}`}
                 key={scene.label}
                 disabled={disabled}
                 aria-label={`${scene.label}、${scene.observation}、受信端子${text ? `、${text}、押すと取り外す` : heldPacket ? 'へ選んだ文を接続する' : '、未接続'}`}
@@ -356,7 +363,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
                 <span className="causal-scene-jack" aria-hidden="true">
                   <i />
                 </span>
-                <span className="causal-packet-tab">
+                <span className="causal-packet-tab console-record">
                   {packet ? (
                     <>
                       <small>{text}</small>
@@ -379,7 +386,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
             return (
               <button
                 type="button"
-                className="causal-packet-strip"
+                className="causal-packet-strip console-record"
                 key={id}
                 draggable={!disabled && !patched}
                 disabled={disabled || patched}
@@ -414,7 +421,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
         </div>
       </div>
 
-      <div className="causal-return-deck" data-contact={contact}>
+      <div className="causal-return-deck console-record" data-contact={contact}>
         <div
           className={`causal-return-patch${heldCable ? ' is-held' : ''}${route ? ' is-patched' : ''}`}
           style={patchStyle}
@@ -474,7 +481,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
         </div>
         <button
           type="button"
-          className="causal-test-lever"
+          className="causal-test-lever console-key"
           aria-label="TEST PULSE 試験レバー"
           aria-describedby="transmission-test-status"
           disabled={disabled || !assemblyReady}
