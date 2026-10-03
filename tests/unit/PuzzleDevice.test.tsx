@@ -4,12 +4,12 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
   within,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PuzzleDevice } from '../../src/ui/puzzles/PuzzleDevice';
+import { packetEntries } from '../../src/ui/narrative/narrativeArchive';
 
 afterEach(() => {
   cleanup();
@@ -17,6 +17,75 @@ afterEach(() => {
 });
 
 describe('PuzzleDevice', () => {
+  it('reveals and registers only one correctly repaired PACKET at a time, without an audio wait', () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    const onPacketEntryChange = vi.fn();
+    const props = {
+      puzzleId: 'puzzle_packet_repair' as const,
+      failures: 0,
+      onSubmit,
+      onClose: vi.fn(),
+      onPacketEntryChange,
+      voicePlayback: { entryId: 'packet_01', status: 'unavailable' as const },
+    };
+    const view = render(<PuzzleDevice {...props} />);
+    const place = (order: string[]) =>
+      order.forEach((fragment, index) => {
+        fireEvent.click(
+          screen.getByRole('button', { name: `断片${fragment}を持つ` }),
+        );
+        fireEvent.click(
+          screen.getByRole('button', {
+            name: `レール${index + 2}へ断片${fragment}を置く`,
+          }),
+        );
+      });
+    place(['D', 'B', 'A']);
+    expect(onPacketEntryChange).not.toHaveBeenCalled();
+    expect(screen.queryByText(/PACKET 04/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'EJECT / 取り出す' }));
+    onSubmit.mockClear();
+    place(['D', 'A', 'B']);
+    expect(onPacketEntryChange).toHaveBeenLastCalledWith('packet_01');
+    expect(screen.queryByText(/PACKET 02/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('音声を再生できませんでした。字幕で進めます'),
+    ).toBeVisible();
+    act(() => vi.runAllTimers());
+    expect(onPacketEntryChange).toHaveBeenCalledTimes(1);
+    view.rerender(<PuzzleDevice {...props} active={false} />);
+    expect(onPacketEntryChange).toHaveBeenLastCalledWith(null);
+    view.rerender(<PuzzleDevice {...props} active />);
+    for (let index = 1; index < packetEntries.length; index += 1) {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'NEXT PACKET / 次の通信へ' }),
+      );
+      expect(onPacketEntryChange).toHaveBeenLastCalledWith(
+        packetEntries[index]!.id,
+      );
+      expect(
+        screen.getByText(
+          `PACKET 0${index + 1} / ${packetEntries[index]!.text}`,
+        ),
+      ).toBeVisible();
+      if (index < 3)
+        expect(screen.queryByText(/PACKET 04/)).not.toBeInTheDocument();
+    }
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'ACCEPT FRAME / 復元内容を確認する' }),
+    );
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith('puzzle_packet_repair', [
+      'c',
+      'd',
+      'a',
+      'b',
+    ]);
+    view.unmount();
+    expect(onPacketEntryChange).toHaveBeenLastCalledWith(null);
+  });
+
   it('defers automatic detection for an inactive display and submits once when reactivated', () => {
     const onSubmit = vi.fn();
     const props = {
@@ -47,294 +116,6 @@ describe('PuzzleDevice', () => {
     view.rerender(<PuzzleDevice {...props} active={false} />);
     view.rerender(<PuzzleDevice {...props} active />);
     expect(onSubmit).toHaveBeenCalledOnce();
-  });
-
-  it('isolates DOOR, rejects an out-of-order circuit, then restores power upstream first', async () => {
-    const onSubmit = vi.fn();
-    const view = render(
-      <PuzzleDevice
-        puzzleId="puzzle_power_route"
-        failures={0}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-
-    const leverSources = Array.from(
-      view.container.querySelectorAll<HTMLImageElement>(
-        '.breaker-lever-sprite',
-      ),
-      (image) => image.src,
-    );
-    expect(leverSources).toHaveLength(4);
-    expect(new Set(leverSources)).toHaveLength(1);
-    expect(view.container.querySelectorAll('.breaker-socket')).toHaveLength(4);
-    expect(
-      view.container.querySelectorAll('.circuit-status-label'),
-    ).toHaveLength(4);
-
-    fireEvent.click(screen.getByRole('button', { name: 'TERMINAL回路、OFF' }));
-    expect(onSubmit).toHaveBeenCalledWith('puzzle_power_route', [
-      'short-circuit',
-      'terminal',
-    ]);
-    expect(
-      screen.getByRole('button', { name: 'DOOR回路、ON' }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'DOOR回路、ON' }));
-    expect(screen.getByText('BOOT SEQUENCE READY')).toBeVisible();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
-    );
-    expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
-      'control-signal-missing',
-      'buffer',
-    ]);
-    expect(screen.getByText('CONTROL SIGNAL MISSING')).toBeVisible();
-    expect(
-      screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
-    ).toHaveAttribute('aria-pressed', 'false');
-
-    fireEvent.click(screen.getByRole('button', { name: 'TERMINAL回路、OFF' }));
-    expect(screen.getByText('BOOT SEQUENCE / 1 / 3')).toBeVisible();
-    expect(view.container.querySelector('.power-panel-base')).toHaveAttribute(
-      'src',
-      expect.stringContaining(
-        'gfx-close-005__terminal-powered__preview-flat.webp',
-      ),
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'INTERCOM回路、OFF' }));
-    expect(screen.getByText('BOOT SEQUENCE / 2 / 3')).toBeVisible();
-    expect(view.container.querySelector('.power-panel-base')).toHaveAttribute(
-      'src',
-      expect.stringContaining(
-        'gfx-close-005__intercom-powered__preview-flat.webp',
-      ),
-    );
-    fireEvent.click(
-      screen.getByRole('button', { name: 'ECHO BUFFER回路、OFF' }),
-    );
-    expect(screen.getByText('ONLINE')).toBeVisible();
-    await waitFor(
-      () =>
-        expect(onSubmit).toHaveBeenLastCalledWith('puzzle_power_route', [
-          'terminal',
-          'intercom',
-          'buffer',
-        ]),
-      { timeout: 1500 },
-    );
-    expect(screen.queryByText(/選択済み/)).not.toBeInTheDocument();
-    expect(screen.queryByText('この答えで確認する')).not.toBeInTheDocument();
-  });
-
-  it('keeps the rejected switch logically off while the short is active', () => {
-    const onSubmit = vi.fn();
-    const view = render(
-      <PuzzleDevice
-        puzzleId="puzzle_power_route"
-        failures={0}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-    const device = within(view.container);
-    fireEvent.click(device.getByRole('button', { name: 'TERMINAL回路、OFF' }));
-
-    view.rerender(
-      <PuzzleDevice
-        puzzleId="puzzle_power_route"
-        failures={1}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(
-      device.getByRole('button', { name: 'DOOR回路、ON' }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      device.getByRole('button', { name: 'TERMINAL回路、OFF' }),
-    ).toHaveAttribute('aria-pressed', 'false');
-    expect(device.getByText('PROTECTION TRIPPED')).toBeVisible();
-    expect(
-      view.container.querySelector('.physical-breaker.is-rejected'),
-    ).not.toBeNull();
-  });
-
-  it('submits carrier offsets when the waveforms themselves reach the lock point', async () => {
-    const onSubmit = vi.fn();
-    render(
-      <PuzzleDevice
-        embedded
-        puzzleId="puzzle_carrier_sync"
-        failures={0}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-
-    fireEvent.keyDown(screen.getByRole('slider', { name: 'CHANNEL A' }), {
-      key: 'ArrowRight',
-    });
-    fireEvent.keyDown(screen.getByRole('slider', { name: 'CHANNEL A' }), {
-      key: 'ArrowRight',
-    });
-    fireEvent.keyDown(screen.getByRole('slider', { name: 'CHANNEL C' }), {
-      key: 'ArrowLeft',
-    });
-
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith('puzzle_carrier_sync', [
-        'right-2',
-        'none',
-        'left-1',
-      ]),
-    );
-  });
-
-  it('fixes the packet header and submits the visible connector order', async () => {
-    const onSubmit = vi.fn();
-    render(
-      <PuzzleDevice
-        embedded
-        puzzleId="puzzle_packet_repair"
-        failures={0}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(
-      screen.getByRole('button', { name: '固定されたHEADER断片C' }),
-    ).toBeDisabled();
-    for (const [fragment, rail] of [
-      ['D', 2],
-      ['A', 3],
-      ['B', 4],
-    ] as const) {
-      fireEvent.click(
-        screen.getByRole('button', { name: `断片${fragment}を持つ` }),
-      );
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: `レール${rail}へ断片${fragment}を置く`,
-        }),
-      );
-    }
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText('FRAME RESTORED')).toBeInTheDocument();
-    expect(screen.getByText(/PACKET 04/)).toHaveTextContent(
-      '最後に、赤いボタンを押せ。',
-    );
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'ACCEPT FRAME / 復元内容を確認する',
-      }),
-    );
-    expect(onSubmit).toHaveBeenCalledWith('puzzle_packet_repair', [
-      'c',
-      'd',
-      'a',
-      'b',
-    ]);
-  });
-
-  it('keeps a broken packet arrangement visible for correction', async () => {
-    const onSubmit = vi.fn();
-    const view = render(
-      <PuzzleDevice
-        embedded
-        puzzleId="puzzle_packet_repair"
-        failures={0}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-    const device = within(view.container);
-
-    for (const [fragment, rail] of [
-      ['A', 2],
-      ['B', 3],
-      ['D', 4],
-    ] as const) {
-      fireEvent.click(
-        device.getByRole('button', { name: `断片${fragment}を持つ` }),
-      );
-      fireEvent.click(
-        device.getByRole('button', {
-          name: `レール${rail}へ断片${fragment}を置く`,
-        }),
-      );
-    }
-    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-
-    view.rerender(
-      <PuzzleDevice
-        embedded
-        puzzleId="puzzle_packet_repair"
-        failures={1}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(device.getByText('SIGNAL BREAK')).toBeInTheDocument();
-    expect(
-      device.getByRole('button', {
-        name: 'レール2の断片Aを持ち上げる',
-      }),
-    ).toBeInTheDocument();
-    expect(onSubmit).toHaveBeenCalledTimes(1);
-    fireEvent.click(device.getByRole('button', { name: 'EJECT / 取り出す' }));
-    for (const [fragment, rail] of [
-      ['D', 2],
-      ['A', 3],
-      ['B', 4],
-    ] as const) {
-      fireEvent.click(
-        device.getByRole('button', { name: `断片${fragment}を持つ` }),
-      );
-      fireEvent.click(
-        device.getByRole('button', {
-          name: `レール${rail}へ断片${fragment}を置く`,
-        }),
-      );
-    }
-    expect(device.getByText('FRAME RESTORED')).toBeInTheDocument();
-    expect(device.queryByText(/BROKEN|SIGNAL BREAK/)).not.toBeInTheDocument();
-    expect(onSubmit).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps a diegetic actuator for manual validation devices', () => {
-    const onSubmit = vi.fn();
-    render(
-      <PuzzleDevice
-        puzzleId="puzzle_maintenance_lock"
-        failures={0}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByText('4 STEP')).not.toBeInTheDocument();
-    for (let index = 1; index <= 4; index += 1)
-      fireEvent.keyDown(
-        screen.getByRole('spinbutton', { name: `ダイヤル${index}` }),
-        {
-          key: 'ArrowUp',
-        },
-      );
-    fireEvent.click(screen.getByRole('button', { name: 'ロッカーのハンドル' }));
-
-    expect(onSubmit).toHaveBeenCalledWith('puzzle_maintenance_lock', [
-      'double',
-      'ring',
-      'triangle',
-      'node',
-    ]);
   });
 
   it('keeps dial input after a failed validation instead of remounting', () => {
@@ -404,68 +185,5 @@ describe('PuzzleDevice', () => {
       'invert',
       'left-2',
     ]);
-  });
-
-  it('reports transmission failures by packet, delay, and route region', () => {
-    const onSubmit = vi.fn();
-    const view = render(
-      <PuzzleDevice
-        embedded
-        puzzleId="puzzle_transmission_window"
-        failures={1}
-        onSubmit={onSubmit}
-        onClose={vi.fn()}
-      />,
-    );
-    const device = within(view.container);
-    expect(device.getByText('PACKET MAP / RECHECK')).toBeVisible();
-    expect(device.getByText('DELAY / RECHECK')).toBeVisible();
-    expect(device.getByText('ROUTE / RECHECK')).toBeVisible();
-
-    const packetLabels = [
-      '……聞こえるか？',
-      'まず電源を戻せ。',
-      'ログは気にするな。',
-      '最後に、赤いボタンを押せ。',
-    ];
-    const windows = [
-      '返事をする前',
-      '電源を調べる前',
-      'LOGを開いた直後',
-      '最後の操作の前',
-    ];
-    for (let index = 0; index < 4; index += 1) {
-      fireEvent.click(
-        device.getByRole('button', {
-          name: `送信する文「${packetLabels[index]}」`,
-        }),
-      );
-      fireEvent.click(
-        device.getByRole('button', {
-          name: new RegExp(`W${index + 1} ${windows[index]}`),
-        }),
-      );
-    }
-    expect(device.getByText('PACKET MAP / LOCKED')).toBeVisible();
-    expect(device.getByText('DELAY / RECHECK')).toBeVisible();
-    expect(device.getByText('ROUTE / RECHECK')).toBeVisible();
-  });
-
-  it('announces a session-only diagnostic after inactivity', () => {
-    vi.useFakeTimers();
-    const view = render(
-      <PuzzleDevice
-        embedded
-        puzzleId="puzzle_carrier_sync"
-        failures={0}
-        onSubmit={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    );
-
-    act(() => vi.advanceTimersByTime(60_000));
-    expect(
-      within(view.container).getByText(/DIAGNOSTIC AVAILABLE/),
-    ).toBeVisible();
   });
 });

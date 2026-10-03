@@ -3,9 +3,10 @@ import { describe, expect, it } from 'vitest';
 
 import { gameMachine } from '../../src/game/machine/gameMachine';
 import type { PuzzleId } from '../../src/game/puzzles/storyPuzzles';
-import { createPowerRestoredProgress } from '../../src/game/save/saveManager';
+import { endingEntries } from '../../src/ui/narrative/narrativeArchive';
 
 const solutions: [PuzzleId, string[]][] = [
+  ['puzzle_power_route', ['terminal', 'intercom', 'buffer']],
   ['puzzle_carrier_sync', ['right-2', 'none', 'left-1']],
   ['puzzle_maintenance_lock', ['double', 'ring', 'triangle', 'node']],
   [
@@ -28,55 +29,55 @@ const solutions: [PuzzleId, string[]][] = [
 ];
 
 describe('seven-puzzle story progression', () => {
-  it('does not advance for a wrong answer and grants items at puzzle 3', () => {
+  it('rejects early transmission and a wrong answer, then reaches the ending through all seven puzzles', () => {
     const actor = createActor(gameMachine).start();
-    actor.send({
-      type: 'PROGRESS_RESTORED',
-      progress: createPowerRestoredProgress(),
-    });
+    actor.send({ type: 'GAME_STARTED' });
+    actor.send({ type: 'DIALOGUE_SKIPPED' });
+    actor.send({ type: 'VIEW_CHANGED', locationId: 'location_west_wall' });
+    actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_breaker' });
     actor.send({
       type: 'PUZZLE_SUBMITTED',
-      puzzleId: 'puzzle_carrier_sync',
-      answer: ['none', 'none', 'none'],
+      puzzleId: 'puzzle_power_route',
+      answer: ['door'],
     });
-    expect(actor.getSnapshot().context.storyStage).toBe('puzzle_carrier_sync');
-    for (const [puzzleId, answer] of solutions.slice(0, 2))
+    expect(actor.getSnapshot().context.puzzleFailures.puzzle_power_route).toBe(
+      1,
+    );
+    expect(actor.getSnapshot().matches({ playing: 'breakerPuzzle' })).toBe(
+      true,
+    );
+    for (const [puzzleId, answer] of solutions) {
       actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
-    expect(actor.getSnapshot().context.inventory).toEqual([
-      'item_screwdriver',
-      'item_staff_card',
-      'item_floor_map',
-    ]);
-  });
-
-  it('requires all seven deductions before transmission and ending', () => {
-    const actor = createActor(gameMachine).start();
-    actor.send({
-      type: 'PROGRESS_RESTORED',
-      progress: createPowerRestoredProgress(),
-    });
-    actor.send({ type: 'TRANSMISSION_CONFIRMED' });
-    expect(actor.getSnapshot().context.storyStage).toBe('puzzle_carrier_sync');
-    for (const [puzzleId, answer] of solutions.slice(0, -1))
-      actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
-    actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_terminal' });
-    const [finalPuzzleId, finalAnswer] = solutions.at(-1)!;
-    actor.send({
-      type: 'PUZZLE_SUBMITTED',
-      puzzleId: finalPuzzleId,
-      answer: finalAnswer,
-    });
+      if (puzzleId === 'puzzle_power_route') {
+        actor.send({ type: 'TRANSMISSION_CONFIRMED' });
+        actor.send({
+          type: 'PUZZLE_SUBMITTED',
+          puzzleId: 'puzzle_transmission_window',
+          answer: solutions.at(-1)![1],
+        });
+        expect(actor.getSnapshot().context.storyStage).toBe(
+          'puzzle_carrier_sync',
+        );
+        expect(actor.getSnapshot().context.completedPuzzleIds).toEqual([
+          'puzzle_power_route',
+        ]);
+      }
+      if (puzzleId === 'puzzle_maintenance_lock')
+        expect(actor.getSnapshot().context.inventory).toEqual([
+          'item_screwdriver',
+          'item_staff_card',
+          'item_floor_map',
+        ]);
+    }
     expect(actor.getSnapshot().context.completedPuzzleIds).toHaveLength(7);
     expect(actor.getSnapshot().context.storyStage).toBe('transmission_ready');
-    expect(actor.getSnapshot().context.selectedHotspotId).toBe(
-      'hotspot_terminal',
-    );
     actor.send({ type: 'TRANSMISSION_CONFIRMED' });
     expect(actor.getSnapshot().context.storyStage).toBe('ending_transmission');
-    for (let index = 0; index < 6; index += 1)
+    for (let index = 0; index < endingEntries.length; index += 1)
       actor.send({ type: 'ENDING_ADVANCED' });
     expect(actor.getSnapshot().context.storyStage).toBe('ending_door');
     actor.send({ type: 'ENDING_DOOR_SELECTED' });
     expect(actor.getSnapshot().context.storyStage).toBe('completed');
+    actor.stop();
   });
 });

@@ -1,12 +1,23 @@
 import { useActorRef, useSelector } from '@xstate/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import {
   AudioUnlockRequest,
   hasAudioChoice,
   rememberAudioChoice,
 } from '../audio/audioSetup';
-import { soundManager, type SoundEffectId } from '../audio/soundManager';
+import { voiceCues } from '../audio/voiceManifest';
+import {
+  soundManager,
+  type EffectScope,
+  type SoundEffectId,
+} from '../audio/soundManager';
 import { type HotspotId, type LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
 import {
@@ -49,6 +60,8 @@ import {
   getArchiveDocuments,
   getRestoredNarrativeHistory,
   introEntries,
+  endingEntries,
+  packetEntries,
   getPuzzleCompletionEntries,
   powerRestoredEntry,
   type NarrativeEntry,
@@ -85,6 +98,15 @@ export function App() {
   const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(
     initialSettings.subtitleSettings,
   );
+  const voicePlayback = useSyncExternalStore(
+    soundManager.subscribeVoice,
+    soundManager.getVoicePlayback,
+  );
+  const [archiveAudioRequest] = useState(() => new AudioUnlockRequest());
+  const handleStopVoice = useCallback(() => {
+    archiveAudioRequest.cancel();
+    soundManager.stopVoice();
+  }, [archiveAudioRequest]);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [narrativeHistory, setNarrativeHistory] = useState<NarrativeEntry[]>(
     [],
@@ -92,6 +114,15 @@ export function App() {
   const [eventNarrativeQueue, setEventNarrativeQueue] = useState<
     NarrativeEntry[]
   >([]);
+  const [packetEntryId, setPacketEntryId] = useState<string | null>(null);
+  const encounteredSceneEntriesRef = useRef(new Set<string>());
+  const handlePacketEntryChange = useCallback(
+    (entryId: string | null) => {
+      if (entryId === null) handleStopVoice();
+      setPacketEntryId(entryId);
+    },
+    [handleStopVoice],
+  );
   const [acquiredItems, setAcquiredItems] = useState<ItemId[]>([]);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
@@ -137,7 +168,7 @@ export function App() {
     inventory: [...inventory],
     completedPuzzleIds: [...completedPuzzleIds],
     puzzleFailures: { ...puzzleFailures },
-    endingLineIndex: storyStage === 'completed' ? 6 : 0,
+    endingLineIndex: storyStage === 'completed' ? endingEntries.length : 0,
     hintLevel,
     activeElapsedMs,
     reservePower,
@@ -208,10 +239,14 @@ export function App() {
   }, [motionReduced]);
 
   useEffect(() => {
+    if (!isPlaying || !pageVisible || !soundEnabled || soundLevels.voice === 0)
+      handleStopVoice();
     soundManager.sync({
-      active: isPlaying && pageVisible && !systemMenuOpen,
+      active: isPlaying && pageVisible,
+      paused: systemMenuOpen,
       enabled: soundEnabled,
       effectsVolume: soundLevels.effects,
+      voiceVolume: soundLevels.voice,
       environmentVolume: soundLevels.environment,
       powered: powerRestored,
       powerPhase: reservePower
@@ -226,17 +261,22 @@ export function App() {
     reservePower,
     soundEnabled,
     soundLevels.effects,
+    soundLevels.voice,
     soundLevels.environment,
     systemMenuOpen,
+    handleStopVoice,
   ]);
 
   useEffect(() => {
-    const handleVisibilityChange = () =>
-      setPageVisible(document.visibilityState === 'visible');
+    const handleVisibilityChange = () => {
+      const visible = document.visibilityState === 'visible';
+      if (!visible) handleStopVoice();
+      setPageVisible(visible);
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [handleStopVoice]);
 
   useEffect(() => {
     if (!isPlaying || systemMenuOpen || !pageVisible) return;
@@ -364,6 +404,82 @@ export function App() {
   }, [gameAudioRequest]);
 
   const activeEventNarrative = eventNarrativeQueue[0] ?? null;
+  const packetSceneVisible =
+    selectedHotspotId === 'hotspot_terminal' &&
+    terminalMenuId === 'audio' &&
+    storyStage === 'puzzle_packet_repair';
+  const currentEntry = !isPlaying
+    ? null
+    : intro
+      ? introEntries[introLineIndex]
+      : (activeEventNarrative ??
+        (storyStage === 'ending_transmission' || storyStage === 'ending_replay'
+          ? endingEntries[endingLineIndex]
+          : packetSceneVisible
+            ? packetEntries.find(({ id }) => id === packetEntryId)
+            : null));
+  useEffect(() => {
+    if (!currentEntry) return;
+    // Queueing a scene is not reading it. Register just the displayed line.
+    appendHistory([currentEntry]);
+    if (encounteredSceneEntriesRef.current.has(currentEntry.id)) return;
+    encounteredSceneEntriesRef.current.add(currentEntry.id);
+    if (voiceCues[currentEntry.id])
+      return soundManager.playVoice(currentEntry.id);
+  }, [appendHistory, currentEntry]);
+  useEffect(() => handleStopVoice, [handleStopVoice]);
+  const handleReplayVoice = useCallback(
+    (entryId: string) => {
+      // The manifest is not authority to expose a line: only read history is.
+      const terminalPacketReplay =
+        selectedHotspotId === 'hotspot_terminal' &&
+        completedPuzzleIds.includes('puzzle_packet_repair') &&
+        (terminalMenuId === 'audio' ||
+          (terminalMenuId === 'system' &&
+            storyStage === 'transmission_ready')) &&
+        packetEntries.some(({ id }) => id === entryId);
+      if (
+        (!systemMenuOpen && !terminalPacketReplay) ||
+        !pageVisible ||
+        !soundEnabled ||
+        soundLevels.voice === 0 ||
+        !narrativeHistory.some((entry) => entry.id === entryId) ||
+        !voiceCues[entryId]
+      )
+        return;
+      const current = soundManager.getVoicePlayback();
+      handleStopVoice();
+      if (
+        current.entryId === entryId &&
+        (current.status === 'playing' || current.status === 'loading')
+      )
+        return;
+      archiveAudioRequest.run(
+        () => soundManager.unlock(),
+        (result) => {
+          if (result === 'ready')
+            soundManager.playVoice(
+              entryId,
+              systemMenuOpen ? 'archive' : 'scene',
+            );
+          else setSaveMessage('音声を開始できませんでした。字幕で続けられます');
+        },
+      );
+    },
+    [
+      systemMenuOpen,
+      selectedHotspotId,
+      completedPuzzleIds,
+      terminalMenuId,
+      storyStage,
+      pageVisible,
+      soundEnabled,
+      soundLevels.voice,
+      narrativeHistory,
+      handleStopVoice,
+      archiveAudioRequest,
+    ],
+  );
   const handleStart = useCallback(() => {
     savedProgressRef.current = false;
     lastSavedFingerprintRef.current = null;
@@ -372,23 +488,25 @@ export function App() {
     setSaveMessage(null);
     setNarrativeHistory([]);
     setEventNarrativeQueue([]);
+    setPacketEntryId(null);
+    encounteredSceneEntriesRef.current.clear();
     setAcquiredItems([]);
     setAudioChoiceMade(true);
     if (soundEnabled) unlockGameSound();
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef, soundEnabled, unlockGameSound]);
   const handleUiClick = useCallback(
-    () => soundManager.playEffect('ui_click'),
+    (scope?: EffectScope) => soundManager.playEffect('ui_click', scope),
     [],
   );
   const handleTextBlip = useCallback(
     () => soundManager.playEffect('text_blip'),
     [],
   );
-  const handleEventNarrativeAdvance = useCallback(
-    () => setEventNarrativeQueue((current) => current.slice(1)),
-    [],
-  );
+  const handleEventNarrativeAdvance = useCallback(() => {
+    handleStopVoice();
+    setEventNarrativeQueue((current) => current.slice(1));
+  }, [handleStopVoice]);
   const handleHotspot = useCallback(
     (hotspotId: HotspotId) => {
       if (storyStage === 'ending_door' && hotspotId === 'hotspot_door') {
@@ -410,18 +528,26 @@ export function App() {
   );
   const handlePuzzleSubmit = useCallback(
     (puzzleId: PuzzleId, answer: string[]) => {
+      const snapshot = actorRef.getSnapshot();
+      if (
+        puzzleId === 'puzzle_power_route'
+          ? !selectIsPowerPuzzle(snapshot)
+          : !snapshot.matches({ playing: 'powered' }) ||
+            snapshot.context.storyStage !== puzzleId
+      )
+        return;
       const correct = isPuzzleAnswerCorrect(puzzleId, answer);
       soundManager.playEffect(
         correct ? puzzleSuccessCue[puzzleId] : puzzleFailureCue[puzzleId],
       );
       if (correct) {
+        handleStopVoice();
         const entries = [...getPuzzleCompletionEntries(puzzleId)];
-        appendHistory(entries);
         setEventNarrativeQueue(entries);
       }
       actorRef.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
     },
-    [actorRef, appendHistory],
+    [actorRef, handleStopVoice],
   );
 
   const archiveDocuments = getArchiveDocuments(powerRestored, inventory);
@@ -454,7 +580,12 @@ export function App() {
                 previousInventoryRef.current = [...progress.inventory];
                 setAcquiredItems([]);
                 setEventNarrativeQueue([]);
-                setNarrativeHistory(getRestoredNarrativeHistory(progress));
+                setPacketEntryId(null);
+                const history = getRestoredNarrativeHistory(progress);
+                setNarrativeHistory(history);
+                encounteredSceneEntriesRef.current = new Set(
+                  history.map(({ id }) => id),
+                );
                 actorRef.send({
                   type: 'PROGRESS_RESTORED',
                   progress,
@@ -493,6 +624,10 @@ export function App() {
       visualAssist={visualAssist}
       motionReduced={motionReduced}
       soundEnabled={soundEnabled}
+      voicePlayback={voicePlayback}
+      onReplayVoice={handleReplayVoice}
+      onStopVoice={handleStopVoice}
+      onPacketEntryChange={handlePacketEntryChange}
       soundLevels={soundLevels}
       subtitleSettings={subtitleSettings}
       saveMessage={saveMessage}
@@ -513,20 +648,22 @@ export function App() {
       activeElapsedMs={activeElapsedMs}
       reservePower={reservePower}
       onDialogueAdvance={() => {
-        const entry = introEntries[introLineIndex];
-        if (entry) appendHistory([entry]);
+        handleStopVoice();
         if (introLineIndex >= introEntries.length - 1) setIntroSeen(true);
         actorRef.send({ type: 'DIALOGUE_ADVANCED' });
       }}
       onDialogueSkip={() => {
-        appendHistory(introEntries);
+        handleStopVoice();
         setIntroSeen(true);
         actorRef.send({ type: 'DIALOGUE_SKIPPED' });
       }}
       onViewChanged={handleView}
       onHotspotSelected={handleHotspot}
       onPuzzleSubmit={handlePuzzleSubmit}
-      onClose={() => actorRef.send({ type: 'PUZZLE_CLOSED' })}
+      onClose={() => {
+        handleStopVoice();
+        actorRef.send({ type: 'PUZZLE_CLOSED' });
+      }}
       onToggleAssist={() => setVisualAssist((value) => !value)}
       onToggleMotion={() => setMotionReduced((value) => !value)}
       onToggleSound={() => {
@@ -542,6 +679,7 @@ export function App() {
         setSubtitleSettings((current) => ({ ...current, [key]: value }))
       }
       onExit={() => {
+        handleStopVoice();
         gameAudioRequest.cancel();
         if (powerRestored) persistCurrentProgress();
         setSystemMenuOpen(false);
@@ -549,6 +687,7 @@ export function App() {
         actorRef.send({ type: 'RETURNED_TO_TITLE' });
       }}
       onTerminalMenu={(menuId) => {
+        handleStopVoice();
         soundManager.playEffect('terminal_connect');
         actorRef.send({ type: 'TERMINAL_MENU_SELECTED', menuId });
       }}
@@ -561,13 +700,16 @@ export function App() {
         setSystemMenuOpen(true);
       }}
       onTransmit={() => {
+        handleStopVoice();
         soundManager.playEffect('transmission');
         actorRef.send({ type: 'TRANSMISSION_CONFIRMED' });
       }}
       onEndingAdvance={() => {
+        handleStopVoice();
         if (endingLineIndex === 0)
           soundManager.playEffect('communication_noise');
-        if (endingLineIndex >= 5) soundManager.playEffect('door_unlock');
+        if (endingLineIndex >= endingEntries.length - 1)
+          soundManager.playEffect('door_unlock');
         actorRef.send({ type: 'ENDING_ADVANCED' });
       }}
       onHintOpen={() => {
@@ -580,6 +722,7 @@ export function App() {
       }}
       onHintReveal={() => actorRef.send({ type: 'HINT_REQUESTED' })}
       onSystemToggle={() => {
+        handleStopVoice();
         setInventoryOpen(false);
         setHintOpen(false);
         setSystemMenuOpen((value) => !value);

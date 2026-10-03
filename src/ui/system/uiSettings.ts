@@ -10,6 +10,7 @@ export type SubtitleSettings = {
 
 export type SoundLevels = {
   effects: number;
+  voice: number;
   environment: number;
 };
 
@@ -26,5 +27,6 @@ export const defaultSubtitleSettings: SubtitleSettings = {
 
 export const defaultSoundLevels: SoundLevels = {
   effects: 100,
+  voice: 85,
   environment: 70,
 };

@@ -201,7 +201,7 @@ export function TitleScreen({
         >
           <div className="title-headphones" aria-hidden="true" />
           <p>
-            環境音と効果音が流れます。
+            環境音・効果音と、一部の台詞音声（合成音声）が流れます。
             <br />
             音なしでも最後まで遊べます。
           </p>

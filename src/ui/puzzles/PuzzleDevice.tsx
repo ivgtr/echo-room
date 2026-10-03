@@ -21,12 +21,17 @@ import {
 } from '../../game/puzzles/signalRecords';
 import { ContextBackButton } from '../common/ContextBackButton';
 import { FacilityMap } from '../evidence/FacilityMap';
+import type { VoicePlayback } from '../../audio/voiceManifest';
+import { packetEntries } from '../narrative/narrativeArchive';
+import { VoiceStatus } from '../narrative/VoiceStatus';
 
 type Props = {
   puzzleId: PuzzleId;
   failures: number;
   embedded?: boolean;
   active?: boolean;
+  voicePlayback?: VoicePlayback;
+  onPacketEntryChange?: (entryId: string | null) => void;
   onSubmit: (puzzleId: PuzzleId, answer: string[]) => void;
   onClose: () => void;
 };
@@ -35,6 +40,8 @@ type DeviceProps = {
   active: boolean;
   failures: number;
   submit: (answer: string[]) => void;
+  voicePlayback?: VoicePlayback;
+  onPacketEntryChange?: (entryId: string | null) => void;
 };
 
 export function PuzzleDevice({
@@ -42,6 +49,8 @@ export function PuzzleDevice({
   failures,
   embedded = false,
   active = true,
+  voicePlayback,
+  onPacketEntryChange,
   onSubmit,
   onClose,
 }: Props) {
@@ -92,7 +101,13 @@ export function PuzzleDevice({
       diagnosticAvailable={diagnosticAvailable}
       onActivity={restartInactivityTimer}
     >
-      <Device active={active} failures={failures} submit={submit} />
+      <Device
+        active={active}
+        failures={failures}
+        submit={submit}
+        {...(voicePlayback ? { voicePlayback } : {})}
+        {...(onPacketEntryChange ? { onPacketEntryChange } : {})}
+      />
     </DeviceFrame>
   );
 }
@@ -707,12 +722,19 @@ const fragments = [
   { id: 'd', label: 'D', left: 'triangle', right: 'diamond' },
 ] as const;
 
-function PacketRailDevice({ active, submit }: DeviceProps) {
+function PacketRailDevice({
+  active,
+  submit,
+  voicePlayback,
+  onPacketEntryChange,
+}: DeviceProps) {
   const [rail, setRail] = useState<(string | null)[]>([null, null, null]);
   const [selected, setSelected] = useState<string | null>(null);
   const complete = rail.every(isString);
   const submittedSignatureRef = useRef('');
   const confirmationRef = useRef<HTMLButtonElement>(null);
+  const [packetIndex, setPacketIndex] = useState(0);
+  const packetEntry = packetEntries[packetIndex]!;
 
   const placedFragments = [
     fragments.find(({ id }) => id === 'c')!,
@@ -727,6 +749,11 @@ function PacketRailDevice({ active, submit }: DeviceProps) {
     : '';
   const jointSignature = joints.map(Number).join('');
   const restored = complete && jointSignature === '111';
+  useEffect(() => {
+    if (!active || !restored) return;
+    onPacketEntryChange?.(packetEntry.id);
+    return () => onPacketEntryChange?.(null);
+  }, [active, restored, packetEntry.id, onPacketEntryChange]);
   useEffect(() => {
     // The placement controls disappear on restoration; keep keyboard focus
     // on the result's remaining action rather than the document body.
@@ -871,18 +898,29 @@ function PacketRailDevice({ active, submit }: DeviceProps) {
           aria-live="assertive"
         >
           <strong>FRAME RESTORED</strong>
-          {packetTexts.map((text, index) => (
-            <span className={index === 3 ? 'is-future-packet' : ''} key={text}>
-              PACKET 0{index + 1} / {text}
-            </span>
-          ))}
+          <span className={packetIndex === 3 ? 'is-future-packet' : ''}>
+            {packetEntry.speaker} / {packetEntry.text}
+          </span>
+          {voicePlayback && (
+            <VoiceStatus playback={voicePlayback} entryId={packetEntry.id} />
+          )}
           <button
             type="button"
             className="packet-confirm"
+            data-sound="dialogue"
             ref={confirmationRef}
-            onClick={() => submit(['c', ...rail.filter(isString)])}
+            onClick={() => {
+              if (!active) return;
+              if (packetIndex < packetEntries.length - 1)
+                setPacketIndex((index) =>
+                  Math.min(packetEntries.length - 1, index + 1),
+                );
+              else submit(['c', ...rail.filter(isString)]);
+            }}
           >
-            ACCEPT FRAME / 復元内容を確認する
+            {packetIndex < packetEntries.length - 1
+              ? 'NEXT PACKET / 次の通信へ'
+              : 'ACCEPT FRAME / 復元内容を確認する'}
           </button>
         </div>
       )}
