@@ -907,6 +907,7 @@ function PacketRailDevice({
           <button
             type="button"
             className="packet-confirm"
+            data-sound="dialogue"
             ref={confirmationRef}
             onClick={() => {
               if (!active) return;

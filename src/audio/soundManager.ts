@@ -35,6 +35,8 @@ export type SoundState = {
   powerPhase: 'normal' | 'low' | 'critical' | 'reserve';
 };
 
+export type EffectScope = 'world' | 'dialogue';
+
 type Tone = {
   frequency: number;
   delay: number;
@@ -170,7 +172,7 @@ type EnvironmentSource = {
   oscillator: OscillatorNode;
   gain: GainNode;
 };
-type EffectSource = EnvironmentSource;
+type EffectSource = EnvironmentSource & { scope: EffectScope };
 
 export class SoundManager {
   private context: AudioContext | null = null;
@@ -224,9 +226,17 @@ export class SoundManager {
     this.syncEnvironment();
   }
 
-  playEffect(effectId: SoundEffectId) {
-    if (effectId === 'text_blip' && this.voiceDucking) return;
-    this.playTones(SOUND_CUES[effectId]);
+  playEffect(
+    effectId: SoundEffectId,
+    scope: EffectScope = effectId === 'text_blip' ? 'dialogue' : 'world',
+  ) {
+    if (
+      scope === 'dialogue' &&
+      (this.voiceDucking ||
+        (effectId !== 'text_blip' && this.voicePlayback.status === 'loading'))
+    )
+      return;
+    this.playTones(SOUND_CUES[effectId], scope);
   }
 
   dispose() {
@@ -239,12 +249,22 @@ export class SoundManager {
     this.effectsBus = null;
     this.voiceBus = null;
     this.environmentBus = null;
-    if (context) void context.close();
+    if (context) {
+      context.onstatechange = null;
+      void context.close();
+    }
   }
 
   private ensureContext() {
     if (this.context) return;
     this.context = this.createContext();
+    this.context.onstatechange = () => {
+      if (this.context && this.context.state !== 'running') {
+        this.stopVoice();
+        this.stopEffects();
+        this.stopEnvironment();
+      }
+    };
     this.effectsBus = this.context.createGain();
     this.environmentBus = this.context.createGain();
     this.voiceBus = this.context.createGain();
@@ -392,6 +412,9 @@ export class SoundManager {
           this.voiceSources.push(noise);
           this.voiceNodes.push(highpass, lowpass, warmth, noise);
         } else source.connect(envelope);
+        // End even already scheduled dialogue tails before the first voice sample.
+        // Device feedback and the voice's own radio noise remain independent.
+        this.stopEffects('dialogue');
         this.voiceDucking = true;
         this.revealDucking = Boolean(cue.reveal);
         this.syncBuses();
@@ -493,7 +516,7 @@ export class SoundManager {
     this.environmentKey = null;
   }
 
-  private playTones(tones: readonly Tone[]) {
+  private playTones(tones: readonly Tone[], scope: EffectScope) {
     if (
       !this.state.active ||
       this.state.paused ||
@@ -515,7 +538,7 @@ export class SoundManager {
       gain.gain.setValueAtTime(tone.gain, startAt);
       gain.gain.exponentialRampToValueAtTime(0.001, stopAt);
       oscillator.connect(gain).connect(this.effectsBus);
-      const source = { oscillator, gain };
+      const source = { oscillator, gain, scope };
       this.effectSources.add(source);
       oscillator.onended = () => {
         this.effectSources.delete(source);
@@ -527,8 +550,11 @@ export class SoundManager {
     }
   }
 
-  private stopEffects() {
-    for (const { oscillator, gain } of this.effectSources) {
+  private stopEffects(scope?: EffectScope) {
+    for (const source of this.effectSources) {
+      if (scope && source.scope !== scope) continue;
+      const { oscillator, gain } = source;
+      this.effectSources.delete(source);
       oscillator.onended = null;
       try {
         oscillator.stop();
@@ -538,7 +564,6 @@ export class SoundManager {
       oscillator.disconnect();
       gain.disconnect();
     }
-    this.effectSources.clear();
   }
 }
 

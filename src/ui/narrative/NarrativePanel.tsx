@@ -64,6 +64,7 @@ export function NarrativePanel({
       <button
         type="button"
         className="narrative-advance-surface"
+        data-sound="dialogue"
         aria-label={textComplete ? advanceLabel : '文章をすべて表示'}
         onClick={handleAdvance}
         autoFocus={autoFocus}
@@ -100,6 +101,7 @@ export function NarrativePanel({
         <button
           type="button"
           className="narrative-secondary-action"
+          data-sound="dialogue"
           onClick={secondaryAction.onSelect}
         >
           {secondaryAction.label}

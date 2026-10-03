@@ -245,6 +245,7 @@ function ArchiveView({
                     <button
                       type="button"
                       disabled={!voiceEnabled}
+                      data-sound="voice"
                       aria-label={`${entry.text} 音声${voicePlayback.entryId === entry.id && ['loading', 'playing'].includes(voicePlayback.status) ? 'を停止' : 'を再生'}`}
                       onClick={() => onReplayVoice(entry.id)}
                     >

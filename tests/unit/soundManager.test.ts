@@ -30,7 +30,7 @@ class FakeNode {
   connect(node: FakeNode) {
     return node;
   }
-  disconnect() {}
+  disconnect = vi.fn();
 }
 
 const activeState: SoundState = {
@@ -52,6 +52,7 @@ const createManager = (
     currentTime: 10,
     sampleRate: 24000,
     state: 'suspended' as AudioContextState,
+    onstatechange: null as (() => void) | null,
     destination: new FakeNode(),
     createGain: () => new FakeNode(),
     createBiquadFilter: () => new FakeNode(),
@@ -169,6 +170,58 @@ describe('SoundManager', () => {
     manager.dispose();
   });
 
+  it('cuts dialogue tails at voice onset while retaining device feedback and releasing nodes', async () => {
+    let resolveFetch!: (response: Response) => void;
+    const { manager, context } = createManager(
+      () => new Promise((resolve) => (resolveFetch = resolve)),
+    );
+    manager.sync({ ...activeState, environmentVolume: 0 });
+    await manager.unlock();
+    manager.playEffect('ui_click', 'dialogue');
+    const click = context.createOscillator.mock.results.at(-1)!.value;
+    manager.playVoice('intro_02');
+    manager.playEffect('ui_click', 'dialogue');
+    expect(context.createOscillator).toHaveBeenCalledTimes(1);
+    manager.playEffect('text_blip');
+    const blip = context.createOscillator.mock.results.at(-1)!.value;
+    manager.playEffect('packet_snap');
+    const device = context.createOscillator.mock.results.slice(-2);
+    context.currentTime += 0.01;
+    resolveFetch(new Response(new ArrayBuffer(4)));
+    await expectPlaying(manager);
+    const voice = context.createBufferSource.mock.results[0]!.value;
+    expect(voice.start).toHaveBeenCalledWith(10.01);
+    for (const source of [click, blip]) {
+      expect(source.stop).toHaveBeenLastCalledWith();
+      expect(source.disconnect).toHaveBeenCalledOnce();
+      expect(source.disconnect.mock.invocationCallOrder[0]).toBeLessThan(
+        voice.start.mock.invocationCallOrder[0]!,
+      );
+      expect(source.onended).toBeNull();
+    }
+    for (const { value } of device) {
+      expect(value.stop).toHaveBeenCalledOnce(); // Scheduled finish only.
+      expect(value.disconnect).not.toHaveBeenCalled();
+    }
+    const count = context.createOscillator.mock.calls.length;
+    manager.playEffect('text_blip');
+    manager.playEffect('ui_click', 'dialogue');
+    expect(context.createOscillator).toHaveBeenCalledTimes(count);
+    manager.playEffect('ui_click');
+    expect(context.createOscillator).toHaveBeenCalledTimes(count + 1);
+    context.state = 'suspended';
+    context.onstatechange?.();
+    expect(manager.getVoicePlayback().status).toBe('idle');
+    for (const { value } of device)
+      expect(value.disconnect).toHaveBeenCalledOnce();
+    expect(voice.stop).toHaveBeenCalled();
+    await manager.unlock();
+    manager.playEffect('text_blip');
+    expect(context.createOscillator).toHaveBeenCalledTimes(count + 2);
+    manager.dispose();
+    expect(context.onstatechange).toBeNull();
+  });
+
   it('stops scene audio on pause, permits explicit archive playback, and respects mute', async () => {
     const { manager, context } = createManager();
     manager.sync(activeState);
@@ -193,19 +246,29 @@ describe('SoundManager', () => {
 
   it('leaves unvoiced text silent and allows retry after an unavailable clip', async () => {
     const fetchAudio = vi.fn(async () => new Response('', { status: 404 }));
-    const { manager } = createManager(fetchAudio);
-    manager.sync(activeState);
+    const { manager, context } = createManager(fetchAudio);
+    manager.sync({ ...activeState, environmentVolume: 0 });
     await manager.unlock();
     manager.playVoice('intro_01');
     manager.playVoice('ending_power');
     expect(fetchAudio).not.toHaveBeenCalled();
+    manager.playEffect('text_blip');
+    manager.playEffect('ui_click', 'dialogue');
+    expect(context.createOscillator).toHaveBeenCalledTimes(2);
     manager.playVoice('intro_02');
     await vi.waitFor(() =>
       expect(manager.getVoicePlayback().status).toBe('unavailable'),
     );
+    manager.playEffect('text_blip');
+    manager.playEffect('ui_click', 'dialogue');
+    expect(context.createOscillator).toHaveBeenCalledTimes(4);
     fetchAudio.mockImplementation(async () => new Response(new ArrayBuffer(4)));
     manager.playVoice('intro_02');
     await expectPlaying(manager);
+    manager.sync({ ...activeState, environmentVolume: 0, voiceVolume: 0 });
+    manager.playEffect('text_blip');
+    manager.playEffect('ui_click', 'dialogue');
+    expect(context.createOscillator).toHaveBeenCalledTimes(6);
     manager.dispose();
   });
 });

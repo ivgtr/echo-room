@@ -13,7 +13,11 @@ import {
   rememberAudioChoice,
 } from '../audio/audioSetup';
 import { voiceCues } from '../audio/voiceManifest';
-import { soundManager, type SoundEffectId } from '../audio/soundManager';
+import {
+  soundManager,
+  type EffectScope,
+  type SoundEffectId,
+} from '../audio/soundManager';
 import { type HotspotId, type LocationId } from '../game/domain/ids';
 import { gameMachine, type ItemId } from '../game/machine/gameMachine';
 import {
@@ -492,7 +496,7 @@ export function App() {
     actorRef.send({ type: 'GAME_STARTED' });
   }, [actorRef, soundEnabled, unlockGameSound]);
   const handleUiClick = useCallback(
-    () => soundManager.playEffect('ui_click'),
+    (scope?: EffectScope) => soundManager.playEffect('ui_click', scope),
     [],
   );
   const handleTextBlip = useCallback(

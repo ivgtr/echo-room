@@ -12,6 +12,8 @@
 
 `npm run check`成功（36 unit tests、型・lint・content/assets・build）。先行の整理後33件から代表回帰3件だけ追加し、E2Eは3件を維持する。PACKETと追加返答に合わせて全編経路を更新し、discoveryのみ確認。ブラウザ実行は既知の環境制限で未実施。ゲーム内mix・新規原音の実聴取・iOS Safariも未確認のためDraftを維持する。固定asset commitは`1ede5f2229dc5547c911b70e4d188a3d1ab03be0`。
 
+会話SEの整理：発話開始時に文字送り・進行SEの残りを停止し、全文表示・次へ・スキップ・PACKET確認を装置音から分離。既読音声の再生ボタンにもclick音を付けない。装置SE・通信加工・全原音は維持。`npm run check`は37 unit testsで成功（代表回帰1件追加）、E2Eは3件のdiscoveryのみ。一時的なAudioContext時刻検証で文字送り音の重複0ms、UI結合検証で操作の振り分けを確認した。実聴取の未確認範囲は変わらない。
+
 ## タイトルの刷新・初回サウンド選択
 
 状態: completed（今回の改修範囲）。既存E-01背景、二段ロゴ、文字メニュー、全画面の初回音声選択、設定階層、確認付きの再開始を実装した。[判断記録](./decisions/cinematic-title.md)参照。

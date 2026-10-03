@@ -88,6 +88,7 @@ export function EndingPanel({
           <button
             type="button"
             className="ending-advance-surface"
+            data-sound="dialogue"
             aria-label={
               textComplete
                 ? lineIndex === endingEntries.length - 1

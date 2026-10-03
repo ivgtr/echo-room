@@ -301,6 +301,7 @@ function PacketReadout({
           <button
             type="button"
             disabled={!voiceEnabled}
+            data-sound="voice"
             aria-label={`PACKET 0${index + 1} 音声${voicePlayback.entryId === id && ['loading', 'playing'].includes(voicePlayback.status) ? 'を停止' : 'を再生'}`}
             onClick={() => onReplayVoice(id)}
           >

@@ -1,4 +1,5 @@
 import type { VoicePlayback } from '../audio/voiceManifest';
+import type { EffectScope } from '../audio/soundManager';
 import {
   useCallback,
   useEffect,
@@ -114,7 +115,7 @@ type Props = {
   onHintReveal: () => void;
   onSystemToggle: () => void;
   onDismissAcquisition: () => void;
-  onUiClick: () => void;
+  onUiClick: (scope?: EffectScope) => void;
   onPuzzleInteraction: (puzzleId: PuzzleId) => void;
   onTextBlip: () => void;
   onEventNarrativeAdvance: () => void;
@@ -415,8 +416,13 @@ export function GameScreen(props: Props) {
         onClickCapture={(event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;
-          const button = target.closest('button:not(:disabled)');
+          const button = target.closest<HTMLElement>('button:not(:disabled)');
           if (!button || button.closest('.terminal-function-keys')) return;
+          if (button.dataset.sound === 'voice') return;
+          if (button.dataset.sound === 'dialogue') {
+            props.onUiClick('dialogue');
+            return;
+          }
           const device = button.closest<HTMLElement>('[data-puzzle-id]');
           const puzzleId = device?.dataset.puzzleId as PuzzleId | undefined;
           if (puzzleId) props.onPuzzleInteraction(puzzleId);
