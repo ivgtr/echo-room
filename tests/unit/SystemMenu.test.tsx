@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { HintPanel } from '../../src/ui/hints/HintPanel';
 import { SystemMenu } from '../../src/ui/system/SystemMenu';
 import { getArchiveDocuments } from '../../src/ui/narrative/narrativeArchive';
 import {
@@ -9,7 +10,38 @@ import {
   defaultSubtitleSettings,
 } from '../../src/ui/system/uiSettings';
 
+afterEach(cleanup);
+
 describe('SystemMenu', () => {
+  it('shows power recovery clues progressively before other devices unlock', () => {
+    const onReveal = vi.fn();
+    const props = {
+      stage: 'puzzle_power_route' as const,
+      onReveal,
+      onClose: vi.fn(),
+    };
+    const view = render(<HintPanel {...props} level={0} />);
+    expect(screen.queryByText(/LEVEL/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '次のヒントを見る' }));
+    expect(onReveal).toHaveBeenCalledOnce();
+    view.rerender(<HintPanel {...props} level={1} />);
+    expect(screen.getByText(/LEVEL 1/)).toHaveTextContent(
+      '状態灯・煤・上の配線',
+    );
+    expect(screen.queryByText(/DOOR/)).not.toBeInTheDocument();
+    view.rerender(<HintPanel {...props} level={2} />);
+    expect(screen.getByText(/LEVEL 2/)).toHaveTextContent('DOOR回路を切る');
+    expect(screen.queryByText(/TERMINAL/)).not.toBeInTheDocument();
+    view.rerender(<HintPanel {...props} level={3} />);
+    expect(screen.getByText(/LEVEL 3/)).toHaveTextContent(
+      'TERMINAL、INTERCOM、ECHO BUFFER',
+    );
+    expect(
+      screen.queryByRole('button', { name: '次のヒントを見る' }),
+    ).not.toBeInTheDocument();
+    expect(getArchiveDocuments(false, [], [])).toEqual([]);
+  });
+
   it('shows read subtitles and returns from the archive without voice controls', () => {
     const documents = getArchiveDocuments(true, ['item_floor_map'], []);
     const map = documents.find(

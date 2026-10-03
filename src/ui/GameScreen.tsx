@@ -362,6 +362,7 @@ export function GameScreen(props: Props) {
       stage={props.storyStage}
       completedPuzzleIds={props.completedPuzzleIds}
       puzzleFailures={props.puzzleFailures}
+      narrativeHistory={props.narrativeHistory}
       onSelect={props.onTerminalMenu}
       onClose={closeInspection}
       onPuzzleSubmit={handlePuzzleSubmit}
@@ -608,7 +609,9 @@ export function GameScreen(props: Props) {
             fallbackFocusRef={systemButtonRef}
           >
             <HintPanel
-              stage={props.storyStage}
+              stage={
+                props.powerRestored ? props.storyStage : 'puzzle_power_route'
+              }
               level={props.hintLevel}
               onReveal={props.onHintReveal}
               onClose={props.onHintClose}
@@ -627,7 +630,7 @@ export function GameScreen(props: Props) {
             visualAssist={props.visualAssist}
             motionReduced={props.motionReduced}
             inventoryAvailable={props.inventory.length > 0}
-            hintAvailable={props.powerRestored}
+            hintAvailable={!props.intro}
             hintUnlocked={Object.values(props.puzzleFailures).some(
               (failures) => failures > 0,
             )}

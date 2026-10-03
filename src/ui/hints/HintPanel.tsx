@@ -1,7 +1,14 @@
 import type { StoryStage } from '../../game/machine/gameMachine';
 import { ContextBackButton } from '../common/ContextBackButton';
 
-const hints: Partial<Record<StoryStage, [string, string, string]>> = {
+type HintStage = StoryStage | 'puzzle_power_route';
+
+const hints: Partial<Record<HintStage, [string, string, string]>> = {
+  puzzle_power_route: [
+    '机の引き継ぎメモと、ブレーカーの状態灯・煤・上の配線を見比べる。',
+    '煤のあるDOOR回路を切る。その後、上の配線を根元からたどって復帰順を読む。',
+    'DOORをOFFにして、TERMINAL、INTERCOM、ECHO BUFFERの順にONにする。',
+  ],
   puzzle_carrier_sync: [
     '基準の波とA・B・Cが、最初に上がる位置を比べる。',
     '早い波は右へ、遅い波は左へ動かす。',
@@ -28,13 +35,13 @@ const hints: Partial<Record<StoryStage, [string, string, string]>> = {
     '間隔は半分、上下は反転、開始位置は左へ2。',
   ],
   puzzle_transmission_window: [
-    '文を受け取る前と後で、何が起きたか。SYSTEMの会話履歴で確かめる。',
+    '文を受け取る前と後で、何が起きたか。端末の「会話履歴」で確かめる。配置はそのまま残る。',
     '返事、設備の起動、時刻への疑問、まだ行っていない操作への反応を、文と結びつける。時間と送り先はLOGとSECURITYで再確認できる。',
     '「誰だ？」には「聞こえるか」、「起動した」には電源の指示。「戻ってる？」の直後はログへの忠告、復元した文への反応は赤いボタン。時間差は-00:20:00、送り先はECHO BUFFER RETURN。',
   ],
   transmission_ready: [
     '送信テストは終わっている。',
-    'SYSTEMに戻り、送る内容を確認する。',
+    '端末のSYSTEM表示で、送る内容を確認する。',
     '赤い送信ボタンを押す。',
   ],
 };
@@ -45,7 +52,7 @@ export function HintPanel({
   onReveal,
   onClose,
 }: {
-  stage: StoryStage;
+  stage: HintStage;
   level: number;
   onReveal: () => void;
   onClose: () => void;

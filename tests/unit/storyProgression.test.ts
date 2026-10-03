@@ -2,6 +2,7 @@ import { createActor } from 'xstate';
 import { describe, expect, it } from 'vitest';
 
 import { gameMachine } from '../../src/game/machine/gameMachine';
+import { selectCurrentPuzzleId } from '../../src/game/selectors/gameSelectors';
 import type { PuzzleId } from '../../src/game/puzzles/storyPuzzles';
 import { endingEntries } from '../../src/ui/narrative/narrativeArchive';
 
@@ -31,10 +32,22 @@ const solutions: [PuzzleId, string[]][] = [
 describe('seven-puzzle story progression', () => {
   it('rejects early transmission and a wrong answer, then reaches the ending through all seven puzzles', () => {
     const actor = createActor(gameMachine).start();
+    expect(selectCurrentPuzzleId(actor.getSnapshot())).toBeNull();
     actor.send({ type: 'GAME_STARTED' });
+    actor.send({ type: 'HINT_REQUESTED' });
+    expect(actor.getSnapshot().context.hintLevel).toBe(0);
     actor.send({ type: 'DIALOGUE_SKIPPED' });
+    expect(selectCurrentPuzzleId(actor.getSnapshot())).toBe(
+      'puzzle_power_route',
+    );
+    actor.send({ type: 'HINT_REQUESTED' });
+    expect(actor.getSnapshot().context.hintLevel).toBe(1);
     actor.send({ type: 'VIEW_CHANGED', locationId: 'location_west_wall' });
     actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_breaker' });
+    actor.send({ type: 'HINT_REQUESTED' });
+    actor.send({ type: 'HINT_REQUESTED' });
+    actor.send({ type: 'HINT_REQUESTED' });
+    expect(actor.getSnapshot().context.hintLevel).toBe(3);
     actor.send({
       type: 'PUZZLE_SUBMITTED',
       puzzleId: 'puzzle_power_route',
@@ -49,6 +62,10 @@ describe('seven-puzzle story progression', () => {
     for (const [puzzleId, answer] of solutions) {
       actor.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
       if (puzzleId === 'puzzle_power_route') {
+        expect(actor.getSnapshot().context.hintLevel).toBe(0);
+        expect(selectCurrentPuzzleId(actor.getSnapshot())).toBe(
+          'puzzle_carrier_sync',
+        );
         actor.send({ type: 'TRANSMISSION_CONFIRMED' });
         actor.send({
           type: 'PUZZLE_SUBMITTED',

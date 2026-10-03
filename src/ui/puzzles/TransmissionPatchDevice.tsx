@@ -99,7 +99,8 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
       dragRef.current = null;
       setPulse(false);
       // A test interrupted before submission must be deliberately run again.
-      if (!completedRef.current) setTestResult(null);
+      if (!completedRef.current)
+        setTestResult((result) => (result === true ? null : result));
     }
     function onVisibility() {
       if (document.visibilityState === 'hidden') interrupt();

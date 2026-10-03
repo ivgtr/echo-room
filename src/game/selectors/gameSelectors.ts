@@ -96,7 +96,7 @@ export const selectSubtitle = (snapshot: GameSnapshot) => {
 };
 
 export const selectCurrentPuzzleId = (snapshot: GameSnapshot) => {
-  if (snapshot.matches({ playing: 'breakerPuzzle' }))
-    return 'puzzle_power_route' as const;
+  if (!snapshot.matches('playing')) return null;
+  if (!snapshot.context.powerRestored) return 'puzzle_power_route' as const;
   return stagePuzzle[snapshot.context.storyStage] ?? null;
 };

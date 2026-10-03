@@ -290,6 +290,7 @@ export const gameMachine = setup({
         },
         exploring: {
           on: {
+            HINT_REQUESTED: { actions: 'revealHint' },
             VIEW_CHANGED: { actions: 'changeView' },
             HOTSPOT_SELECTED: [
               { guard: 'selectedBreaker', target: 'breakerPuzzle' },
@@ -300,6 +301,7 @@ export const gameMachine = setup({
         },
         breakerPuzzle: {
           on: {
+            HINT_REQUESTED: { actions: 'revealHint' },
             PUZZLE_SUBMITTED: [
               {
                 guard: 'correctPowerRoute',

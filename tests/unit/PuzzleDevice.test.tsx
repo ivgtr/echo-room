@@ -31,6 +31,17 @@ describe('PuzzleDevice', () => {
     expect(
       screen.queryByText(`PACKET 04 / ${packetTexts[3]}`),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '固定されたHEADER断片C' }),
+    ).toHaveAccessibleDescription('左端は縦線、右端は三角');
+    for (const [fragment, edges] of [
+      ['A', '左端はひし形、右端は丸'],
+      ['B', '左端は丸、右端は塗りつぶした四角'],
+      ['D', '左端は三角、右端はひし形'],
+    ])
+      expect(
+        screen.getByRole('button', { name: `断片${fragment}を持つ` }),
+      ).toHaveAccessibleDescription(edges);
     for (const [index, fragment] of ['D', 'A', 'B'].entries()) {
       fireEvent.click(
         screen.getByRole('button', { name: `断片${fragment}を持つ` }),
@@ -41,6 +52,9 @@ describe('PuzzleDevice', () => {
         }),
       );
     }
+    expect(
+      screen.getByRole('button', { name: 'レール2の断片Dを持ち上げる' }),
+    ).toHaveAccessibleDescription('左端は三角、右端はひし形');
     for (const [index, text] of packetTexts.entries())
       expect(screen.getByText(`PACKET 0${index + 1} / ${text}`)).toBeVisible();
     expect(
@@ -307,6 +321,9 @@ describe('PuzzleDevice', () => {
       /TIME BASE \/ LOCKED|RETURN \/ LOCKED|P0[1-4]/,
     );
     act(() => vi.advanceTimersByTime(400));
+    view.rerender(<PuzzleDevice {...props} active={false} />);
+    view.rerender(<PuzzleDevice {...props} active />);
+    expect(screen.getByText(/RECORD MISMATCH/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /^指示に従った結果/ }));
     fireEvent.click(screen.getByRole('button', { name: /^受信後の返事/ }));
     place(1, 1);

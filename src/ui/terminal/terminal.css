@@ -594,3 +594,23 @@
 [data-reduced-motion='true'] .terminal-safety-cover {
   transition: none;
 }
+
+.terminal-history-button {
+  min-height: 2.75rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #53746e;
+  color: #c4e9e3;
+  background: #112624;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.terminal-history {
+  padding-top: 4.5rem;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.terminal-history header p {
+  margin-bottom: 0;
+}

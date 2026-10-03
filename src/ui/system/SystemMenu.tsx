@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import { ContextBackButton } from '../common/ContextBackButton';
+import { ConversationHistory } from '../narrative/ConversationHistory';
 import type {
   ArchiveDocument,
   NarrativeEntry,
@@ -215,21 +216,7 @@ function ArchiveView({
 }) {
   return (
     <div className="system-scroll system-archive">
-      <section aria-labelledby="conversation-history-title">
-        <h3 id="conversation-history-title">CONVERSATION / 会話履歴</h3>
-        {history.length === 0 ? (
-          <p>まだ記録された会話はない。</p>
-        ) : (
-          <ol className="archive-list">
-            {history.map((entry) => (
-              <li key={entry.id} data-kind={entry.kind}>
-                <span>{entry.speaker ?? kindLabel(entry.kind)}</span>
-                <p>{entry.text}</p>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      <ConversationHistory history={history} />
       <section aria-labelledby="document-archive-title">
         <h3 id="document-archive-title">DOCUMENT / 資料</h3>
         {documents.length === 0 ? (
@@ -378,10 +365,4 @@ function SettingButtons<Value extends string>({
       </div>
     </div>
   );
-}
-
-function kindLabel(kind: NarrativeEntry['kind']) {
-  if (kind === 'system') return 'FACILITY SYSTEM';
-  if (kind === 'discovery') return 'DISCOVERY';
-  return '主人公';
 }

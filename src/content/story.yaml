@@ -183,19 +183,19 @@ hints:
       id: hint_power_1,
       puzzleId: puzzle_power_route,
       level: 1,
-      text: 状態灯と、盤面上部の配線がどこからどこへ続くかを見る。,
+      text: 机の引き継ぎメモと、ブレーカーの状態灯・煤・上の配線を見比べる。,
     }
   - {
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: 赤い状態灯の回路を切り、上の配線の始まりに近い機器から電源を入れる。,
+      text: 煤のあるDOOR回路を切る。その後、上の配線を根元からたどって復帰順を読む。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: ドアの回路を切ってから、端末、インターホン、転送装置の順に入れる。,
+      text: DOORをOFFにして、TERMINAL、INTERCOM、ECHO BUFFERの順にONにする。,
     }
   - {
       id: hint_carrier_1,
@@ -291,7 +291,7 @@ hints:
       id: hint_send_1,
       puzzleId: puzzle_transmission_window,
       level: 1,
-      text: 文を受け取る前と後で、何が起きたか。SYSTEMの会話履歴で確かめる。,
+      text: 文を受け取る前と後で、何が起きたか。端末の「会話履歴」で確かめる。配置はそのまま残る。,
     }
   - {
       id: hint_send_2,

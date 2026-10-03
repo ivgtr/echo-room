@@ -45,6 +45,18 @@ const fragments = {
 type FragmentId = keyof typeof fragments;
 type MovableFragmentId = Exclude<FragmentId, 'c'>;
 const trayOrder: MovableFragmentId[] = ['a', 'b', 'd'];
+const edgeDescriptions = {
+  header: '縦線',
+  triangle: '三角',
+  diamond: 'ひし形',
+  voice: '丸',
+  check: '塗りつぶした四角',
+} as const;
+
+function describeFragmentEdges(id: FragmentId) {
+  const fragment = fragments[id];
+  return `左端は${edgeDescriptions[fragment.left]}、右端は${edgeDescriptions[fragment.right]}`;
+}
 
 function isMovableFragment(value: string): value is MovableFragmentId {
   return trayOrder.some((id) => id === value);
@@ -164,6 +176,7 @@ export function PacketRailDevice({ active, submit }: Props) {
                         ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
                         : `レール${slot + 1}へ置く`
                 }
+                aria-description={id ? describeFragmentEdges(id) : '未接続'}
                 onClick={() => {
                   if (!active || restored || fixed || document.hidden) return;
                   if (selected) placeFragment(slot - 1, selected);
@@ -259,6 +272,7 @@ export function PacketRailDevice({ active, submit }: Props) {
               disabled={!active || rail.includes(id)}
               aria-pressed={selected === id}
               aria-label={`断片${fragments[id].label}を持つ`}
+              aria-description={describeFragmentEdges(id)}
               onClick={() => {
                 if (active && !document.hidden)
                   setSelected(selected === id ? null : id);
