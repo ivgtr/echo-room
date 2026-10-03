@@ -9,7 +9,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PuzzleDevice } from '../../src/ui/puzzles/PuzzleDevice';
-import { packetEntries } from '../../src/ui/narrative/narrativeArchive';
+import { packetTexts } from '../../src/game/puzzles/storyPuzzles';
 
 afterEach(() => {
   cleanup();
@@ -17,61 +17,31 @@ afterEach(() => {
 });
 
 describe('PuzzleDevice', () => {
-  it('reveals and registers only one correctly repaired PACKET at a time, without an audio wait', () => {
-    vi.useFakeTimers();
+  it('keeps all restored PACKET subtitles visible until confirmation', () => {
     const onSubmit = vi.fn();
-    const onPacketEntryChange = vi.fn();
-    const props = {
-      puzzleId: 'puzzle_packet_repair' as const,
-      failures: 0,
-      onSubmit,
-      onClose: vi.fn(),
-      onPacketEntryChange,
-      voicePlayback: { entryId: 'packet_01', status: 'unavailable' as const },
-    };
-    const view = render(<PuzzleDevice {...props} />);
-    const place = (order: string[]) =>
-      order.forEach((fragment, index) => {
-        fireEvent.click(
-          screen.getByRole('button', { name: `断片${fragment}を持つ` }),
-        );
-        fireEvent.click(
-          screen.getByRole('button', {
-            name: `レール${index + 2}へ断片${fragment}を置く`,
-          }),
-        );
-      });
-    place(['D', 'B', 'A']);
-    expect(onPacketEntryChange).not.toHaveBeenCalled();
-    expect(screen.queryByText(/PACKET 04/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'EJECT / 取り出す' }));
-    onSubmit.mockClear();
-    place(['D', 'A', 'B']);
-    expect(onPacketEntryChange).toHaveBeenLastCalledWith('packet_01');
-    expect(screen.queryByText(/PACKET 02/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText('音声を再生できませんでした。字幕で進めます'),
-    ).toBeVisible();
-    act(() => vi.runAllTimers());
-    expect(onPacketEntryChange).toHaveBeenCalledTimes(1);
-    view.rerender(<PuzzleDevice {...props} active={false} />);
-    expect(onPacketEntryChange).toHaveBeenLastCalledWith(null);
-    view.rerender(<PuzzleDevice {...props} active />);
-    for (let index = 1; index < packetEntries.length; index += 1) {
+    render(
+      <PuzzleDevice
+        puzzleId="puzzle_packet_repair"
+        failures={0}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+    for (const [index, fragment] of ['D', 'A', 'B'].entries()) {
       fireEvent.click(
-        screen.getByRole('button', { name: 'NEXT PACKET / 次の通信へ' }),
+        screen.getByRole('button', { name: `断片${fragment}を持つ` }),
       );
-      expect(onPacketEntryChange).toHaveBeenLastCalledWith(
-        packetEntries[index]!.id,
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: `レール${index + 2}へ断片${fragment}を置く`,
+        }),
       );
-      expect(
-        screen.getByText(
-          `PACKET 0${index + 1} / ${packetEntries[index]!.text}`,
-        ),
-      ).toBeVisible();
-      if (index < 3)
-        expect(screen.queryByText(/PACKET 04/)).not.toBeInTheDocument();
     }
+    for (const [index, text] of packetTexts.entries())
+      expect(screen.getByText(`PACKET 0${index + 1} / ${text}`)).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: /NEXT PACKET|音声を再生/ }),
+    ).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
     fireEvent.click(
       screen.getByRole('button', { name: 'ACCEPT FRAME / 復元内容を確認する' }),
@@ -82,8 +52,6 @@ describe('PuzzleDevice', () => {
       'a',
       'b',
     ]);
-    view.unmount();
-    expect(onPacketEntryChange).toHaveBeenLastCalledWith(null);
   });
 
   it('defers automatic detection for an inactive display and submits once when reactivated', () => {

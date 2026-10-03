@@ -1,5 +1,3 @@
-import { voiceCues, type VoicePlayback } from '../../audio/voiceManifest';
-import { VoiceStatus } from '../narrative/VoiceStatus';
 import {
   useEffect,
   useRef,
@@ -31,9 +29,6 @@ type Props = {
   powerRestored: boolean;
   reservePower: boolean;
   soundEnabled: boolean;
-  voicePlayback: VoicePlayback;
-  onReplayVoice: (entryId: string) => void;
-  onStopVoice: () => void;
   soundLevels: SoundLevels;
   subtitleSettings: SubtitleSettings;
   visualAssist: boolean;
@@ -62,7 +57,6 @@ const focusableSelector =
 export function SystemMenu(props: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View>('main');
-  useEffect(() => () => props.onStopVoice(), [view, props.onStopVoice]);
 
   useEffect(() => {
     const requested = props.initialFocus
@@ -177,9 +171,6 @@ export function SystemMenu(props: Props) {
         <ArchiveView
           history={props.narrativeHistory}
           documents={props.documents}
-          voicePlayback={props.voicePlayback}
-          voiceEnabled={props.soundEnabled && props.soundLevels.voice > 0}
-          onReplayVoice={props.onReplayVoice}
         />
       )}
 
@@ -218,15 +209,9 @@ export function SystemMenu(props: Props) {
 function ArchiveView({
   history,
   documents,
-  voicePlayback,
-  voiceEnabled,
-  onReplayVoice,
 }: {
   history: readonly NarrativeEntry[];
   documents: readonly ArchiveDocument[];
-  voicePlayback: VoicePlayback;
-  voiceEnabled: boolean;
-  onReplayVoice: (entryId: string) => void;
 }) {
   return (
     <div className="system-scroll system-archive">
@@ -240,23 +225,6 @@ function ArchiveView({
               <li key={entry.id} data-kind={entry.kind}>
                 <span>{entry.speaker ?? kindLabel(entry.kind)}</span>
                 <p>{entry.text}</p>
-                {voiceCues[entry.id] && (
-                  <>
-                    <button
-                      type="button"
-                      disabled={!voiceEnabled}
-                      data-sound="voice"
-                      aria-label={`${entry.text} 音声${voicePlayback.entryId === entry.id && ['loading', 'playing'].includes(voicePlayback.status) ? 'を停止' : 'を再生'}`}
-                      onClick={() => onReplayVoice(entry.id)}
-                    >
-                      {voicePlayback.entryId === entry.id &&
-                      ['loading', 'playing'].includes(voicePlayback.status)
-                        ? '音声を停止'
-                        : '音声を再生'}
-                    </button>
-                    <VoiceStatus playback={voicePlayback} entryId={entry.id} />
-                  </>
-                )}
               </li>
             ))}
           </ol>
@@ -343,7 +311,6 @@ function SettingsView(
         </button>
         {(
           [
-            ['voice', 'VOICE / 会話'],
             ['effects', 'EFFECTS / 効果音'],
             ['environment', 'ENVIRONMENT / 環境音'],
           ] as const

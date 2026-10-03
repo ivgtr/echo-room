@@ -69,7 +69,6 @@ const saveSchemaV4 = z.object({
 });
 
 const soundLevelsSchema = z.object({
-  voice: z.number().min(0).max(100).default(85),
   effects: z.number().min(0).max(100),
   environment: z.number().min(0).max(100),
 });
@@ -103,7 +102,7 @@ export const defaultSettings: SettingsData = {
   visualAssist: false,
   motionReduced: false,
   introSeen: false,
-  soundLevels: { effects: 100, environment: 70, voice: 85 },
+  soundLevels: { effects: 100, environment: 70 },
   subtitleSettings: {
     size: 'medium',
     background: 'soft',

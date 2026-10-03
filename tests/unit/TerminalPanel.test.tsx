@@ -28,10 +28,6 @@ const propsFor = (stage: StoryStage) => ({
   onClose: vi.fn(),
   onPuzzleSubmit: vi.fn(),
   onTransmit: vi.fn(),
-  voicePlayback: { entryId: null, status: 'idle' as const },
-  voiceEnabled: true,
-  onReplayVoice: vi.fn(),
-  onPacketEntryChange: vi.fn(),
 });
 
 function Session() {
@@ -63,12 +59,10 @@ describe('TerminalPanel', () => {
   });
 
   it('reveals packet text and identity only after their discoveries', () => {
-    const onReplayVoice = vi.fn();
     const view = render(
       <TerminalPanel
         {...propsFor('puzzle_signal_investigation')}
         menuId="audio"
-        onReplayVoice={onReplayVoice}
       />,
     );
     expect(screen.queryByText(packetTexts[3]!)).not.toBeInTheDocument();
@@ -79,18 +73,12 @@ describe('TerminalPanel', () => {
       <TerminalPanel
         {...propsFor('puzzle_voiceprint_calibration')}
         menuId="audio"
-        onReplayVoice={onReplayVoice}
       />,
     );
     expect(
       screen.getByRole('list', { name: '復元済みパケット' }),
     ).toHaveTextContent(packetTexts[3]!);
     expect(screen.queryByText(/E-01 OCCUPANT/)).not.toBeInTheDocument();
-    expect(onReplayVoice).not.toHaveBeenCalled();
-    fireEvent.click(
-      screen.getByRole('button', { name: 'PACKET 04 音声を再生' }),
-    );
-    expect(onReplayVoice).toHaveBeenCalledExactlyOnceWith('packet_04');
     view.rerender(
       <TerminalPanel
         {...propsFor('puzzle_transmission_window')}

@@ -2,30 +2,22 @@ import { useCallback, useState } from 'react';
 
 import { NarrativeText } from '../narrative/NarrativeText';
 import { endingEntries } from '../narrative/narrativeArchive';
-import { VoiceStatus } from '../narrative/VoiceStatus';
-import type { VoicePlayback } from '../../audio/voiceManifest';
 import type { TextSpeed } from '../system/uiSettings';
 
 export function EndingPanel({
   lineIndex,
   completed,
-  onOpenSystem,
-  obscured,
   onAdvance,
   textSpeed,
   motionReduced,
   onTextBlip,
-  voicePlayback,
 }: {
   lineIndex: number;
   completed: boolean;
-  onOpenSystem?: () => void;
-  obscured?: boolean;
   onAdvance: () => void;
   textSpeed: TextSpeed;
   motionReduced: boolean;
   onTextBlip: () => void;
-  voicePlayback?: VoicePlayback;
 }) {
   const entry = endingEntries[lineIndex];
   const text = entry
@@ -50,8 +42,6 @@ export function EndingPanel({
   return (
     <section
       className={completed ? 'ending-panel is-complete' : 'ending-panel'}
-      inert={obscured || undefined}
-      aria-hidden={obscured || undefined}
       role="dialog"
       aria-modal="true"
       aria-label={completed ? 'TRANSMISSION COMPLETE' : '最終通信'}
@@ -62,9 +52,6 @@ export function EndingPanel({
         <>
           <h1>ECHO ROOM</h1>
           <p>TRANSMISSION COMPLETE</p>
-          <button type="button" onClick={onOpenSystem} autoFocus>
-            SYSTEM / 会話履歴・設定
-          </button>
         </>
       ) : (
         <>
@@ -82,13 +69,9 @@ export function EndingPanel({
               onComplete={handleTextComplete}
             />
           </p>
-          {voicePlayback && (
-            <VoiceStatus playback={voicePlayback} entryId={entry?.id} />
-          )}
           <button
             type="button"
             className="ending-advance-surface"
-            data-sound="dialogue"
             aria-label={
               textComplete
                 ? lineIndex === endingEntries.length - 1

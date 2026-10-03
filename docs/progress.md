@@ -2,17 +2,13 @@
 
 最終更新: 2026-10-03
 
-## Issue #21：未来側の全発言の音声化
+## Issue #21：発話音声の追加を撤回
 
-状態: verification。2026-10-03の利用者の指示により、採用したA80声をUNKNOWNを含む未来側の通常会話10行とPACKET 4本文へ展開する。重複本文を共有して原音12本。冒頭・本人判明の採用済み2本は未加工の同一bytesを維持し、最終送信は冒頭と同一原音を使う。[判断記録](./decisions/narration-pilot.md)参照。
+2026-10-03、品質が採用基準に届かないため、利用者の指示でPR #22の発話機能を撤回。音源・制作参照・取得処理・voice設定・履歴再生・PACKETの音声向け行送りを削除し、字幕と既存の環境音・17種の手続き生成SEへ戻した。
 
-音声はGitの固定commit URLから必要時だけ取得し、Viteの出力へ含めない。原案にある未実装の返答1行を調査後へ復帰し、PACKETは復元後に行単位で表示・再生する。現在側の独白・応答は最終「……聞こえるか？」以外字幕のみ。既存の主要7問・開示順・チェックポイント復元方針を維持する。
+PR #22内のテスト縮小、古いパズル入力の拒否、原案にある返答・最終「……聞こえるか？」の字幕復帰は維持する。進行schema v4・contentVersion・終盤の保存indexを保ち、廃止したvoice設定だけを無視する。Git履歴は書き換えない。
 
-新規10原音は合計30.72秒。全文・語尾ASRと波形境界を検査し、問題のあった5本は1回ずつ再生成した。ASRの表記・短い発声の曖昧さを制作記録へ残し、試聴済みとは扱わない。新規10本はwatermarkの完全復号を確認し、採用済みの短い2本の復号未確認状態は変更しない。
-
-`npm run check`成功（36 unit tests、型・lint・content/assets・build）。先行の整理後33件から代表回帰3件だけ追加し、E2Eは3件を維持する。PACKETと追加返答に合わせて全編経路を更新し、discoveryのみ確認。ブラウザ実行は既知の環境制限で未実施。ゲーム内mix・新規原音の実聴取・iOS Safariも未確認のためDraftを維持する。固定asset commitは`1ede5f2229dc5547c911b70e4d188a3d1ab03be0`。
-
-会話SEの整理：発話開始時に文字送り・進行SEの残りを停止し、全文表示・次へ・スキップ・PACKET確認を装置音から分離。既読音声の再生ボタンにもclick音を付けない。装置SE・通信加工・全原音は維持。`npm run check`は37 unit testsで成功（代表回帰1件追加）、E2Eは3件のdiscoveryのみ。一時的なAudioContext時刻検証で文字送り音の重複0ms、UI結合検証で操作の振り分けを確認した。実聴取の未確認範囲は変わらない。
+検証: `npm run check`成功（31 unit tests、型・lint・content/assets・build）。`npm run test:e2e -- --list`で3件を確認。既知のブラウザ取得・実行環境の制約によりE2E本体と実機確認は未実施。
 
 ## タイトルの刷新・初回サウンド選択
 
@@ -56,7 +52,7 @@ Node 24.20.0 / npm 11.19.0 / React 19.2.8 / Playwright 1.62.1 / 標準Chromium 1
 - P5-01は完了。主要7体験の完了IDを進行schema v4へ自動保存し、設定の別枠保存、非対応version・破損進行の保護と確認付き消去を実装した。旧schemaの互換層は持たない。
 - P5-02は完了。現行の単一Hotspot View Modelから意味を持つDOMを生成し、modal中の探索無効化、focus trap・復帰、通知role、SYSTEMの動き軽減設定、keyboardのみの全編ルートを完成した。
 - P5-03は完了。冒頭7台詞を通常に読み終えた時だけ既読状態を保存し、次回以降は単一Narrative UIからskip可能にした。skip後のSYSTEMへのfocus移動と、全7台詞のARCHIVE復元も統合した。
-- 2026-08-11の字幕のみ方針は、Issue #21の試作と2026-10-03の採用・拡大指示により未来側の全発言を音声化する方針へ更新した。全パズルの無音進行と単一Sound Managerを維持する。
+- 2026-10-03の利用者指示によりIssue #21の発話音声を撤回し、字幕のみの方針へ戻した。全パズルの無音進行と既存の単一Sound Managerを維持する。
 - P4-04は完了。旧tone playerを削除し、非常電源・復旧後の環境音と通信・接続・回路・電源・ロック・解析・送信・ドア解錠cueを単一Sound Managerへ統合した。
 - P4-04の操作音を拡張し、話者差のないレトロゲーム風text blipと共通UI clickをeffectsへ追加。字幕速度と句読点へ同期する文字送り、早押し全文表示、動き軽減時の即時表示へ接続した。
 - P5は全作業完了。次の着手点はP4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残演出。
@@ -129,7 +125,7 @@ Node 24.20.0 / npm 11.19.0 / React 19.2.8 / Playwright 1.62.1 / 標準Chromium 1
 ## 次作業者への引き継ぎ
 
 1. `docs/README.md`のグラフィック・テストルーティングに従い、`graphics-production.md`、`graphics-generation.yaml`、`requirements.md` 6・8〜10・15・16章、`technical-design.md` 7・13・14・18章、`implementation-plan.md`のP4-02〜05とP6を読む。
-2. P4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残視覚演出を完了してP4 Gateを閉じる。音声はIssue #21の未来側全発言と最終送信のmixを確認し、別playerは追加しない。
+2. P4-02の正式高解像度原本・layer分離・hit mask・残状態差分と、P4-05の残視覚演出を完了してP4 Gateを閉じる。サウンドは既存の手続き生成を維持し、発話音声の追加作業は継続しない。
 3. P5は完了。進行・設定ともv4だけを正規形式とし、旧fixtureや旧読込分岐を追加しない。
 4. `tmp/voice-match-99-8.png`、`tmp/ending-door-control.png`、`tmp/p5-02-motion-settings.png`、`tmp/p5-03-intro-skip.png`、`tmp/p4-04-sound-settings.png`、`tmp/p4-05-text-blip.png`は実画面確認用。その他の一時画像も引き続きignore済みの`tmp/`へ集約する。
 5. 主要7体験の初見所要時間、偶然正解、詰まり、ヒント使用箇所をP7-01で測る。机上時間だけで難易度完了としない。
