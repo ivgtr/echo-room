@@ -1,5 +1,5 @@
 import type { ItemId } from '../../game/machine/gameMachine';
-import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import { packetTexts, type PuzzleId } from '../../game/puzzles/storyPuzzles';
 import type { SavedProgress } from '../../game/save/saveManager';
 import { archivedDeskDocuments } from '../evidence/deskEvidence';
 
@@ -107,6 +107,16 @@ export const powerRestoredEntry: NarrativeEntry = {
   text: '非常電源がつながった。端末と転送装置が起動する。',
 };
 
+/** These entries are revealed one at a time only after a correct frame repair. */
+export const packetEntries: readonly NarrativeEntry[] = packetTexts.map(
+  (text, index) => ({
+    id: `packet_0${index + 1}`,
+    kind: 'communication',
+    speaker: `PACKET 0${index + 1}`,
+    text,
+  }),
+);
+
 const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
   {
     puzzle_power_route: [
@@ -154,6 +164,12 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
         kind: 'communication',
         speaker: 'UNKNOWN',
         text: 'ログは気にするな。',
+      },
+      {
+        id: 'offset_answer',
+        kind: 'communication',
+        speaker: 'UNKNOWN',
+        text: '分かってる。まだ説明できない。',
       },
       {
         id: 'damaged_packet_cue',
@@ -233,8 +249,11 @@ export function getArchiveDocuments(
 
 export function getRestoredNarrativeHistory(progress: SavedProgress) {
   const history: NarrativeEntry[] = [...introEntries, powerRestoredEntry];
-  for (const puzzleId of progress.completedPuzzleIds)
+  for (const puzzleId of progress.completedPuzzleIds) {
+    // ACCEPT FRAME is reachable only after all four restored lines were shown.
+    if (puzzleId === 'puzzle_packet_repair') history.push(...packetEntries);
     history.push(...getPuzzleCompletionEntries(puzzleId));
+  }
   if (
     progress.storyStage === 'ending_door' ||
     progress.storyStage === 'completed'

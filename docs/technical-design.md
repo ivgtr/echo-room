@@ -432,7 +432,7 @@ effectsOnComplete:
   - setObjective: restore_power
 ```
 
-- 発話音声の対応は既存NarrativeのIDで限定し、冒頭`intro_02`、照合結果の確認後の`identity_answer`、最終送信の現在側「……聞こえるか？」だけに付ける。同文の未解禁PACKETへ自動で割り当てない。
+- 発話音声はNarrativeのIDで対応し、未来の自分／UNKNOWNの発言、修復後に表示したPACKET、最終送信の現在側「……聞こえるか？」だけに付ける。同文の未解禁PACKETへ自動で割り当てない。既読履歴は表示した行単位で追加し、未表示の会話キューをまとめて既読にしない。
 - 通信時は字幕と通信ノイズを同期させるが、サウンド終了を進行条件にしない。
 - 台詞の表示時間は文字数から初期値を算出して個別調整できる。
 
@@ -555,11 +555,11 @@ master
 
 ### 10.3 素材形式
 
-- 環境音・効果音は引き続きWeb Audio APIで手続き生成する。試作の静的WAVも同じ`SoundManager`で読込・decode・再生し、別player、Audio Sprite、実行時TTS、マイク入力、バックエンドは追加しない。
+- 環境音・効果音は引き続きWeb Audio APIで手続き生成する。静的WAVも同じ`SoundManager`で読込・decode・再生し、別player、Audio Sprite、実行時TTS、マイク入力、バックエンドは追加しない。
 - 非常電源中と電源復旧後の機械ハムをenvironment busでループし、共通UI click、話者差のないtext blip、通信ノイズ、接続、回路、電源、ロック、解析、送信、ドア解錠をeffects busの短いcueとして生成する。
 - text blipは字幕速度に同期して句読点を避けながら間引き、`performance.now()`基準の文字送り表示と合わせる。早押しでは全文表示まで、動き軽減では文字送りとblipを省略する。
-- 試作WAVはGit管理の`audio/voice/`へ置き、`public/`・`src/`やアプリのbuild出力へ複製しない。完全なcommit SHAで固定したraw GitHub URLから必要時だけ取得し、冒頭と最後は同一のdecode済み原音を使う。制作元、利用条件、必要表示は`audio/voice/README.md`に記録する。
-- 冒頭の声だけに狭帯域filter、軽い歪み、控えめな通信ノイズを加え、最後の現在側は原音を近く明瞭に再生する。ノイズや効果音を含めclippingを避ける。
+- WAVはGit管理の`audio/voice/`へ置き、`public/`・`src/`やアプリのbuild出力へ複製しない。完全なcommit SHAで固定したraw GitHub URLから必要時だけ取得し、冒頭と最後は同一のdecode済み原音を使う。制作元、利用条件、必要表示は`audio/voice/README.md`に記録する。
+- 未来側の全発言・PACKET・その履歴再生に狭帯域filter、軽い歪み、控えめな通信ノイズを加え、本人判明後も維持する。最終送信の現在側「……聞こえるか？」だけは原音を近く明瞭に再生する。ノイズや効果音を含めclippingを避ける。
 - 発話は同時に1件だけとし、スキップ、台詞・場面変更、停止時に読込要求を無効化して再生nodeを止める。遅延したfetch・decode完了で古い台詞を再生せず、再表示や連打でも重複させない。読込・失敗状態は該当Narrativeまたは既読ARCHIVE内で表示し、字幕と操作を妨げない。
 
 ### 10.4 声紋演出

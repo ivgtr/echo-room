@@ -72,6 +72,7 @@ type Props = {
   voicePlayback: VoicePlayback;
   onReplayVoice: (entryId: string) => void;
   onStopVoice: () => void;
+  onPacketEntryChange: (entryId: string | null) => void;
   soundLevels: SoundLevels;
   subtitleSettings: SubtitleSettings;
   saveMessage: string | null;
@@ -370,6 +371,10 @@ export function GameScreen(props: Props) {
       onClose={closeInspection}
       onPuzzleSubmit={handlePuzzleSubmit}
       onTransmit={handleTransmit}
+      voicePlayback={props.voicePlayback}
+      voiceEnabled={props.soundEnabled && props.soundLevels.voice > 0}
+      onReplayVoice={props.onReplayVoice}
+      onPacketEntryChange={props.onPacketEntryChange}
     />
   ) : props.selectedHotspotId === 'hotspot_locker' &&
     props.storyStage === 'puzzle_maintenance_lock' ? (

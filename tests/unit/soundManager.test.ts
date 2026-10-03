@@ -4,8 +4,11 @@ import { SoundManager, type SoundState } from '../../src/audio/soundManager';
 import { voiceAssets, voiceCues } from '../../src/audio/voiceManifest';
 import {
   endingEntries,
+  getPuzzleCompletionEntries,
   introEntries,
+  packetEntries,
 } from '../../src/ui/narrative/narrativeArchive';
+import { puzzleIds } from '../../src/game/puzzles/storyPuzzles';
 
 const param = () => ({
   value: 1,
@@ -94,12 +97,31 @@ describe('SoundManager', () => {
     manager.dispose();
   });
 
-  it('uses one opening/final take and limits voiced lines to the three intended roles', async () => {
-    expect(voiceCues).toEqual({
-      intro_02: { asset: 'first_contact', treatment: 'radio' },
-      identity_answer: { asset: 'identity', treatment: 'radio', reveal: true },
-      ending_first_contact: { asset: 'first_contact', treatment: 'near' },
+  it('voices every future line over radio and reuses the opening take for the sole current-side voice', async () => {
+    const storyEntries = [
+      ...introEntries,
+      ...puzzleIds.flatMap(getPuzzleCompletionEntries),
+      ...packetEntries,
+    ];
+    const futureEntries = storyEntries.filter(
+      ({ kind }) => kind === 'communication',
+    );
+    expect(Object.keys(voiceCues).sort()).toEqual(
+      [...futureEntries.map(({ id }) => id), 'ending_first_contact'].sort(),
+    );
+    for (const entry of futureEntries)
+      expect(voiceCues[entry.id]?.treatment).toBe('radio');
+    expect(voiceCues.identity_answer?.reveal).toBe(true);
+    expect(voiceCues.ending_first_contact).toEqual({
+      asset: 'first_contact',
+      treatment: 'near',
     });
+    expect(voiceCues.packet_01?.asset).toBe(voiceCues.intro_02?.asset);
+    expect(voiceCues.packet_03?.asset).toBe(voiceCues.offset_warning?.asset);
+    for (const entry of endingEntries.filter(
+      ({ id }) => id !== 'ending_first_contact',
+    ))
+      expect(voiceCues[entry.id]).toBeUndefined();
     expect(
       endingEntries.find(({ id }) => id === 'ending_first_contact')?.text,
     ).toBe(introEntries[1].text);
@@ -175,7 +197,7 @@ describe('SoundManager', () => {
     manager.sync(activeState);
     await manager.unlock();
     manager.playVoice('intro_01');
-    manager.playVoice('packet_04');
+    manager.playVoice('ending_power');
     expect(fetchAudio).not.toHaveBeenCalled();
     manager.playVoice('intro_02');
     await vi.waitFor(() =>

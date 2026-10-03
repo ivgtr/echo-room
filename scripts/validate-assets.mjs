@@ -66,7 +66,7 @@ try {
   }
 
   console.log(
-    `Asset validation passed (${bundleIds.size} bundles, ${imageIds.size} images, 2 Git-hosted voice masters, all files present).`,
+    `Asset validation passed (${bundleIds.size} bundles, ${imageIds.size} images, ${Object.keys(voiceAssets).length} Git-hosted voice masters, all files present).`,
   );
 } catch (error) {
   console.error('Asset validation failed.');

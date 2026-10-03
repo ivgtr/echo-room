@@ -135,7 +135,7 @@ async function solveSignalInvestigation(page: Page) {
   await device
     .getByRole('button', { name: 'ECHO BUFFER RETURN' })
     .press('Enter');
-  await finishPuzzle(page, 3);
+  await finishPuzzle(page, 4);
 }
 
 async function solvePacketRail(page: Page) {
@@ -155,6 +155,15 @@ async function solvePacketRail(page: Page) {
       .press('Enter');
   }
   await expect(device.getByText('FRAME RESTORED')).toBeVisible();
+  for (let index = 1; index <= 3; index += 1) {
+    await expect(
+      device.getByText(new RegExp(`PACKET 0${index} /`)),
+    ).toBeVisible();
+    await expect(device.getByText(/PACKET 04/)).toHaveCount(0);
+    await device
+      .getByRole('button', { name: 'NEXT PACKET / 次の通信へ' })
+      .press('Enter');
+  }
   await expect(device.getByText(/PACKET 04/)).toContainText(
     '最後に、赤いボタンを押せ。',
   );
