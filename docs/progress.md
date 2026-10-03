@@ -1,12 +1,12 @@
 # ECHO ROOM 実装進捗
 
-最終更新: 2026-10-02
+最終更新: 2026-10-03
 
 ## Issue #21：3場面の音声試作
 
 状態: verification。冒頭、本人判明、最終送信の既存台詞へ音声を接続し、冒頭と最後は同一WAVを通信加工／近い声で再生する。音声はGitの固定commit URLから取得し、Viteの出力へ含めない。[判断記録](./decisions/narration-pilot.md)参照。
 
-`npm run check`成功（既存107件＋音声・設定互換の5件＝112 unit tests）。読込取消、遅延decode、同一原音、mix、pause／mute、失敗後の再生を検証した。E2Eは標準Chromiumの未配置・取得失敗、導入済みChromiumのsocket作成制限でブラウザ起動前に停止した。Cloud Browserもlocal previewを拒否しており、今回の実画面・実聴取、iOS Safariは未確認。常設／一時CI、検証画像は追加しない。音声の試聴判断はDraft PRで行い、PACKET全音声化や残SEへは広げない。固定commit `63773e5c291841491c2623497fc117f3c73cc969` の2音源は実取得でHTTP 200・CORS許可・SHA-256一致を確認し、`dist`に音源がないことも確認した。
+テストは主要な進行・保存・音声へ整理し、unit 112→33件、E2E 41→3件。表示細部と重複経路を削除し、コンテンツschemaと型検査の重複も解消した。`npm run check`成功。E2Eはブラウザ環境制限で未実行、実聴取とiOS Safariも未確認。既存音源は変更せず、声の違和感への再制作・試聴判断を残す。
 
 ## タイトルの刷新・初回サウンド選択
 

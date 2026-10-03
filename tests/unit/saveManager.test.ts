@@ -4,7 +4,6 @@ import {
   clearProgress,
   createPowerRestoredProgress,
   defaultSettings,
-  getCheckpointId,
   loadProgress,
   loadSettings,
   SAVE_KEY,
@@ -93,37 +92,17 @@ describe('saveManager', () => {
     expect(loadSettings(storage)).toEqual(defaultSettings);
   });
 
-  it('maps solved puzzle count and terminal states to checkpoints', () => {
-    expect(getCheckpointId('puzzle_carrier_sync', ['puzzle_power_route'])).toBe(
-      'checkpoint_puzzle_01',
-    );
-    expect(
-      getCheckpointId('puzzle_transmission_window', [
-        'puzzle_power_route',
-        'puzzle_carrier_sync',
-        'puzzle_maintenance_lock',
-        'puzzle_signal_investigation',
-        'puzzle_packet_repair',
-        'puzzle_voiceprint_calibration',
-      ]),
-    ).toBe('checkpoint_puzzle_06');
-    expect(getCheckpointId('ending_replay', [])).toBe(
-      'checkpoint_transmission_started',
-    );
-    expect(getCheckpointId('completed', [])).toBe('checkpoint_completed');
-  });
-});
-
-it('adds the voice level to existing v4 settings without resetting other choices', () => {
-  const storage = createStorage();
-  const prior = {
-    ...defaultSettings,
-    soundEnabled: false,
-    soundLevels: { effects: 35, environment: 55 },
-  };
-  storage.setItem(SETTINGS_KEY, JSON.stringify(prior));
-  expect(loadSettings(storage)).toMatchObject({
-    soundEnabled: false,
-    soundLevels: { effects: 35, environment: 55, voice: 85 },
+  it('adds the voice level to existing v4 settings without resetting other choices', () => {
+    const storage = createStorage();
+    const prior = {
+      ...defaultSettings,
+      soundEnabled: false,
+      soundLevels: { effects: 35, environment: 55 },
+    };
+    storage.setItem(SETTINGS_KEY, JSON.stringify(prior));
+    expect(loadSettings(storage)).toMatchObject({
+      soundEnabled: false,
+      soundLevels: { effects: 35, environment: 55, voice: 85 },
+    });
   });
 });

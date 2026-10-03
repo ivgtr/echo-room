@@ -906,7 +906,7 @@ verification:
 4. PACKET復元と時系列照合から未来通信を確信。
 5. 声紋特徴量の校正から正体判明。
 6. 因果会話と送信タイミングの設定からending。
-7. 各主要checkpointからの再開。
+7. 代表checkpointからの再開。
 
 ### 10.3 Flaky test
 

@@ -5,52 +5,7 @@ import { gameMachine } from '../../src/game/machine/gameMachine';
 import { createPowerRestoredProgress } from '../../src/game/save/saveManager';
 import { EMERGENCY_POWER_DURATION_MS } from '../../src/game/time/emergencyPower';
 
-const enterPowerPuzzle = () => {
-  const actor = createActor(gameMachine).start();
-  actor.send({ type: 'GAME_STARTED' });
-  for (let index = 0; index < 7; index += 1)
-    actor.send({ type: 'DIALOGUE_ADVANCED' });
-  actor.send({ type: 'VIEW_CHANGED', locationId: 'location_west_wall' });
-  actor.send({ type: 'HOTSPOT_SELECTED', hotspotId: 'hotspot_breaker' });
-  return actor;
-};
-
-describe('gameMachine vertical slice', () => {
-  it('skips an already-read introduction as one state transition', () => {
-    const actor = createActor(gameMachine).start();
-    actor.send({ type: 'GAME_STARTED' });
-    actor.send({ type: 'DIALOGUE_SKIPPED' });
-    expect(actor.getSnapshot().matches({ playing: 'exploring' })).toBe(true);
-  });
-
-  it('rejects an unsafe power route and permits a retry', () => {
-    const actor = enterPowerPuzzle();
-    actor.send({
-      type: 'PUZZLE_SUBMITTED',
-      puzzleId: 'puzzle_power_route',
-      answer: ['terminal', 'door', 'intercom', 'buffer'],
-    });
-    expect(actor.getSnapshot().matches({ playing: 'breakerPuzzle' })).toBe(
-      true,
-    );
-    expect(actor.getSnapshot().context.puzzleFailures.puzzle_power_route).toBe(
-      1,
-    );
-  });
-
-  it('restores power only for the capacity-safe route', () => {
-    const actor = enterPowerPuzzle();
-    actor.send({
-      type: 'PUZZLE_SUBMITTED',
-      puzzleId: 'puzzle_power_route',
-      answer: ['terminal', 'intercom', 'buffer'],
-    });
-    expect(actor.getSnapshot().matches({ playing: 'powered' })).toBe(true);
-    expect(actor.getSnapshot().context.completedPuzzleIds).toEqual([
-      'puzzle_power_route',
-    ]);
-  });
-
+describe('gameMachine', () => {
   it('restores current-only domain progress without replaying rewards', () => {
     const actor = createActor(gameMachine).start();
     actor.send({

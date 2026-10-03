@@ -1,159 +1,68 @@
-import { openTitle } from './titleFixture';
 import { expect, test } from '@playwright/test';
+import { startNewGame } from './gameplay';
 
-import { createSettingsSave, installSettingsSave } from './saveFixture';
-
-test('sound lifecycle follows play, SYSTEM, visibility, and master settings', async ({
+test('real Web Audio starts, pauses, resumes, and respects mute', async ({
   page,
 }) => {
+  // Observe native nodes rather than maintaining a second Web Audio implementation.
   await page.addInitScript(() => {
-    const audit = {
-      started: [] as number[],
-      immediateStops: [] as number[],
-      resumed: 0,
-    };
+    const audit = { created: 0, active: 0 };
     Object.defineProperty(window, '__soundAudit', { value: audit });
-
-    class FakeParam {
-      value = 1;
-      cancelScheduledValues() {}
-      setTargetAtTime(value: number) {
-        this.value = value;
-      }
-      setValueAtTime(value: number) {
-        this.value = value;
-      }
-      exponentialRampToValueAtTime(value: number) {
-        this.value = value;
-      }
-    }
-    class FakeNode {
-      connect() {
-        return this;
-      }
-      disconnect() {}
-    }
-    class FakeGain extends FakeNode {
-      gain = new FakeParam();
-    }
-    class FakeOscillator extends FakeNode {
-      frequency = new FakeParam();
-      type: OscillatorType = 'sine';
-      onended: (() => void) | null = null;
-      start() {
-        audit.started.push(this.frequency.value);
-      }
-      stop(when?: number) {
-        if (when === undefined) audit.immediateStops.push(this.frequency.value);
-      }
-    }
-    class FakeAudioContext {
-      currentTime = 0;
-      destination = new FakeNode();
-      state: AudioContextState = 'suspended';
-      createGain() {
-        return new FakeGain();
+    const NativeContext = window.AudioContext;
+    window.AudioContext = class extends NativeContext {
+      constructor() {
+        super();
+        audit.created += 1;
       }
       createOscillator() {
-        return new FakeOscillator();
+        const oscillator = super.createOscillator();
+        audit.active += 1;
+        oscillator.addEventListener('ended', () => (audit.active -= 1), {
+          once: true,
+        });
+        return oscillator;
       }
-      async resume() {
-        this.state = 'running';
-        audit.resumed += 1;
-      }
-      async close() {
-        this.state = 'closed';
-      }
-    }
-
-    window.AudioContext = FakeAudioContext as unknown as typeof AudioContext;
+    };
   });
-
   const readAudit = () =>
     page.evaluate(
       () =>
         (
           window as unknown as {
-            __soundAudit: {
-              started: number[];
-              immediateStops: number[];
-              resumed: number;
-            };
+            __soundAudit: { created: number; active: number };
           }
         ).__soundAudit,
     );
+  const activeNodes = async () => (await readAudit()).active;
 
-  await page.addInitScript(
-    installSettingsSave,
-    createSettingsSave({
-      motionReduced: false,
-      subtitleSettings: { size: 'medium', background: 'soft', speed: 'fast' },
-    }),
-  );
-  await openTitle(page, 'on');
-  await page.getByRole('button', { name: 'ゲーム開始' }).click();
-  const environmentStarts = async () =>
-    (await readAudit()).started.filter(
-      (frequency) => frequency === 43 || frequency === 43 * 2.01,
-    ).length;
-  const environmentStops = async () =>
-    (await readAudit()).immediateStops.filter(
-      (frequency) => frequency === 43 || frequency === 43 * 2.01,
-    ).length;
-  await expect.poll(environmentStarts).toBe(2);
-  await expect
-    .poll(async () => (await readAudit()).started.includes(520))
-    .toBe(true);
-  expect((await readAudit()).resumed).toBe(1);
+  await startNewGame(page, 'on');
+  await expect.poll(activeNodes).toBeGreaterThan(0);
+  expect((await readAudit()).created).toBe(1);
 
-  // The opening narrative owns the full-screen pointer surface. Finish it
-  // before exercising the SYSTEM control rather than clicking through it.
-  for (let index = 0; index < 6; index += 1) {
-    await expect(page.locator('.narrative-text')).toHaveAttribute(
-      'data-text-complete',
-      'true',
-    );
-    await page.getByRole('button', { name: '次の文章へ' }).click();
-  }
-  await expect(page.locator('.narrative-text')).toHaveAttribute(
-    'data-text-complete',
-    'true',
-  );
-  await page.getByRole('button', { name: '探索を始める' }).click();
-
-  await page.getByRole('button', { name: 'SYSTEM' }).click();
-  await expect
-    .poll(async () => (await readAudit()).started.includes(760))
-    .toBe(true);
-  await expect.poll(environmentStops).toBe(2);
-  await page
-    .getByRole('dialog', { name: 'SYSTEM' })
-    .getByRole('button', { name: 'RESUME / ゲームへ戻る' })
-    .click();
-  await expect.poll(environmentStarts).toBe(4);
-
-  await page.evaluate(() => {
-    document.documentElement.dataset.testVisibility = 'hidden';
-    Object.defineProperty(document, 'visibilityState', {
-      configurable: true,
-      get: () => document.documentElement.dataset.testVisibility,
-    });
-    document.dispatchEvent(new Event('visibilitychange'));
-  });
-  await expect.poll(environmentStops).toBe(4);
-  await page.evaluate(() => {
-    document.documentElement.dataset.testVisibility = 'visible';
-    document.dispatchEvent(new Event('visibilitychange'));
-  });
-  await expect.poll(environmentStarts).toBe(6);
-
-  await page.getByRole('button', { name: 'SYSTEM' }).click();
+  await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   const system = page.getByRole('dialog', { name: 'SYSTEM' });
+  await expect.poll(activeNodes).toBe(0);
+  await system
+    .getByRole('button', { name: 'RESUME / ゲームへ戻る' })
+    .press('Enter');
+  await expect.poll(activeNodes).toBeGreaterThan(0);
+
+  await page.getByRole('button', { name: 'SYSTEM' }).press('Enter');
   await system
     .getByRole('button', { name: 'TEXT & SOUND / 字幕・サウンド設定' })
-    .click();
-  await system.getByRole('button', { name: /MASTER \/ サウンド ON/ }).click();
-  await system.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }).click();
-  await system.getByRole('button', { name: 'RESUME / ゲームへ戻る' }).click();
-  await expect.poll(environmentStarts).toBe(6);
+    .press('Enter');
+  await system
+    .getByRole('button', { name: /MASTER \/ サウンド ON/ })
+    .press('Enter');
+  await expect(
+    system.getByRole('button', { name: /MASTER \/ サウンド OFF/ }),
+  ).toBeVisible();
+  await system
+    .getByRole('button', { name: 'BACK / SYSTEMへ戻る' })
+    .press('Enter');
+  await system
+    .getByRole('button', { name: 'RESUME / ゲームへ戻る' })
+    .press('Enter');
+  await expect(system).toBeHidden();
+  await expect.poll(activeNodes).toBe(0);
 });

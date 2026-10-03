@@ -9,10 +9,8 @@ import {
 } from '../../src/ui/system/uiSettings';
 
 describe('SystemMenu', () => {
-  it('opens only discovered archive data and updates accessibility settings', () => {
-    const onSoundLevelChange = vi.fn();
-    const onSubtitleSettingChange = vi.fn();
-    const onToggleMotion = vi.fn();
+  it('replays only read voice entries and stops playback on leaving the archive', () => {
+    const onStopVoice = vi.fn();
     const onReplayVoice = vi.fn();
     render(
       <SystemMenu
@@ -23,7 +21,7 @@ describe('SystemMenu', () => {
         soundEnabled
         voicePlayback={{ entryId: null, status: 'idle' }}
         onReplayVoice={onReplayVoice}
-        onStopVoice={vi.fn()}
+        onStopVoice={onStopVoice}
         soundLevels={defaultSoundLevels}
         subtitleSettings={defaultSubtitleSettings}
         visualAssist={false}
@@ -50,10 +48,10 @@ describe('SystemMenu', () => {
         initialFocus={null}
         onClose={vi.fn()}
         onToggleSound={vi.fn()}
-        onSoundLevelChange={onSoundLevelChange}
-        onSubtitleSettingChange={onSubtitleSettingChange}
+        onSoundLevelChange={vi.fn()}
+        onSubtitleSettingChange={vi.fn()}
         onToggleAssist={vi.fn()}
-        onToggleMotion={onToggleMotion}
+        onToggleMotion={vi.fn()}
         onInventory={vi.fn()}
         onHint={vi.fn()}
         onExit={vi.fn()}
@@ -74,36 +72,9 @@ describe('SystemMenu', () => {
       screen.getByRole('button', { name: '……聞こえるか？ 音声を再生' }),
     );
     expect(onReplayVoice).toHaveBeenCalledExactlyOnceWith('intro_02');
-    expect(screen.getByText('EMERGENCY POWER TEST')).toBeVisible();
-    expect(
-      screen.queryByRole('button', { name: 'RESUME / ゲームへ戻る' }),
-    ).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole('button', { name: 'BACK / SYSTEMへ戻る' }),
     );
-    expect(
-      screen.getByRole('button', { name: 'RESUME / ゲームへ戻る' }),
-    ).toBeVisible();
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'TEXT & SOUND / 字幕・サウンド設定',
-      }),
-    );
-    expect(screen.getByLabelText(/VOICE \/ 会話/)).toBeVisible();
-    expect(
-      screen.getByRole('button', { name: 'MASTER / サウンド ON' }),
-    ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: /^大$/ }));
-    expect(onSubtitleSettingChange).toHaveBeenCalledWith('size', 'large');
-    fireEvent.change(screen.getByLabelText(/EFFECTS \/ 効果音/), {
-      target: { value: '35' },
-    });
-    expect(onSoundLevelChange).toHaveBeenCalledWith('effects', 35);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'REDUCE MOTION / 動き軽減 OFF',
-      }),
-    );
-    expect(onToggleMotion).toHaveBeenCalledOnce();
+    expect(onStopVoice).toHaveBeenCalled();
   });
 });

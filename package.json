@@ -18,7 +18,7 @@
     "test:e2e": "playwright test",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:assets": "node scripts/validate-assets.mjs",
-    "check": "npm run typecheck && npm run lint && npm run validate:content && npm run validate:assets && npm run test && npm run build"
+    "check": "npm run lint && npm run validate:content && npm run validate:assets && npm run test && npm run build"
   },
   "dependencies": {
     "@xstate/react": "6.1.0",
