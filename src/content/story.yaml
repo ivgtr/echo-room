@@ -243,13 +243,13 @@ hints:
       id: hint_signal_2,
       puzzleId: puzzle_signal_investigation,
       level: 2,
-      text: R1=B、R2=C、R3=A。次に通信の実線と丸い端子をたどる。,
+      text: R1=B、R2=C、R3=A。送信の時間軸を動かし、三組を重ねる。,
     }
   - {
       id: hint_signal_3,
       puzzleId: puzzle_signal_investigation,
       level: 3,
-      text: 3組をつなぎ、通信実線、J-2、ECHO BUFFER RETURNの順。,
+      text: 送信の時間軸を20分戻して重ねる。地図ではインターホンから実線と丸い端子をたどる。,
     }
   - {
       id: hint_repair_1,

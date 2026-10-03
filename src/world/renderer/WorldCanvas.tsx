@@ -9,6 +9,12 @@ import {
 import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import type { HotspotId, LocationId } from '../../game/domain/ids';
+import type { PuzzleId } from '../../game/puzzles/storyPuzzles';
+import {
+  describeWorldDevices,
+  getWorldDeviceState,
+  type WorldDeviceState,
+} from '../assets/worldDeviceState';
 import {
   getAllWorldImages,
   getWorldImage,
@@ -23,6 +29,7 @@ const CAMERA_OVERSCAN = 1.012;
 type Props = {
   locationId: LocationId;
   powerRestored: boolean;
+  completedPuzzleIds: readonly PuzzleId[];
   motionReduced: boolean;
   onHotspotSelected: (hotspotId: HotspotId) => void;
 };
@@ -32,14 +39,18 @@ type Scene = {
   locationId: LocationId;
   powerRestored: boolean;
   container: Container;
+  devices: Graphics;
 };
 
 export function WorldCanvas({
   locationId,
   powerRestored,
+  completedPuzzleIds,
   motionReduced,
   onHotspotSelected,
 }: Props) {
+  const deviceState = getWorldDeviceState(completedPuzzleIds);
+  const deviceStateRef = useRef(deviceState);
   const hostRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const cameraRef = useRef<Container | null>(null);
@@ -55,6 +66,23 @@ export function WorldCanvas({
     'loading',
   );
   const [transitioning, setTransitioning] = useState(false);
+
+  useEffect(() => {
+    const state = getWorldDeviceState(completedPuzzleIds);
+    deviceStateRef.current = state;
+    const scene = currentSceneRef.current;
+    if (!scene) return;
+    drawDeviceState(
+      scene.devices,
+      scene.locationId,
+      scene.powerRestored,
+      state,
+    );
+    appRef.current?.canvas.setAttribute(
+      'aria-label',
+      `実験室E-01 ${worldViewAssets[scene.locationId].label} ${describeWorldDevices(scene.locationId, state)}`,
+    );
+  }, [completedPuzzleIds]);
 
   useEffect(() => {
     hotspotHandlerRef.current = onHotspotSelected;
@@ -211,12 +239,13 @@ export function WorldCanvas({
           locationId,
           powerRestored,
           hotspotHandlerRef,
+          deviceStateRef.current,
         );
         camera.addChild(next.container);
         currentSceneRef.current = next;
         app.canvas.setAttribute(
           'aria-label',
-          `実験室E-01 ${worldViewAssets[locationId].label}`,
+          `実験室E-01 ${worldViewAssets[locationId].label} ${describeWorldDevices(locationId, deviceStateRef.current)}`,
         );
         setAssetState('ready');
 
@@ -302,6 +331,7 @@ function buildScene(
   locationId: LocationId,
   powerRestored: boolean,
   hotspotHandlerRef: RefObject<(hotspotId: HotspotId) => void>,
+  deviceState: WorldDeviceState,
 ): Scene {
   const asset = worldViewAssets[locationId];
   const container = new Container({
@@ -313,6 +343,9 @@ function buildScene(
   container.addChild(background);
 
   if (locationId === 'location_south_wall') addDeskClutter(container);
+  const devices = new Graphics({ label: 'device-progress', eventMode: 'none' });
+  drawDeviceState(devices, locationId, powerRestored, deviceState);
+  container.addChild(devices);
 
   for (const hotspot of asset.hotspots) {
     const target = new Graphics({
@@ -331,6 +364,7 @@ function buildScene(
     locationId,
     powerRestored,
     container,
+    devices,
   };
 }
 
@@ -388,4 +422,83 @@ async function warmWorldImageCache(isDisposed: () => boolean) {
       if (response.ok) await response.blob();
     }),
   );
+}
+
+function drawDeviceState(
+  display: Graphics,
+  location: LocationId,
+  powered: boolean,
+  state: WorldDeviceState,
+) {
+  display.clear();
+  if (!powered) return;
+  const light = '#97d8ce';
+  const dim = '#2b4b48';
+  if (location === 'location_west_wall' && state.carrier) {
+    // The small indicator and latch belong to the existing locker plate.
+    display.roundRect(373, 490, 50, 25, 3).fill('#071112');
+    for (let index = 0; index < 3; index += 1)
+      display.rect(379 + index * 14, 498, 8, 10).fill(light);
+    if (state.locker) {
+      display
+        .moveTo(350, 489)
+        .lineTo(350, 515)
+        .lineTo(367, 515)
+        .stroke({ color: light, width: 4 });
+      display
+        .moveTo(356, 488)
+        .lineTo(364, 480)
+        .stroke({ color: '#d5d1c4', width: 5 });
+    }
+  }
+  if (location !== 'location_east_wall') return;
+  // Display geometry stays inside the raster terminal's glass.
+  display
+    .roundRect(795, 433, 329, 168, 5)
+    .fill({ color: '#071b1c', alpha: 0.78 });
+  for (let row = 0; row < 3; row += 1) {
+    const y = 469 + row * 39;
+    const shift = state.carrier ? 0 : (row - 1) * 15;
+    display
+      .moveTo(817, y)
+      .lineTo(866 + shift, y)
+      .lineTo(875 + shift, y - 12)
+      .lineTo(884 + shift, y + 12)
+      .lineTo(893 + shift, y)
+      .lineTo(1099, y)
+      .stroke({ color: state.carrier ? light : dim, width: 2 });
+  }
+  if (state.returnBus) {
+    display.roundRect(806, 445, 307, 143, 9).stroke({ color: light, width: 3 });
+    display
+      .moveTo(828, 581)
+      .lineTo(818, 588)
+      .lineTo(828, 595)
+      .stroke({ color: light, width: 3 });
+  }
+  if (state.frame) {
+    for (let index = 0; index < 4; index += 1)
+      display.roundRect(832 + index * 62, 567, 55, 10, 2).fill(light);
+  }
+  if (state.identity) {
+    display.roundRect(1292, 473, 67, 70, 5).fill('#071b1c');
+    for (let row = 0; row < 2; row += 1)
+      display
+        .moveTo(1300, 492 + row * 30)
+        .lineTo(1316, 492 + row * 30)
+        .lineTo(1323, 482 + row * 30)
+        .lineTo(1331, 502 + row * 30)
+        .lineTo(1339, 492 + row * 30)
+        .lineTo(1350, 492 + row * 30)
+        .stroke({ color: light, width: 2 });
+  }
+  if (state.transmit) {
+    display.roundRect(1034, 698, 23, 10, 2).fill('#ff716d');
+    display
+      .moveTo(965, 586)
+      .lineTo(965, 597)
+      .lineTo(1045, 597)
+      .lineTo(1045, 698)
+      .stroke({ color: light, width: 3 });
+  }
 }

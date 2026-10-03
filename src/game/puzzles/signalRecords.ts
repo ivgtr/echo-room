@@ -12,17 +12,6 @@ export const sourceRecords = [
   { id: 's-c', time: '02:34:32', signature: '長・短・短' },
 ] as const;
 
-type RecordId =
-  (typeof receiveRecords)[number]['id'] | (typeof sourceRecords)[number]['id'];
-type Signature = (typeof receiveRecords)[number]['signature'];
-
-export const recordSignatures = Object.fromEntries(
-  [...receiveRecords, ...sourceRecords].map(({ id, signature }) => [
-    id,
-    signature,
-  ]),
-) as Record<RecordId, Signature>;
-
 export const matchedRecords = receiveRecords.map((receive) => ({
   receive,
   source: sourceRecords.find(

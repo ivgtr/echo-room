@@ -130,11 +130,11 @@ async function solveSignalInvestigation(page: Page) {
       .getByRole('button', { name: `${source}送信端子` })
       .press('Enter');
   }
-  await device.getByRole('button', { name: '通信実線' }).press('Enter');
-  await device.getByRole('button', { name: 'J-2 丸端子' }).press('Enter');
-  await device
-    .getByRole('button', { name: 'ECHO BUFFER RETURN' })
-    .press('Enter');
+  const ruler = device.getByRole('slider', { name: '送信時刻ルーラー' });
+  for (let step = 0; step < 4; step += 1) await ruler.press('PageUp');
+  await expect(device.getByText('TEMPORAL COHERENCE')).toBeVisible();
+  for (const label of ['INTERCOM端子', 'J-1端子', 'J-2端子', 'BUFFER端子'])
+    await device.getByRole('button', { name: label }).press('Enter');
   await finishPuzzle(page, 4);
 }
 
@@ -155,9 +155,9 @@ async function solvePacketRail(page: Page) {
       .press('Enter');
   }
   await expect(device.getByText('FRAME RESTORED')).toBeVisible();
-  await expect(device.getByText(/PACKET 04/)).toContainText(
-    '最後に、赤いボタンを押せ。',
-  );
+  await expect(
+    device.getByText('PACKET 04 / 最後に、赤いボタンを押せ。', { exact: true }),
+  ).toBeVisible();
   await device
     .getByRole('button', { name: 'ACCEPT FRAME / 復元内容を確認する' })
     .press('Enter');
@@ -167,8 +167,8 @@ async function solvePacketRail(page: Page) {
 async function solveVoiceprint(page: Page) {
   const device = puzzle(page);
   await device
-    .getByRole('spinbutton', { name: '波の間隔ダイヤル' })
-    .press('Enter');
+    .getByRole('slider', { name: '波の間隔ダイヤル' })
+    .press('ArrowLeft');
   await device.getByRole('switch').press('Enter');
   await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
   await device.getByRole('slider', { name: '波の開始位置' }).press('ArrowLeft');
@@ -183,12 +183,7 @@ async function solveVoiceprint(page: Page) {
 
 async function solveTransmissionPatch(page: Page) {
   const device = puzzle(page);
-  const windows = [
-    '返事をする前',
-    '電源を調べる前',
-    'LOGを開いた直後',
-    '最後の操作の前',
-  ];
+  const scenes = ['インターホン', '非常電源', '通信記録', '赤い送信ボタン'];
   const packetLabels = [
     '……聞こえるか？',
     'まず電源を戻せ。',
@@ -201,16 +196,21 @@ async function solveTransmissionPatch(page: Page) {
       .press('Enter');
     await device
       .getByRole('button', {
-        name: new RegExp(`W${index + 1} ${windows[index]}`),
+        name: new RegExp(`^${scenes[index]}の受信端子`),
       })
       .press('Enter');
   }
   await device
-    .getByRole('spinbutton', { name: '時間差ダイヤル' })
+    .getByRole('slider', { name: '送信側の時間軸' })
+    .press('ArrowLeft');
+  await device
+    .getByRole('button', { name: '送信ケーブルを持つ' })
     .press('Enter');
   await device
-    .getByRole('spinbutton', { name: '送り先ダイヤル' })
+    .getByRole('button', { name: 'ECHO BUFFER RETURNの端子' })
     .press('Enter');
-  await device.getByRole('button', { name: 'TEST PULSE' }).press('Enter');
+  await device
+    .getByRole('button', { name: 'TEST PULSE 試験レバー' })
+    .press('Enter');
   await finishPuzzle(page, 1);
 }

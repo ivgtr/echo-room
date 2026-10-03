@@ -443,29 +443,11 @@
   grid-column: auto;
 }
 
-.terminal-instrument .signal-investigation-device:has(.trace-device) {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  align-items: start;
-  gap: 1rem;
-}
-
-.terminal-instrument .trace-device {
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .terminal-instrument .log-columns {
   gap: 0.4rem;
 }
-.terminal-instrument .patch-cords {
-  font-size: 0.65rem;
-}
 .terminal-instrument .jack {
   min-height: 3.1rem;
-}
-.terminal-instrument .offset-reveal {
-  grid-template-columns: 1fr;
-  font-size: 0.7rem;
 }
 
 .terminal-instrument .facility-map {
@@ -483,48 +465,6 @@
   font-size: 0.75rem;
   color: #b9d2cb;
   border-left-color: #53746e;
-}
-.terminal-instrument .facility-conduit-layer {
-  grid-template-columns: 1fr;
-}
-.terminal-instrument .facility-conduit-layer small {
-  grid-column: auto;
-}
-.terminal-instrument .trace-path {
-  gap: 0.35rem;
-}
-.terminal-instrument .trace-path button {
-  min-height: 2.75rem;
-  padding: 0.5rem;
-  border: 1px solid #53746e;
-  color: #d1e8dc;
-  background: #132725;
-  font:
-    0.85rem system-ui,
-    sans-serif;
-  cursor: pointer;
-}
-.terminal-instrument .trace-path button:disabled {
-  color: #8fa69f;
-  background: #0a1716;
-  border-color: #2c413c;
-  cursor: default;
-}
-.terminal-instrument .trace-path button[aria-pressed='true'] {
-  color: #d1e8dc;
-  border-color: #a5c4b9;
-}
-.terminal-instrument .trace-path button[aria-pressed='true']::before {
-  content: '';
-  display: inline-block;
-  width: 0.65em;
-  height: 0.65em;
-  margin-right: 0.35em;
-  border-radius: 50%;
-  background: currentColor;
-}
-.terminal-instrument .packet-plugs small {
-  font-size: 0.75rem;
 }
 
 @container (max-height: 560px) {
@@ -622,9 +562,6 @@
   }
   .terminal-instrument .wave-rail output {
     grid-column: 2;
-  }
-  .terminal-instrument .signal-investigation-device:has(.trace-device) {
-    grid-template-columns: 1fr;
   }
   .terminal-readings dl > div {
     grid-template-columns: 1fr;

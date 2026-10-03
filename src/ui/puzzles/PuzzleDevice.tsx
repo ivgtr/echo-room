@@ -11,16 +11,15 @@ import {
 } from 'react';
 
 import {
-  packetTexts,
+  isPuzzleAnswerCorrect,
   PUZZLE_DEVICE_COPY,
   type PuzzleId,
 } from '../../game/puzzles/storyPuzzles';
-import {
-  matchedRecords,
-  recordSignatures as signatures,
-} from '../../game/puzzles/signalRecords';
 import { ContextBackButton } from '../common/ContextBackButton';
-import { FacilityMap } from '../evidence/FacilityMap';
+import { SignalInvestigationDevice } from './SignalInvestigationDevice';
+import { PacketRailDevice } from './PacketRailDevice';
+import { VoiceprintDevice } from './VoiceprintDevice';
+import { TransmissionPatchDevice } from './TransmissionPatchDevice';
 
 type Props = {
   puzzleId: PuzzleId;
@@ -86,7 +85,6 @@ export function PuzzleDevice({
   return (
     <DeviceFrame
       puzzleId={puzzleId}
-      failures={failures}
       embedded={embedded}
       onClose={onClose}
       diagnosticAvailable={diagnosticAvailable}
@@ -116,7 +114,6 @@ const closeupImages: Partial<Record<PuzzleId, string>> = {
 
 function DeviceFrame({
   puzzleId,
-  failures,
   embedded,
   onClose,
   diagnosticAvailable,
@@ -124,7 +121,6 @@ function DeviceFrame({
   children,
 }: {
   puzzleId: PuzzleId;
-  failures: number;
   embedded: boolean;
   onClose: () => void;
   diagnosticAvailable: boolean;
@@ -134,9 +130,6 @@ function DeviceFrame({
   const copy = PUZZLE_DEVICE_COPY[puzzleId];
   const titleId = `${puzzleId}-title`;
   const closeupImage = closeupImages[puzzleId];
-  const errorCode: Partial<Record<PuzzleId, string>> = {
-    puzzle_maintenance_lock: 'LOCK / JAMMED',
-  };
   const closeupStyle = closeupImage
     ? ({
         backgroundImage: `url("${import.meta.env.BASE_URL}${closeupImage}")`,
@@ -165,17 +158,6 @@ function DeviceFrame({
         </header>
       )}
       <div className="device-workarea">{children}</div>
-      {puzzleId !== 'puzzle_power_route' &&
-        puzzleId !== 'puzzle_packet_repair' && (
-          <p
-            className={`device-feedback${failures > 0 ? ' is-error' : ''}`}
-            aria-live="assertive"
-          >
-            {failures > 0
-              ? (errorCode[puzzleId] ?? copy.incorrectFeedback)
-              : 'STATUS / STANDBY'}
-          </p>
-        )}
       {diagnosticAvailable && (
         <p className="device-diagnostic" role="status">
           DIAGNOSTIC AVAILABLE / SYSTEMのヒントを確認できます
@@ -357,6 +339,13 @@ function CarrierSyncDevice({ active, failures, submit }: DeviceProps) {
   );
   return (
     <div className={`carrier-device${failures > 0 ? ' is-error' : ''}`}>
+      <div className="carrier-contact-bank" aria-hidden="true">
+        {positions.map((value, index) => (
+          <i key={index} className={value === 0 ? 'is-closed' : ''}>
+            <b />
+          </i>
+        ))}
+      </div>
       <div className="carrier-readout">
         <span>REFERENCE</span>
         <strong>SYNC POINT / 0</strong>
@@ -465,11 +454,45 @@ const symbols = [
   ['node', '◆'],
 ] as const;
 
-function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
+function MaintenanceLockDevice({ active, submit }: DeviceProps) {
   const [dials, setDials] = useState(['ring', 'triangle', 'node', 'double']);
+  const [jammed, setJammed] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [visible, setVisible] = useState(() => !document.hidden);
+  useEffect(() => {
+    const onVisibility = () => setVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+  const submittedRef = useRef(false);
+  useEffect(() => {
+    if (!active || !visible || !unlocked || submittedRef.current) return;
+    const timer = window.setTimeout(() => {
+      if (document.hidden || submittedRef.current) return;
+      submittedRef.current = true;
+      submit(dials);
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [active, visible, dials, submit, unlocked]);
+
+  function rotateDial(index: number, symbolIndex: number, delta: number) {
+    if (!active || unlocked) return;
+    setJammed(false);
+    setDials((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? symbols[(symbolIndex + delta + symbols.length) % symbols.length]![0]
+          : item,
+      ),
+    );
+  }
+
   return (
     <div className="locker-device">
-      <div className={`lock-plate${failures > 0 ? ' is-jammed' : ''}`}>
+      <div
+        className={`lock-plate${jammed ? ' is-jammed' : ''}${unlocked ? ' is-unlocked' : ''}`}
+        aria-label={unlocked ? 'ラッチが外れたロッカー' : undefined}
+      >
         <span>LAST INSPECTION</span>
         <div className="symbol-dials" aria-label="4つの記号ダイヤル">
           {dials.map((value, index) => {
@@ -486,30 +509,14 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
                 aria-valuetext={symbol}
                 className="symbol-dial"
                 key={index}
-                onClick={() =>
-                  setDials((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? symbols[(symbolIndex + 1) % symbols.length]![0]
-                        : item,
-                    ),
-                  )
-                }
+                disabled={!active || unlocked}
+                onClick={() => rotateDial(index, symbolIndex, 1)}
                 onKeyDown={(event) => {
                   if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')
                     return;
                   event.preventDefault();
                   const delta = event.key === 'ArrowDown' ? 1 : -1;
-                  setDials((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? symbols[
-                            (symbolIndex + delta + symbols.length) %
-                              symbols.length
-                          ]![0]
-                        : item,
-                    ),
-                  );
+                  rotateDial(index, symbolIndex, delta);
                 }}
               >
                 <span className="symbol-reel-window" aria-hidden="true">
@@ -533,673 +540,34 @@ function MaintenanceLockDevice({ failures, submit }: DeviceProps) {
           type="button"
           className="lock-handle"
           aria-label="ロッカーのハンドル"
-          onClick={() => submit(dials)}
+          disabled={!active || unlocked}
+          onClick={() => {
+            if (!active || unlocked) return;
+            if (isPuzzleAnswerCorrect('puzzle_maintenance_lock', dials)) {
+              setUnlocked(true);
+              setJammed(false);
+            } else {
+              setJammed(true);
+              submit(dials);
+            }
+          }}
         >
-          <i aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function WaveSignature({
-  value,
-}: {
-  value: (typeof signatures)[keyof typeof signatures];
-}) {
-  return (
-    <small className="wave-signature" aria-label={`波形 ${value}`}>
-      {value.split('・').map((pulse, index) => (
-        <i
-          aria-hidden="true"
-          className={pulse === '長' ? 'is-long' : 'is-short'}
-          key={`${pulse}-${index}`}
-        />
-      ))}
-    </small>
-  );
-}
-
-function SignalInvestigationDevice({ active, failures, submit }: DeviceProps) {
-  const [activeReceive, setActiveReceive] = useState<number | null>(null);
-  const [patches, setPatches] = useState<(string | null)[]>([null, null, null]);
-  const [trace, setTrace] = useState<string[]>([]);
-  const pairingComplete = patches.every((source, index) => {
-    const receiveId = `r${index + 1}` as keyof typeof signatures;
-    return (
-      source &&
-      signatures[receiveId] === signatures[source as keyof typeof signatures]
-    );
-  });
-  useAutoAnswer(
-    active && pairingComplete && trace.length === 3
-      ? [...patches.filter(isString), ...trace]
-      : null,
-    submit,
-  );
-  const traceSegments = [
-    ['signal', '通信実線'],
-    ['power', '電力破線'],
-    ['ring-relay', 'J-2 丸端子'],
-    ['bar-relay', 'J-3 線端子'],
-    ['echo-buffer', 'ECHO BUFFER RETURN'],
-    ['adjacent-room', 'E-02'],
-  ] as const;
-  const allowedAtStep = [
-    ['signal', 'power'],
-    ['ring-relay', 'bar-relay'],
-    ['echo-buffer', 'adjacent-room'],
-  ] as const;
-  return (
-    <div
-      className={`signal-investigation-device${failures > 0 ? ' is-trace-error' : ''}`}
-    >
-      <div className="patch-device">
-        <div className="log-columns">
-          <div className="jack-column">
-            <h3>RECEIVE</h3>
-            {(['r1', 'r2', 'r3'] as const).map((id, index) => (
-              <button
-                type="button"
-                className={activeReceive === index ? 'jack is-armed' : 'jack'}
-                aria-pressed={activeReceive === index}
-                aria-label={`${id.toUpperCase()}受信端子`}
-                key={id}
-                onClick={() => setActiveReceive(index)}
-              >
-                <i aria-hidden="true" />
-                <span>{id.toUpperCase()}</span>
-                <WaveSignature value={signatures[id]} />
-              </button>
-            ))}
-          </div>
-          <div className="patch-cords" aria-label="接続状態">
-            {patches.map((source, index) => (
-              <span
-                key={index}
-              >{`R${index + 1} ─ ${source?.toUpperCase() ?? 'OPEN'}`}</span>
-            ))}
-          </div>
-          <div className="jack-column">
-            <h3>SOURCE</h3>
-            {(['s-a', 's-b', 's-c'] as const).map((id) => (
-              <button
-                type="button"
-                className="jack"
-                aria-label={`${id.toUpperCase()}送信端子`}
-                key={id}
-                onClick={() => {
-                  if (activeReceive === null) return;
-                  setPatches((current) =>
-                    current.map((value, index) =>
-                      index === activeReceive ? id : value,
-                    ),
-                  );
-                  setActiveReceive(null);
-                }}
-              >
-                <i aria-hidden="true" />
-                <span>{id.toUpperCase()}</span>
-                <WaveSignature value={signatures[id]} />
-              </button>
-            ))}
-          </div>
-        </div>
-        {pairingComplete && (
-          <div
-            className="offset-reveal"
-            role="status"
-            aria-label="3組すべて送信は受信の20分後"
-          >
-            {matchedRecords.map(({ receive, source }) => (
-              <span key={receive.id}>
-                {receive.time} ─ {source.time}
-              </span>
-            ))}
-            <strong>+20:00 / OFFSET CONFIRMED</strong>
-          </div>
-        )}
-      </div>
-      {pairingComplete && (
-        <div className="trace-device">
-          <FacilityMap conduitLayer revealRoute={false} />
-          <div
-            className="trace-path"
-            aria-label="インターホンから配線を順に追う"
-          >
-            <span>INTERCOM</span>
-            {traceSegments.map(([id, label]) => {
-              const step = trace.length;
-              const enabled =
-                step < allowedAtStep.length &&
-                allowedAtStep[step]!.includes(id as never);
-              const selected = trace.includes(id);
-              return (
-                <button
-                  type="button"
-                  key={id}
-                  disabled={!enabled || selected}
-                  aria-pressed={selected}
-                  onClick={() => setTrace((current) => [...current, id])}
-                >
-                  {label}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              className="device-eject"
-              onClick={() => setTrace([])}
-            >
-              TRACE RESET
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const fragments = [
-  { id: 'a', label: 'A', left: 'diamond', right: 'voice' },
-  { id: 'b', label: 'B', left: 'voice', right: 'check' },
-  { id: 'c', label: 'C', left: 'header', right: 'triangle' },
-  { id: 'd', label: 'D', left: 'triangle', right: 'diamond' },
-] as const;
-
-function PacketRailDevice({ active, submit }: DeviceProps) {
-  const [rail, setRail] = useState<(string | null)[]>([null, null, null]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const complete = rail.every(isString);
-  const submittedSignatureRef = useRef('');
-  const confirmationRef = useRef<HTMLButtonElement>(null);
-
-  const placedFragments = [
-    fragments.find(({ id }) => id === 'c')!,
-    ...rail.map((id) => fragments.find((fragment) => fragment.id === id)),
-  ];
-  const joints = placedFragments.slice(0, -1).map((fragment, index) => {
-    const next = placedFragments[index + 1];
-    return Boolean(fragment && next && fragment.right === next.left);
-  });
-  const answerSignature = complete
-    ? ['c', ...rail.filter(isString)].join('|')
-    : '';
-  const jointSignature = joints.map(Number).join('');
-  const restored = complete && jointSignature === '111';
-  useEffect(() => {
-    // The placement controls disappear on restoration; keep keyboard focus
-    // on the result's remaining action rather than the document body.
-    if (active && restored && document.activeElement === document.body)
-      confirmationRef.current?.focus();
-  }, [active, restored]);
-  useEffect(() => {
-    if (!active || !complete || restored) return;
-    const answer = answerSignature.split('|');
-    if (submittedSignatureRef.current === answerSignature) return;
-    submittedSignatureRef.current = answerSignature;
-    submit(answer);
-  }, [active, answerSignature, complete, restored, submit]);
-
-  function placeFragment(slot: number, fragmentId: string) {
-    setRail((current) =>
-      current.map((value, index) => {
-        if (index === slot) return fragmentId;
-        return value === fragmentId ? null : value;
-      }),
-    );
-    setSelected(null);
-  }
-
-  return (
-    <div className="frame-device">
-      {!restored && (
-        <>
-          <div className="frame-rail" aria-label="壊れたデータの並べ替え">
-            {[0, 1, 2, 3].map((slot) => {
-              const fixed = slot === 0;
-              const fragment = fixed
-                ? fragments.find(({ id }) => id === 'c')
-                : fragments.find(({ id }) => id === rail[slot - 1]);
-              return (
-                <div
-                  className={`data-fragment-slot${fixed ? ' is-fixed' : ''}`}
-                  key={slot}
-                >
-                  <small>{fixed ? 'HEADER / FIXED' : `RAIL ${slot + 1}`}</small>
-                  <button
-                    type="button"
-                    data-frame-slot={fixed ? undefined : slot - 1}
-                    disabled={fixed}
-                    aria-label={
-                      fixed
-                        ? '固定されたHEADER断片C'
-                        : fragment
-                          ? `レール${slot + 1}の断片${fragment.label}を持ち上げる`
-                          : `レール${slot + 1}へ${selected ? `断片${selected.toUpperCase()}を` : ''}置く`
-                    }
-                    onClick={() => {
-                      if (fixed) return;
-                      if (selected) placeFragment(slot - 1, selected);
-                      else if (fragment) {
-                        setSelected(fragment.id);
-                        setRail((current) =>
-                          current.map((value, index) =>
-                            index === slot - 1 ? null : value,
-                          ),
-                        );
-                      }
-                    }}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      const fragmentId =
-                        event.dataTransfer.getData('text/plain');
-                      if (fragmentId) placeFragment(slot - 1, fragmentId);
-                    }}
-                  >
-                    {fragment ? (
-                      <DataFragmentGraphic fragment={fragment} />
-                    ) : (
-                      <span className="empty-fragment" aria-hidden="true" />
-                    )}
-                  </button>
-                  {slot < 3 && (
-                    <i
-                      className={`fragment-joint${joints[slot] ? ' is-connected' : complete ? ' is-broken' : ''}`}
-                      aria-hidden="true"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className="fragment-tray" aria-label="壊れたデータ片">
-            {fragments
-              .filter(({ id }) => id !== 'c')
-              .map((fragment) => (
-                <button
-                  type="button"
-                  key={fragment.id}
-                  draggable
-                  disabled={rail.includes(fragment.id)}
-                  aria-pressed={selected === fragment.id}
-                  aria-label={`断片${fragment.label}を持つ`}
-                  onClick={() => setSelected(fragment.id)}
-                  onDragStart={(event) => {
-                    setSelected(fragment.id);
-                    event.dataTransfer.setData('text/plain', fragment.id);
-                  }}
-                >
-                  <DataFragmentGraphic fragment={fragment} />
-                </button>
-              ))}
-            <button
-              type="button"
-              className="device-eject"
-              onClick={() => {
-                setRail([null, null, null]);
-                setSelected(null);
-              }}
-            >
-              EJECT / 取り出す
-            </button>
-          </div>
-          <div className="frame-continuity" aria-live="polite">
-            {joints.map((connected, index) => (
-              <span
-                className={
-                  connected ? 'is-connected' : complete ? 'is-broken' : ''
-                }
-                key={index}
-              >
-                {connected ? '●' : complete ? '×' : '○'}
-              </span>
-            ))}
-            <small>
-              {complete && joints.some((joint) => !joint)
-                ? 'SIGNAL BREAK'
-                : 'CONTINUITY'}
-            </small>
-          </div>
-        </>
-      )}
-      {restored && (
-        <div
-          className="packet-restored-sequence"
-          role="status"
-          aria-live="assertive"
-        >
-          <strong>FRAME RESTORED</strong>
-          {packetTexts.map((text, index) => (
-            <span className={index === 3 ? 'is-future-packet' : ''} key={text}>
-              PACKET 0{index + 1} / {text}
-            </span>
-          ))}
-          <button
-            type="button"
-            className="packet-confirm"
-            ref={confirmationRef}
-            onClick={() => submit(['c', ...rail.filter(isString)])}
-          >
-            ACCEPT FRAME / 復元内容を確認する
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-type FragmentDefinition = (typeof fragments)[number];
-
-function DataFragmentGraphic({ fragment }: { fragment: FragmentDefinition }) {
-  return (
-    <span className="data-fragment" data-fragment-id={fragment.id}>
-      <i className={`fragment-edge edge-${fragment.left}`} aria-hidden="true" />
-      <b aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </b>
-      <i
-        className={`fragment-edge edge-${fragment.right}`}
-        aria-hidden="true"
-      />
-      <strong>DATA {fragment.label}</strong>
-    </span>
-  );
-}
-
-function VoiceprintDevice({ failures, submit }: DeviceProps) {
-  const [spacing, setSpacing] = useState(0);
-  const [inverted, setInverted] = useState(false);
-  const [phase, setPhase] = useState(0);
-  const [matchProgress, setMatchProgress] = useState<number | null>(null);
-  const matchStartedRef = useRef(false);
-  const calibrated = spacing === 1 && inverted && phase === -2;
-  useEffect(() => {
-    if (!calibrated || matchStartedRef.current) return;
-    matchStartedRef.current = true;
-    const steps = [24, 51, 76, 93, 99.8, 100];
-    const reduced = document.documentElement.dataset.reducedMotion === 'true';
-    const timers = steps.map((value, index) =>
-      window.setTimeout(
-        () => setMatchProgress(value),
-        index * (reduced ? 60 : 420),
-      ),
-    );
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [calibrated, submit]);
-  const spacingLabels = ['1×', '1/2×', '2×'];
-  return (
-    <div className={`voiceprint-device${failures > 0 ? ' is-error' : ''}`}>
-      <div className="voiceprint-screen" aria-label="声紋の比較">
-        <span>STAFF RECORD</span>
-        <WaveBars values={[2, 4, 2, 2, 4, 2]} />
-        <output>間隔 1-2-1 / 上-下-上 / 開始 0</output>
-        <span>RECEIVED / CALIBRATED</span>
-        <WaveBars
-          values={inverted ? [2, 5, 2, 2, 5, 2] : [5, 1, 5, 5, 1, 5]}
-          offset={phase}
-          compressed={spacing === 1}
-        />
-        <output>
-          倍率 {spacingLabels[spacing]} / {inverted ? '上下反転' : '原形'} /
-          開始 {signed(phase)}
-        </output>
-      </div>
-      <div className="calibration-controls">
-        <button
-          type="button"
-          role="spinbutton"
-          aria-label="波の間隔ダイヤル"
-          aria-valuemin={0}
-          aria-valuemax={2}
-          aria-valuenow={spacing}
-          aria-valuetext={spacingLabels[spacing]}
-          className="rotary-control"
-          onClick={() => setSpacing((value) => (value + 1) % 3)}
-        >
-          <i style={{ transform: `rotate(${spacing * 105 - 105}deg)` }} />
-          <span>SPACING</span>
-          <output>{spacingLabels[spacing]}</output>
-        </button>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={inverted}
-          className="toggle-control"
-          onClick={() => setInverted((value) => !value)}
-        >
-          <i />
-          <span>ENVELOPE</span>
-          <output>{inverted ? 'INVERT' : 'NORMAL'}</output>
-        </button>
-        <label className="phase-control">
-          <span>PHASE</span>
-          <input
-            type="range"
-            min={-2}
-            max={2}
-            step={1}
-            value={phase}
-            aria-label="波の開始位置"
-            aria-valuetext={signed(phase)}
-            onChange={(event) => setPhase(Number(event.currentTarget.value))}
+          <i
+            aria-hidden="true"
+            style={{
+              backgroundImage: `url("${import.meta.env.BASE_URL}${closeupImages.puzzle_maintenance_lock}")`,
+            }}
           />
-          <output>{signed(phase)}</output>
-        </label>
-      </div>
-      {matchProgress !== null && (
-        <div
-          className={`voice-match-sequence${matchProgress === 100 ? ' is-match' : ''}`}
-          role="status"
-          aria-live="polite"
-        >
-          <span>VOICE MATCH</span>
-          <strong>
-            {matchProgress.toFixed(matchProgress >= 99.8 ? 1 : 0)}%
-          </strong>
-          {matchProgress >= 99.8 && (
-            <figure>
-              <img
-                src={`${import.meta.env.BASE_URL}assets/images/items/gfx-item-003__approved__badge-crop__512x640.webp`}
-                alt="職員証と一致したE-01担当者の写真"
-              />
-              <figcaption>
-                {matchProgress === 100
-                  ? '100.0% / MATCH / E-01 OCCUPANT'
-                  : 'IDENTITY QUERY...'}
-              </figcaption>
-            </figure>
-          )}
-          {matchProgress === 100 && (
-            <button
-              type="button"
-              className="voice-match-confirm"
-              onClick={() => submit(['compress-half', 'invert', 'left-2'])}
-            >
-              MATCH CONFIRM / 本人一致を確認する
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WaveBars({
-  values,
-  offset = 0,
-  compressed = false,
-}: {
-  values: readonly number[];
-  offset?: number;
-  compressed?: boolean;
-}) {
-  return (
-    <div
-      className={`feature-wave${compressed ? ' is-compressed' : ''}`}
-      style={{ transform: `translateX(${offset * 4}%)` }}
-      aria-hidden="true"
-    >
-      {values.map((height, index) => (
-        <i key={index} style={{ height: `${height * 15}%` }} />
-      ))}
-    </div>
-  );
-}
-
-function TransmissionPatchDevice({ failures, submit }: DeviceProps) {
-  const [armedPacket, setArmedPacket] = useState<string | null>(null);
-  const [windows, setWindows] = useState<(string | null)[]>([
-    null,
-    null,
-    null,
-    null,
-  ]);
-  const delayOptions = ['minus-10', 'minus-20', 'plus-20'] as const;
-  const routeOptions = ['control', 'echo-return', 'adjacent'] as const;
-  const [delayIndex, setDelayIndex] = useState(0);
-  const [routeIndex, setRouteIndex] = useState(0);
-  const packetReady = windows.every(
-    (packet, index) => packet === `packet-0${index + 1}`,
-  );
-  const delayReady = delayOptions[delayIndex] === 'minus-20';
-  const routeReady = routeOptions[routeIndex] === 'echo-return';
-  const showValidation = failures > 0;
-  return (
-    <div className="transmission-device">
-      <div
-        className={`transmission-packet-region${showValidation && !packetReady ? ' is-region-error' : ''}`}
-      >
-        <div className="transmission-windows" aria-label="4つの受信枠">
-          {[
-            '返事をする前',
-            '電源を調べる前',
-            'LOGを開いた直後',
-            '最後の操作の前',
-          ].map((label, index) => (
-            <button
-              type="button"
-              key={label}
-              aria-label={`W${index + 1} ${label}`}
-              onClick={() => {
-                if (!armedPacket) return;
-                setWindows((current) =>
-                  current.map((value, itemIndex) =>
-                    itemIndex === index ? armedPacket : value,
-                  ),
-                );
-                setArmedPacket(null);
-              }}
-            >
-              <small>
-                W{index + 1} / {label}
-              </small>
-              <strong>{windows[index]?.toUpperCase() ?? 'OPEN'}</strong>
-            </button>
-          ))}
-        </div>
-        {showValidation && (
-          <p className="transmission-validation" role="status">
-            PACKET MAP / {packetReady ? 'LOCKED' : 'RECHECK'}
-          </p>
-        )}
-      </div>
-      <div className="packet-plugs">
-        {packetTexts.map((text, index) => {
-          const id = `packet-0${index + 1}`;
-          return (
-            <button
-              type="button"
-              key={id}
-              aria-label={`送信する文「${text}」`}
-              aria-pressed={armedPacket === id}
-              onClick={() => setArmedPacket(id)}
-            >
-              <span>TX STRIP</span>
-              <small>{text}</small>
-            </button>
-          );
-        })}
-      </div>
-      <div className="transmission-controls">
-        <div
-          className={`transmission-control-region${showValidation && !delayReady ? ' is-region-error' : ''}`}
-        >
-          <button
-            type="button"
-            role="spinbutton"
-            aria-label="時間差ダイヤル"
-            aria-valuemin={0}
-            aria-valuemax={delayOptions.length - 1}
-            aria-valuenow={delayIndex}
-            aria-valuetext={['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
-            className="rotary-control"
-            onClick={() =>
-              setDelayIndex((value) => (value + 1) % delayOptions.length)
-            }
-          >
-            <i style={{ transform: `rotate(${delayIndex * 105 - 105}deg)` }} />
-            <span>DELAY</span>
-            <output>
-              {['-00:10:00', '-00:20:00', '+00:20:00'][delayIndex]}
-            </output>
-          </button>
-          {showValidation && (
-            <small className="transmission-validation">
-              DELAY / {delayReady ? 'LOCKED' : 'RECHECK'}
-            </small>
-          )}
-        </div>
-        <div
-          className={`transmission-control-region${showValidation && !routeReady ? ' is-region-error' : ''}`}
-        >
-          <button
-            type="button"
-            role="spinbutton"
-            aria-label="送り先ダイヤル"
-            aria-valuemin={0}
-            aria-valuemax={routeOptions.length - 1}
-            aria-valuenow={routeIndex}
-            aria-valuetext={
-              ['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]
-            }
-            className="rotary-control"
-            onClick={() =>
-              setRouteIndex((value) => (value + 1) % routeOptions.length)
-            }
-          >
-            <i style={{ transform: `rotate(${routeIndex * 105 - 105}deg)` }} />
-            <span>TERMINATION</span>
-            <output>
-              {['CONTROL ROOM', 'ECHO BUFFER RETURN', 'E-02'][routeIndex]}
-            </output>
-          </button>
-          {showValidation && (
-            <small className="transmission-validation">
-              ROUTE / {routeReady ? 'LOCKED' : 'RECHECK'}
-            </small>
-          )}
-        </div>
-        <button
-          type="button"
-          className="test-pulse-lever"
-          onClick={() =>
-            submit([
-              ...windows.filter(isString),
-              delayOptions[delayIndex]!,
-              routeOptions[routeIndex]!,
-            ])
-          }
-        >
-          <i aria-hidden="true" />
-          <span>TEST PULSE</span>
         </button>
       </div>
+      {jammed && (
+        <p
+          className="device-feedback is-error locker-handle-status"
+          role="status"
+        >
+          LOCK / JAMMED
+        </p>
+      )}
     </div>
   );
 }
@@ -1215,12 +583,4 @@ function useAutoAnswer(
     submittedSignature.current = signature;
     submit(answer);
   }, [answer, signature, submit]);
-}
-
-function signed(value: number) {
-  return value > 0 ? `+${value}` : String(value);
-}
-
-function isString(value: string | null): value is string {
-  return value !== null;
 }
