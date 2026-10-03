@@ -14,7 +14,7 @@ Sources:
 
 Only generated audio is included; no model weights or generation software are redistributed here. The following notices identify the generation tools and do not by themselves assign a separate license to the generated audio.
 
-SilentCipher watermark embedding was enabled. The saved WAV masters are unchanged, with no lossy compression or post-processing. The full expected watermark payload was recovered from the reference but not reliably from the two short target clips. See `provenance.json` for exact checksums, parameters and verification limits.
+SilentCipher watermark embedding was enabled. The saved WAV masters are unchanged, with no lossy compression or post-processing. The full expected watermark payload was recovered from the reference but not reliably from the two short approved target clips. Additional future-dialogue takes have their individual embedding and decoding results recorded in the provenance. See `provenance.json` for exact checksums, parameters and verification limits.
 
 ## Irodori-TTS code notice
 
