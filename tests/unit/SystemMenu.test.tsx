@@ -3,6 +3,7 @@ import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SystemMenu } from '../../src/ui/system/SystemMenu';
+import { getArchiveDocuments } from '../../src/ui/narrative/narrativeArchive';
 import {
   defaultSoundLevels,
   defaultSubtitleSettings,
@@ -10,6 +11,20 @@ import {
 
 describe('SystemMenu', () => {
   it('shows read subtitles and returns from the archive without voice controls', () => {
+    const documents = getArchiveDocuments(true, ['item_floor_map'], []);
+    const map = documents.find(
+      (document) => document.id === 'document_floor_map',
+    )!;
+    expect(map.body).toContain('実線は通信');
+    expect(map.body).not.toMatch(/J-2|RETURN|部屋はない/);
+    expect(getArchiveDocuments(true, [], [])).not.toContainEqual(map);
+    expect(
+      getArchiveDocuments(
+        true,
+        ['item_floor_map'],
+        ['puzzle_signal_investigation'],
+      ).at(-1)?.body,
+    ).toContain('ECHO BUFFER RETURN');
     render(
       <SystemMenu
         objective="端末を確認する。"
@@ -32,13 +47,7 @@ describe('SystemMenu', () => {
             text: '……聞こえるか？',
           },
         ]}
-        documents={[
-          {
-            id: 'seen_document',
-            title: 'EMERGENCY POWER TEST',
-            body: '低い回路から接続する。',
-          },
-        ]}
+        documents={documents}
         returnFocusRef={createRef<HTMLElement>()}
         initialFocus={null}
         onClose={vi.fn()}
@@ -59,6 +68,8 @@ describe('SystemMenu', () => {
       }),
     );
     expect(screen.getByText('……聞こえるか？')).toBeVisible();
+    expect(screen.getByText(map.body)).toBeVisible();
+    expect(screen.queryByText(/J-2|RETURN/)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /音声を再生/ }),
     ).not.toBeInTheDocument();

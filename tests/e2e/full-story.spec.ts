@@ -183,7 +183,12 @@ async function solveVoiceprint(page: Page) {
 
 async function solveTransmissionPatch(page: Page) {
   const device = puzzle(page);
-  const scenes = ['インターホン', '非常電源', '通信記録', '赤い送信ボタン'];
+  const scenes = [
+    '受信後の返事',
+    '指示に従った結果',
+    'この直後に受信',
+    '復元した文への反応',
+  ];
   const packetLabels = [
     '……聞こえるか？',
     'まず電源を戻せ。',
@@ -196,7 +201,7 @@ async function solveTransmissionPatch(page: Page) {
       .press('Enter');
     await device
       .getByRole('button', {
-        name: new RegExp(`^${scenes[index]}の受信端子`),
+        name: new RegExp(`^${scenes[index]}`),
       })
       .press('Enter');
   }

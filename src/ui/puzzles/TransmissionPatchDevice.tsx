@@ -12,6 +12,10 @@ import {
   isPuzzleAnswerCorrect,
   packetTexts,
 } from '../../game/puzzles/storyPuzzles';
+import {
+  getPuzzleCompletionEntries,
+  introEntries,
+} from '../narrative/narrativeArchive';
 
 type Props = {
   active: boolean;
@@ -21,14 +25,24 @@ type Props = {
 
 type PacketId = `packet-0${1 | 2 | 3 | 4}`;
 type RouteId = 'control' | 'echo-return' | 'adjacent';
-type TestResult = { packets: boolean; time: boolean; route: boolean };
-
+// Keep the established answer positions; only the physical display order changes.
+// Each observation was available before this instrument unlocked.
 const scenes = [
-  { id: 'intercom', label: 'インターホン', plate: 'INTERCOM' },
-  { id: 'power', label: '非常電源', plate: 'POWER' },
-  { id: 'log', label: '通信記録', plate: 'LOG' },
-  { id: 'transmit', label: '赤い送信ボタン', plate: 'TRANSMIT' },
+  { label: '受信後の返事', observation: `「${introEntries[2].text}」` },
+  {
+    label: '指示に従った結果',
+    observation: '暗かった端末と転送装置が起動した。',
+  },
+  {
+    label: 'この直後に受信',
+    observation: `「${getPuzzleCompletionEntries('puzzle_signal_investigation')[0]!.text}」`,
+  },
+  {
+    label: '復元した文への反応',
+    observation: `「${getPuzzleCompletionEntries('puzzle_packet_repair')[0]!.text}」`,
+  },
 ] as const;
+const sceneOrder = [1, 3, 0, 2];
 const routes: { id: RouteId; label: string }[] = [
   { id: 'control', label: 'CONTROL ROOM' },
   { id: 'echo-return', label: 'ECHO BUFFER RETURN' },
@@ -58,7 +72,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
   const [delayStep, setDelayStep] = useState(1);
   const [heldCable, setHeldCable] = useState(false);
   const [route, setRoute] = useState<RouteId | null>(null);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [testResult, setTestResult] = useState<boolean | null>(null);
   const [pulse, setPulse] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [pulseCount, setPulseCount] = useState(0);
@@ -72,9 +86,10 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
     width: number;
   } | null>(null);
   const delay = delaySteps[delayStep]!;
-  const allLocked = Boolean(
-    testResult?.packets && testResult.time && testResult.route,
-  );
+  const assemblyReady =
+    windows.every((packet) => packet !== null) && route !== null;
+  const contact =
+    testResult === null ? undefined : testResult ? 'closed' : 'open';
 
   useEffect(() => {
     function interrupt() {
@@ -182,20 +197,15 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
   }
 
   function testPulse() {
-    if (!canOperate()) return;
+    if (!canOperate() || !assemblyReady) return;
     busyRef.current = true;
     const answer = [
       ...windows.map((packet) => packet ?? 'open'),
       delay < 0 ? `minus-${Math.abs(delay)}` : `plus-${delay}`,
       route ?? 'disconnected',
     ];
-    const result = {
-      packets: windows.every((packet, index) => packet === packetIds[index]),
-      time: delay === -20,
-      route: route === 'echo-return',
-    };
     const valid = isPuzzleAnswerCorrect('puzzle_transmission_window', answer);
-    setTestResult(result);
+    setTestResult(valid);
     setPulse(true);
     setPulseCount((count) => count + 1);
     const reduced = document.documentElement.dataset.reducedMotion === 'true';
@@ -224,16 +234,11 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
 
   return (
     <div
-      className={`causal-transmission${pulse ? ' is-pulsing' : ''}${allLocked ? ' is-continuous' : ''}`}
+      className={`causal-transmission${pulse ? ' is-pulsing' : ''}${testResult === true ? ' is-continuous' : ''}`}
       data-pulse={pulseCount}
       aria-busy={pulse}
     >
-      <div
-        className="causal-time-deck"
-        data-contact={
-          testResult ? (testResult.time ? 'closed' : 'open') : undefined
-        }
-      >
+      <div className="causal-time-deck" data-contact={contact}>
         <div className="causal-deck-caption">
           <span>ECHO BUFFER / TIME BASE</span>
           <output aria-live="polite">
@@ -313,41 +318,29 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
             ← <small>時間軸を動かす</small> →
           </span>
           <span>
-            {testResult
-              ? testResult.time
-                ? 'TIME BASE / LOCKED'
-                : 'TIME BASE / CONTACT OPEN'
-              : 'TIME BASE / ADJUST'}
+            {testResult === true ? 'TIME BASE / LOCKED' : 'TIME BASE / ADJUST'}
           </span>
         </div>
       </div>
 
-      <div
-        className="causal-memory-bus"
-        data-contact={
-          testResult ? (testResult.packets ? 'closed' : 'open') : undefined
-        }
-      >
+      <div className="causal-memory-bus" data-contact={contact}>
         <div className="causal-bus-caption">
           <span>RECEIVE / E-01</span>
-          <small>受け取った場面</small>
+          <small>記憶に残った反応と変化</small>
           <i aria-hidden="true" />
         </div>
-        <div
-          className="causal-scene-sockets"
-          aria-label="過去側の四つの受信場面"
-        >
-          {scenes.map((scene, index) => {
+        <div className="causal-scene-sockets" aria-label="受信前後の四つの記憶">
+          {sceneOrder.map((index) => {
+            const scene = scenes[index]!;
             const packet = windows[index];
             const text = packet ? packetTexts[packetIds.indexOf(packet)] : null;
             return (
               <button
                 type="button"
                 className={`causal-scene-socket${packet ? ' is-patched' : ''}${heldPacket ? ' can-receive' : ''}`}
-                key={scene.id}
-                data-scene={scene.id}
+                key={scene.label}
                 disabled={disabled}
-                aria-label={`${scene.label}の受信端子${text ? `、${text}、押すと取り外す` : heldPacket ? 'へ選んだPACKETを接続する' : '、未接続'}`}
+                aria-label={`${scene.label}、${scene.observation}、受信端子${text ? `、${text}、押すと取り外す` : heldPacket ? 'へ選んだ文を接続する' : '、未接続'}`}
                 onClick={() => operateSocket(index)}
                 onDragOver={(event) => {
                   if (canOperate()) event.preventDefault();
@@ -357,23 +350,14 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
                   placePacket(index, event.dataTransfer.getData('text/plain'));
                 }}
               >
-                <span
-                  className="causal-scene-icon"
-                  data-icon={scene.id}
-                  aria-hidden="true"
-                >
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <span className="causal-scene-label">{scene.plate}</span>
+                <span className="causal-scene-label">{scene.label}</span>
+                <span className="causal-observation">{scene.observation}</span>
                 <span className="causal-scene-jack" aria-hidden="true">
                   <i />
                 </span>
                 <span className="causal-packet-tab">
                   {packet ? (
                     <>
-                      <b>{packet.replace('packet-', 'P')}</b>
                       <small>{text}</small>
                     </>
                   ) : (
@@ -429,12 +413,7 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
         </div>
       </div>
 
-      <div
-        className="causal-return-deck"
-        data-contact={
-          testResult ? (testResult.route ? 'closed' : 'open') : undefined
-        }
-      >
+      <div className="causal-return-deck" data-contact={contact}>
         <div
           className={`causal-return-patch${heldCable ? ' is-held' : ''}${route ? ' is-patched' : ''}`}
           style={patchStyle}
@@ -496,7 +475,8 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
           type="button"
           className="causal-test-lever"
           aria-label="TEST PULSE 試験レバー"
-          disabled={disabled}
+          aria-describedby="transmission-test-status"
+          disabled={disabled || !assemblyReady}
           onClick={testPulse}
         >
           <span className="causal-lever-well" aria-hidden="true">
@@ -505,16 +485,25 @@ export function TransmissionPatchDevice({ active, failures, submit }: Props) {
           <span>TEST PULSE</span>
         </button>
       </div>
-      <p className="causal-test-status" role="status" aria-live="polite">
-        {testResult
-          ? `PACKET MAP / ${testResult.packets ? 'LOCKED' : 'CONTACT OPEN'} · TIME BASE / ${testResult.time ? 'LOCKED' : 'CONTACT OPEN'} · RETURN / ${testResult.route ? 'LOCKED' : 'CONTACT OPEN'}`
+      <p
+        id="transmission-test-status"
+        className="causal-test-status"
+        role="status"
+        aria-live="polite"
+      >
+        {testResult !== null
+          ? testResult
+            ? 'RETURN RECEIVED / 記録と一致'
+            : 'RECORD MISMATCH / 文と前後の出来事、LOGの時刻と配線を再確認'
           : heldPacket
-            ? 'PACKETを受信端子へ接続'
+            ? '文を、その前後の出来事が合う端子へ接続'
             : heldCable
               ? 'ケーブルを端子へ接続'
-              : failures > 0
-                ? 'TEST BUS / 再試験待機'
-                : 'TEST BUS / STANDBY'}
+              : !assemblyReady
+                ? '試験待機 / 四つの受信端子と送信ケーブルを接続'
+                : failures > 0
+                  ? 'TEST BUS / 再試験待機'
+                  : 'TEST BUS / STANDBY'}
       </p>
     </div>
   );

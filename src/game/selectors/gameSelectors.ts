@@ -46,9 +46,9 @@ const objectives: Partial<Record<StoryStage, string>> = {
     '端末のLOGで波形をつなぎ、そのまま配線の行き先を追う。',
   puzzle_packet_repair: '端末のSIGNALに残った破損データを調べる。',
   puzzle_voiceprint_calibration:
-    '職員証と、端末横のパネルに出た波形を見比べる。',
+    '端末横のパネルで、受信データと職員記録の波形を見比べる。',
   puzzle_transmission_window:
-    '判明した時間差と回線を使い、送信の準備を整える。',
+    '受け取った文と、その前後に起きたことを照合する。',
   transmission_ready: 'SYSTEMで送る内容を確認し、赤いボタンを押す。',
 };
 

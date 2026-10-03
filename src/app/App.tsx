@@ -433,7 +433,11 @@ export function App() {
     [actorRef, appendHistory],
   );
 
-  const archiveDocuments = getArchiveDocuments(powerRestored, inventory);
+  const archiveDocuments = getArchiveDocuments(
+    powerRestored,
+    inventory,
+    completedPuzzleIds,
+  );
 
   if (!environmentSupported) return <UnsupportedScreen />;
   if (!isPlaying)

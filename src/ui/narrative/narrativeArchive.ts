@@ -194,9 +194,8 @@ const completionEntries: Partial<Record<PuzzleId, readonly NarrativeEntry[]>> =
       },
       {
         id: 'script_cue',
-        kind: 'communication',
-        speaker: '20分後の自分',
-        text: 'お前が受け取った4つの文を、20分前へ戻せ。',
+        kind: 'monologue',
+        text: '……今度は、俺が話す番か。',
       },
     ],
     puzzle_transmission_window: [
@@ -223,16 +222,23 @@ export function discoveryEntry(text: string): NarrativeEntry {
 const floorMap: ArchiveDocument = {
   id: 'document_floor_map',
   title: 'FACILITY / CONDUIT MAP',
-  body: 'E-01の左右に部屋はない。通信の実線は丸端子J-2からECHO BUFFER RETURNへ続く。',
+  body: '施設の見取り図と配線図。実線は通信、破線は電力。○は環端子、┃は線端子。',
 };
 
 export function getArchiveDocuments(
   powerRestored: boolean,
   inventory: readonly ItemId[],
+  completedPuzzleIds: readonly PuzzleId[],
 ) {
   const documents: ArchiveDocument[] = [];
   if (powerRestored) documents.push(...archivedDeskDocuments);
-  if (inventory.includes('item_floor_map')) documents.push(floorMap);
+  if (inventory.includes('item_floor_map'))
+    documents.push({
+      ...floorMap,
+      body: completedPuzzleIds.includes('puzzle_signal_investigation')
+        ? `${floorMap.body} 調査記録: E-01の左右に部屋はない。通信の実線は丸端子J-2を通り、E-01内のECHO BUFFER RETURNへ戻る。`
+        : floorMap.body,
+    });
   return documents;
 }
 

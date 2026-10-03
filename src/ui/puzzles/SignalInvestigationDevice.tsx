@@ -242,21 +242,23 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
                   : 'ΔT ?'}
             </output>
           </div>
+          <div className="signal-matched-records">
+            {(locked ? matchedRecords.slice(0, 1) : matchedRecords).map(
+              ({ receive, source }) => (
+                <div key={receive.id}>
+                  <span>
+                    受信 {receive.id.toUpperCase()} <b>{receive.time}</b>
+                  </span>
+                  <i aria-hidden="true">↔</i>
+                  <span>
+                    送信 {source.id.toUpperCase()} <b>{source.time}</b>
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
           {!locked && (
             <>
-              <div className="signal-matched-records">
-                {matchedRecords.map(({ receive, source }) => (
-                  <div key={receive.id}>
-                    <span>
-                      {receive.id.toUpperCase()} <b>{receive.time}</b>
-                    </span>
-                    <i aria-hidden="true">↔</i>
-                    <span>
-                      {source.id.toUpperCase()} <b>{source.time}</b>
-                    </span>
-                  </div>
-                ))}
-              </div>
               <div
                 ref={rulerRef}
                 className={`signal-time-ruler${delta === deltaTarget ? ' is-aligned' : ''}${dragging ? ' is-dragging' : ''}`}

@@ -496,7 +496,7 @@ type PuzzleResult =
 | 通信記録と配線 | routing | RECEIVE/SOURCE、時間軸、施設図の線上端子 | 3対応、共通時間差の整列、線種、中継端子、送り先 |
 | PACKET復元 | reconstruction | 固定HEADER・端形状付きデータ片・連続性レール | 4断片の連続順 |
 | 声紋校正 | calibration | 同一スコープの重ね合わせ・TIME/DIV・極性・位相移動 | 3特徴の逆変換 |
-| 送信設定 | routing | 場面端子と二本の時間軸・帰還配線・試験レバー | 会話順、4受信枠、時間差、送り先 |
+| 送信設定 | routing | 受信前後の記憶を持つ端子・二本の時間軸・帰還配線・試験レバー | 4本文と過去の出来事の対応、時間差、送り先 |
 
 ### 9.3 装置操作と判定境界
 
@@ -518,6 +518,7 @@ type PuzzleResult =
 - `ModalFocusScope`はhidden・inert・aria-hidden配下をfocus候補から除外する。表示器はkeyboardでscrollできる単一regionとし、操作キーとBACKはその外側に置く。
 - 完了メッセージ中は接写のfocus scope自体をhidden・inertにする。端末を保持したままメッセージへのpointer/touch操作を通し、読了後は表示器へfocusを戻す。
 - 照合時と再読時の波形・時刻は`signalRecords`を共有する。`FacilityMap`の確定経路は既定では隠し、確認済みの呼び出し側だけが明示的に開示する。
+- ARCHIVEの施設図要約も既存の調査完了IDから導出する。最終装置は表示順と既存の回答順を分離し、保存v4・正解配列を変えずに過去の出来事を照合する。試験は接続完了後だけ純粋判定を呼び、個々の設定の正誤は表示しない。
 - 表示切替音は既存の`SoundManager`の`terminal_connect`を用い、同じ操作の汎用click音と二重再生しない。走査演出と安全カバーの動きはreduced-motionで省略し、文字と押下状態は常に残す。
 
 ### 9.5 波形の共通文法

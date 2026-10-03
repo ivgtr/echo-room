@@ -12,7 +12,8 @@ export const itemDetails: Record<
   item_staff_card: {
     label: '職員証',
     code: 'ACCESS CARD',
-    description: '施設の職員証。端末のSECURITYを開けられる。',
+    description:
+      '施設の職員証。端末のSECURITYを開ける。端末横のパネルで職員記録を照会するときにも使う。',
   },
   item_floor_map: {
     label: '施設図',
