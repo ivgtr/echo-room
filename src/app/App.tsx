@@ -240,7 +240,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!isPlaying || systemMenuOpen || !pageVisible) return;
+    if (!isPlaying || systemMenuOpen || hintOpen || !pageVisible) return;
     let previousTime = performance.now();
     let clockVisible = document.visibilityState === 'visible';
     const commitElapsedTime = () => {
@@ -263,7 +263,7 @@ export function App() {
       document.removeEventListener('visibilitychange', syncClockVisibility);
       commitElapsedTime();
     };
-  }, [actorRef, isPlaying, pageVisible, systemMenuOpen]);
+  }, [actorRef, isPlaying, pageVisible, systemMenuOpen, hintOpen]);
 
   const appendHistory = useCallback((entries: readonly NarrativeEntry[]) => {
     setNarrativeHistory((current) => {
@@ -386,10 +386,10 @@ export function App() {
     () => soundManager.playEffect('text_blip'),
     [],
   );
-  const handleEventNarrativeAdvance = useCallback(
-    () => setEventNarrativeQueue((current) => current.slice(1)),
-    [],
-  );
+  const handleEventNarrativeAdvance = useCallback(() => {
+    if (activeEventNarrative) appendHistory([activeEventNarrative]);
+    setEventNarrativeQueue((current) => current.slice(1));
+  }, [activeEventNarrative, appendHistory]);
   const handleHotspot = useCallback(
     (hotspotId: HotspotId) => {
       if (storyStage === 'ending_door' && hotspotId === 'hotspot_door') {
@@ -425,15 +425,18 @@ export function App() {
       );
       if (correct) {
         const entries = [...getPuzzleCompletionEntries(puzzleId)];
-        appendHistory(entries);
         setEventNarrativeQueue(entries);
       }
       actorRef.send({ type: 'PUZZLE_SUBMITTED', puzzleId, answer });
     },
-    [actorRef, appendHistory],
+    [actorRef],
   );
 
-  const archiveDocuments = getArchiveDocuments(powerRestored, inventory);
+  const archiveDocuments = getArchiveDocuments(
+    powerRestored,
+    inventory,
+    completedPuzzleIds,
+  );
 
   if (!environmentSupported) return <UnsupportedScreen />;
   if (!isPlaying)

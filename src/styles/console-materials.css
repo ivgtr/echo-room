@@ -1,0 +1,65 @@
+/* Generated hardware is shared across instruments. Only readouts, exact marks,
+   cable geometry and small state lights are drawn at runtime. */
+:root {
+  --console-screen-frame: url('/assets/images/console/gfx-console-screen__blank__frame.webp');
+  --console-screen-glass: url('/assets/images/console/gfx-console-glass__blank__fill.webp');
+  --console-record-frame: url('/assets/images/console/gfx-console-record__blank__carrier.webp');
+  --console-record-face: url('/assets/images/console/gfx-console-glass__blank__fill.webp');
+  --console-key: url('/assets/images/console/gfx-console-key__neutral__sprite.webp');
+  --console-knob: url('/assets/images/console/gfx-console-knob__neutral__sprite.webp');
+  --console-socket: url('/assets/images/console/gfx-console-jack__empty__sprite.webp');
+  --console-lever: url('/assets/images/console/gfx-console-toggle__neutral__sprite.webp');
+  --console-transmit: url('/assets/images/console/gfx-console-transmit__idle__sprite.webp');
+  --console-cover: url('/assets/images/console/gfx-console-cover__closed__sprite.webp');
+  --console-display-slice: 90;
+  --console-record-slice: 34 72 34 72;
+  --console-key-slice: 27 31 27 31;
+}
+
+.console-display,
+.terminal-instrument .console-display {
+  min-width: 0;
+  border: var(--console-display-border, 12px) solid transparent;
+  border-image: var(--console-screen-frame) var(--console-display-slice) stretch;
+  padding: var(--console-display-padding, 0.65rem);
+  background: #071213 var(--console-screen-glass) center / cover;
+  background-clip: padding-box;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.console-record,
+.terminal-instrument .console-record {
+  min-width: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--console-record-border, 8px)
+    calc(var(--console-record-border, 8px) * 2.12);
+  border-image: var(--console-record-frame) var(--console-record-slice) stretch;
+  padding: var(--console-record-padding, 0.4rem 0.7rem);
+  background: #172121 var(--console-record-face) center / cover;
+  background-clip: padding-box;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.console-key,
+.terminal-instrument .console-key {
+  min-height: 2.75rem;
+  border: var(--console-key-border, 8px) solid transparent;
+  border-image: var(--console-key) var(--console-key-slice) fill stretch;
+  padding: var(--console-key-padding, 0.4rem 0.65rem);
+  color: #e3e9e5;
+  background: #20292b;
+  background-clip: padding-box;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: 0 1px 2px #000;
+}
+
+.console-knob-art {
+  background: transparent var(--console-knob) center / contain no-repeat;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}

@@ -52,7 +52,7 @@ export const PUZZLE_DEVICE_COPY: Record<PuzzleId, PuzzleDeviceCopy> = {
     eyebrow: 'ECHO BUFFER / TEST ROUTE',
     title: '送信設定',
     incorrectFeedback:
-      'LAST TEST / FAILED。受信枠、時間差、送り先を調整し、TEST PULSEで再試験。',
+      'RECORD MISMATCH。文と前後の出来事、LOGの時刻と配線を再確認。',
   },
 };
 

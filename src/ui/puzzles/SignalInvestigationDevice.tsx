@@ -144,7 +144,7 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
       data-failures={failures}
     >
       {!pairingComplete && (
-        <div className="signal-patching">
+        <div className="signal-patching console-display">
           <div className="signal-section-heading">
             <span>RECORD PATCH</span>
             <small>PACKET FINGERPRINT</small>
@@ -156,7 +156,7 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
                 <button
                   type="button"
                   key={record.id}
-                  className={`jack${activeReceive === index ? ' is-armed' : ''}${patches[index] === matchedRecords[index]?.source.id ? ' is-patched' : ''}`}
+                  className={`jack console-record${activeReceive === index ? ' is-armed' : ''}${patches[index] === matchedRecords[index]?.source.id ? ' is-patched' : ''}`}
                   aria-label={`${record.id.toUpperCase()}受信端子`}
                   aria-description={`波形 ${record.signature}`}
                   aria-pressed={activeReceive === index}
@@ -193,7 +193,7 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
                 <button
                   type="button"
                   key={record.id}
-                  className="jack"
+                  className="jack console-record"
                   aria-label={`${record.id.toUpperCase()}送信端子`}
                   aria-description={`波形 ${record.signature}`}
                   disabled={!active}
@@ -229,7 +229,7 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
       )}
       {pairingComplete && (
         <section
-          className={`signal-time-comparator${locked ? ' is-locked' : ''}`}
+          className={`signal-time-comparator console-display${locked ? ' is-locked' : ''}`}
           aria-label="受信・送信時刻の比較"
         >
           <div className="signal-section-heading">
@@ -242,21 +242,23 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
                   : 'ΔT ?'}
             </output>
           </div>
+          <div className="signal-matched-records">
+            {(locked ? matchedRecords.slice(0, 1) : matchedRecords).map(
+              ({ receive, source }) => (
+                <div key={receive.id}>
+                  <span>
+                    受信 {receive.id.toUpperCase()} <b>{receive.time}</b>
+                  </span>
+                  <i aria-hidden="true">↔</i>
+                  <span>
+                    送信 {source.id.toUpperCase()} <b>{source.time}</b>
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
           {!locked && (
             <>
-              <div className="signal-matched-records">
-                {matchedRecords.map(({ receive, source }) => (
-                  <div key={receive.id}>
-                    <span>
-                      {receive.id.toUpperCase()} <b>{receive.time}</b>
-                    </span>
-                    <i aria-hidden="true">↔</i>
-                    <span>
-                      {source.id.toUpperCase()} <b>{source.time}</b>
-                    </span>
-                  </div>
-                ))}
-              </div>
               <div
                 ref={rulerRef}
                 className={`signal-time-ruler${delta === deltaTarget ? ' is-aligned' : ''}${dragging ? ' is-dragging' : ''}`}
@@ -361,7 +363,7 @@ export function SignalInvestigationDevice({ active, failures, submit }: Props) {
                     );
                   })}
                   <div
-                    className="signal-ruler-grip"
+                    className="signal-ruler-grip console-key"
                     style={{ left: `${55 + (deltaTarget - delta) * 1.8}%` }}
                   >
                     <i />

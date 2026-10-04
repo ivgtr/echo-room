@@ -31,6 +31,17 @@ describe('PuzzleDevice', () => {
     expect(
       screen.queryByText(`PACKET 04 / ${packetTexts[3]}`),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '固定されたHEADER断片C' }),
+    ).toHaveAccessibleDescription('左端は縦線、右端は三角');
+    for (const [fragment, edges] of [
+      ['A', '左端はひし形、右端は丸'],
+      ['B', '左端は丸、右端は塗りつぶした四角'],
+      ['D', '左端は三角、右端はひし形'],
+    ])
+      expect(
+        screen.getByRole('button', { name: `断片${fragment}を持つ` }),
+      ).toHaveAccessibleDescription(edges);
     for (const [index, fragment] of ['D', 'A', 'B'].entries()) {
       fireEvent.click(
         screen.getByRole('button', { name: `断片${fragment}を持つ` }),
@@ -41,6 +52,9 @@ describe('PuzzleDevice', () => {
         }),
       );
     }
+    expect(
+      screen.getByRole('button', { name: 'レール2の断片Dを持ち上げる' }),
+    ).toHaveAccessibleDescription('左端は三角、右端はひし形');
     for (const [index, text] of packetTexts.entries())
       expect(screen.getByText(`PACKET 0${index + 1} / ${text}`)).toBeVisible();
     expect(
@@ -220,6 +234,9 @@ describe('PuzzleDevice', () => {
     ).not.toBeInTheDocument();
     view.rerender(<PuzzleDevice {...props} active />);
     act(() => vi.advanceTimersByTime(500));
+    // Keep the direction of the discovered offset readable during tracing.
+    expect(screen.getByText('02:11:04')).toBeVisible();
+    expect(screen.getByText('02:31:04')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'INTERCOM端子' }));
     fireEvent.click(screen.getByRole('button', { name: 'P-1端子' }));
     expect(screen.getByText('× SIGNAL LOST')).toBeVisible();
@@ -244,7 +261,7 @@ describe('PuzzleDevice', () => {
     );
   });
 
-  it('cancels a transmission test when hidden and safely retests the retained circuit', () => {
+  it('tests only complete causal mappings, retaining corrections across an interrupted pulse', () => {
     vi.useFakeTimers();
     const onSubmit = vi.fn();
     const props = {
@@ -257,25 +274,38 @@ describe('PuzzleDevice', () => {
     const view = render(<PuzzleDevice {...props} />);
     const lever = () =>
       screen.getByRole('button', { name: 'TEST PULSE 試験レバー' });
+    expect(lever()).toBeDisabled();
     fireEvent.click(lever());
-    expect(onSubmit).toHaveBeenCalledOnce();
-    expect(screen.getByText(/PACKET MAP \/ CONTACT OPEN/)).toBeVisible();
-    act(() => vi.advanceTimersByTime(400));
-    for (const [index, scene] of [
-      'インターホン',
-      '非常電源',
-      '通信記録',
-      '赤い送信ボタン',
-    ].entries()) {
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/四つの受信端子と送信ケーブルを接続/),
+    ).toBeVisible();
+    const scenes = [
+      '受信後の返事',
+      '指示に従った結果',
+      'この直後に受信',
+      '復元した文への反応',
+    ];
+    const place = (packet: number, scene: number) => {
       fireEvent.click(
         screen.getByRole('button', {
-          name: `送信する文「${packetTexts[index]}」`,
+          name: `送信する文「${packetTexts[packet]}」`,
         }),
       );
       fireEvent.click(
-        screen.getByRole('button', { name: new RegExp(`^${scene}の受信端子`) }),
+        screen.getByRole('button', { name: new RegExp(`^${scenes[scene]}`) }),
       );
-    }
+    };
+    // A plausible but incorrect complete proposal must not certify each knob.
+    for (const [scene, packet] of [1, 0, 2, 3].entries()) place(packet, scene);
+    expect(lever()).toBeDisabled();
+    expect(view.container).not.toHaveTextContent(/P0[1-4]|packet-0[1-4]/);
+    expect(
+      screen
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label'))
+        .join(' '),
+    ).not.toMatch(/P0[1-4]|packet-0[1-4]/);
     fireEvent.keyDown(screen.getByRole('slider', { name: '送信側の時間軸' }), {
       key: 'ArrowLeft',
     });
@@ -283,6 +313,20 @@ describe('PuzzleDevice', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'ECHO BUFFER RETURNの端子' }),
     );
+    expect(lever()).toBeEnabled();
+    fireEvent.click(lever());
+    expect(onSubmit).toHaveBeenCalledOnce();
+    expect(screen.getByText(/RECORD MISMATCH/)).toBeVisible();
+    expect(view.container).not.toHaveTextContent(
+      /TIME BASE \/ LOCKED|RETURN \/ LOCKED|P0[1-4]/,
+    );
+    act(() => vi.advanceTimersByTime(400));
+    view.rerender(<PuzzleDevice {...props} active={false} />);
+    view.rerender(<PuzzleDevice {...props} active />);
+    expect(screen.getByText(/RECORD MISMATCH/)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /^指示に従った結果/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^受信後の返事/ }));
+    place(1, 1);
     onSubmit.mockClear();
     fireEvent.click(lever());
     view.rerender(<PuzzleDevice {...props} active={false} />);

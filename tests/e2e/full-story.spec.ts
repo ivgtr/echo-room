@@ -6,6 +6,20 @@ test('keyboard-only route solves all seven deductions before transmission', asyn
 }) => {
   test.setTimeout(240_000);
   await startNewGame(page);
+  await page
+    .getByRole('button', { name: 'SYSTEM', exact: true })
+    .press('Enter');
+  await page
+    .getByRole('button', { name: 'HINT / ヒント', exact: true })
+    .press('Enter');
+  await page.getByRole('button', { name: '次のヒントを見る' }).press('Enter');
+  await expect(page.getByText(/LEVEL 1/)).toContainText('状態灯・煤・上の配線');
+  await page
+    .getByRole('button', { name: 'BACK / SYSTEMへ戻る' })
+    .press('Escape');
+  await page
+    .getByRole('button', { name: 'RESUME / ゲームへ戻る' })
+    .press('Enter');
   await restorePower(page);
 
   await openHotspot(page, '端末を調べる');
@@ -183,7 +197,12 @@ async function solveVoiceprint(page: Page) {
 
 async function solveTransmissionPatch(page: Page) {
   const device = puzzle(page);
-  const scenes = ['インターホン', '非常電源', '通信記録', '赤い送信ボタン'];
+  const scenes = [
+    '受信後の返事',
+    '指示に従った結果',
+    'この直後に受信',
+    '復元した文への反応',
+  ];
   const packetLabels = [
     '……聞こえるか？',
     'まず電源を戻せ。',
@@ -196,9 +215,28 @@ async function solveTransmissionPatch(page: Page) {
       .press('Enter');
     await device
       .getByRole('button', {
-        name: new RegExp(`^${scenes[index]}の受信端子`),
+        name: new RegExp(`^${scenes[index]}`),
       })
       .press('Enter');
+    if (index === 0) {
+      const historyButton = page.getByRole('button', {
+        name: '会話履歴',
+        exact: true,
+      });
+      await historyButton.press('Enter');
+      const history = page.getByRole('dialog', {
+        name: '会話履歴',
+        exact: true,
+      });
+      await expect(history.getByText('誰だ？', { exact: true })).toBeVisible();
+      await history
+        .getByRole('button', { name: 'BACK / 端末に戻る' })
+        .press('Escape');
+      await expect(historyButton).toBeFocused();
+      await expect(
+        device.getByRole('button', { name: /^受信後の返事/ }),
+      ).toHaveAccessibleName(/……聞こえるか？/);
+    }
   }
   await device
     .getByRole('slider', { name: '送信側の時間軸' })

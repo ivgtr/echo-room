@@ -98,7 +98,7 @@ documents:
   - {
       id: document_conduit_map,
       title: FACILITY CONDUIT MAP,
-      body: E-01の通信実線は、丸端子J-2からECHO BUFFER RETURNへ続く。,
+      body: 室内の配置と配線が描かれている。実線は通信、破線は電力。丸と角の記号は端子を表す。,
     }
 dialogues:
   - {
@@ -183,19 +183,19 @@ hints:
       id: hint_power_1,
       puzzleId: puzzle_power_route,
       level: 1,
-      text: 状態灯と、盤面上部の配線がどこからどこへ続くかを見る。,
+      text: 机の引き継ぎメモと、ブレーカーの状態灯・煤・上の配線を見比べる。,
     }
   - {
       id: hint_power_2,
       puzzleId: puzzle_power_route,
       level: 2,
-      text: 赤い状態灯の回路を切り、上の配線の始まりに近い機器から電源を入れる。,
+      text: 煤のあるDOOR回路を切る。その後、上の配線を根元からたどって復帰順を読む。,
     }
   - {
       id: hint_power_3,
       puzzleId: puzzle_power_route,
       level: 3,
-      text: ドアの回路を切ってから、端末、インターホン、転送装置の順に入れる。,
+      text: DOORをOFFにして、TERMINAL、INTERCOM、ECHO BUFFERの順にONにする。,
     }
   - {
       id: hint_carrier_1,
@@ -273,7 +273,7 @@ hints:
       id: hint_voice_1,
       puzzleId: puzzle_voiceprint_calibration,
       level: 1,
-      text: 受信データを職員証と同じ形にする。,
+      text: 端末横のパネルで、受信データと職員記録の波形を見比べる。,
     }
   - {
       id: hint_voice_2,
@@ -291,19 +291,19 @@ hints:
       id: hint_send_1,
       puzzleId: puzzle_transmission_window,
       level: 1,
-      text: 4つの発言を、受け取った順に置く。,
+      text: 文を受け取る前と後で、何が起きたか。端末の「会話履歴」で確かめる。配置はそのまま残る。,
     }
   - {
       id: hint_send_2,
       puzzleId: puzzle_transmission_window,
       level: 2,
-      text: 4つとも、同じ時刻と同じ送り先を使う。,
+      text: 返事、設備の起動、時刻への疑問、まだ行っていない操作への反応を、文と結びつける。時間と送り先はLOGとSECURITYで再確認できる。,
     }
   - {
       id: hint_send_3,
       puzzleId: puzzle_transmission_window,
       level: 3,
-      text: 会話順、-00:20:00、ECHO BUFFER RETURN。,
+      text: '「誰だ？」には「聞こえるか」、「起動した」には電源の指示。「戻ってる？」の直後はログへの忠告、復元した文への反応は赤いボタン。時間差は-00:20:00、送り先はECHO BUFFER RETURN。',
     }
 storyFacts:
   wallClock: '02:17'

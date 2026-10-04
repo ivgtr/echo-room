@@ -187,7 +187,7 @@ export function FacilityMap({
 
   return (
     <figure
-      className={`facility-map facility-map-spatial${compact ? ' is-compact' : ''}${returned ? ' is-returned' : ''}${trace ? ' is-traceable' : ''}`}
+      className={`facility-map facility-map-spatial console-display${compact ? ' is-compact' : ''}${returned ? ' is-returned' : ''}${trace ? ' is-traceable' : ''}`}
       aria-labelledby={titleId}
       data-trace-attempt={trace?.attempt}
     >
@@ -195,129 +195,137 @@ export function FacilityMap({
         <span>FACILITY / E-01</span>
         <small>{returned ? 'RETURN BUS / VERIFIED' : 'CONDUIT OVERLAY'}</small>
       </figcaption>
-      <div className="facility-plan">
-        <div className="facility-zone facility-west">
-          <b>MACHINE</b>
-          <span>機械設備</span>
-        </div>
-        <div className="facility-zone facility-current">
-          <b>ROOM E-01</b>
-          <span>現在地</span>
-        </div>
-        <div className="facility-zone facility-east">
-          <b>STRUCTURE</b>
-          <span>コンクリート壁</span>
-        </div>
-        <div className="facility-hall">CORRIDOR / 廊下</div>
-        <div className="facility-lower facility-control">
-          CONTROL ROOM / 制御室
-        </div>
-        <div className="facility-lower facility-machine">
-          MACHINE ROOM / 機械室
-        </div>
-        {conduitLayer && (
-          <>
-            <div className="facility-wires" aria-hidden="true">
-              {wires.map((wire) => (
-                <div
-                  key={`${wire.id}-${trace?.lost === wire.id ? trace.attempt : 0}`}
-                  className={`facility-wire${wire.power ? ' is-power' : ''}${(revealRoute && !wire.power) || trace?.visited.includes(wire.id) ? ' is-lit' : ''}${trace?.lost === wire.id ? ' is-lost' : ''}`}
-                >
-                  {wire.points.slice(1).map((to, index) => {
-                    const from = wire.points[index]!;
-                    const vertical = from[0] === to[0];
-                    return (
-                      <i
-                        key={index}
-                        className={vertical ? 'is-vertical' : 'is-horizontal'}
-                        style={{
-                          left: `${Math.min(from[0], to[0])}%`,
-                          top: `${Math.min(from[1], to[1])}%`,
-                          width: vertical
-                            ? undefined
-                            : `${Math.abs(to[0] - from[0])}%`,
-                          height: vertical
-                            ? `${Math.abs(to[1] - from[1])}%`
-                            : undefined,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-            {nodes.map((node) => {
-              const visited = revealRoute
-                ? !['power', 'bar-relay', 'open-end'].includes(node.id)
-                : trace?.visited.includes(node.id);
-              const label =
-                node.id === 'echo-buffer' && returned
-                  ? 'ECHO BUFFER RETURN'
-                  : node.label;
-              const style = {
-                left: `${node.x}%`,
-                top: `${node.y}%`,
-              } satisfies CSSProperties;
-              const content = (
-                <>
-                  <i
-                    className={`facility-terminal is-${node.shape}`}
-                    aria-hidden="true"
-                  />
-                  <span className="facility-node-label" aria-hidden="true">
-                    {label}
+      <div
+        className="facility-plan-viewport"
+        role="region"
+        aria-label="施設図の配線"
+        tabIndex={trace && !trace.active ? -1 : 0}
+      >
+        <div className="facility-plan">
+          <div className="facility-zone facility-west">
+            <b>MACHINE</b>
+            <span>機械設備</span>
+          </div>
+          <div className="facility-zone facility-current">
+            <b>ROOM E-01</b>
+            <span>現在地</span>
+          </div>
+          <div className="facility-zone facility-east">
+            <b>STRUCTURE</b>
+            <span>コンクリート壁</span>
+          </div>
+          <div className="facility-hall">CORRIDOR / 廊下</div>
+          <div className="facility-lower facility-control">
+            CONTROL ROOM / 制御室
+          </div>
+          <div className="facility-lower facility-machine">
+            MACHINE ROOM / 機械室
+          </div>
+          {conduitLayer && (
+            <>
+              <div className="facility-wires" aria-hidden="true">
+                {wires.map((wire) => (
+                  <div
+                    key={`${wire.id}-${trace?.lost === wire.id ? trace.attempt : 0}`}
+                    className={`facility-wire${wire.power ? ' is-power' : ''}${(revealRoute && !wire.power) || trace?.visited.includes(wire.id) ? ' is-lit' : ''}${trace?.lost === wire.id ? ' is-lost' : ''}`}
+                  >
+                    {wire.points.slice(1).map((to, index) => {
+                      const from = wire.points[index]!;
+                      const vertical = from[0] === to[0];
+                      return (
+                        <i
+                          key={index}
+                          className={vertical ? 'is-vertical' : 'is-horizontal'}
+                          style={{
+                            left: `${Math.min(from[0], to[0])}%`,
+                            top: `${Math.min(from[1], to[1])}%`,
+                            width: vertical
+                              ? undefined
+                              : `${Math.abs(to[0] - from[0])}%`,
+                            height: vertical
+                              ? `${Math.abs(to[1] - from[1])}%`
+                              : undefined,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+              {nodes.map((node) => {
+                const visited = revealRoute
+                  ? !['power', 'bar-relay', 'open-end'].includes(node.id)
+                  : trace?.visited.includes(node.id);
+                const label =
+                  node.id === 'echo-buffer' && returned
+                    ? 'ECHO BUFFER RETURN'
+                    : node.label;
+                const style = {
+                  left: `${node.x}%`,
+                  top: `${node.y}%`,
+                } satisfies CSSProperties;
+                const content = (
+                  <>
+                    <i
+                      className={`facility-terminal is-${node.shape}`}
+                      aria-hidden="true"
+                    />
+                    <span className="facility-node-label" aria-hidden="true">
+                      {label}
+                    </span>
+                    {trace?.lost === node.id && (
+                      <strong className="facility-node-loss" aria-hidden="true">
+                        ×
+                      </strong>
+                    )}
+                  </>
+                );
+                const className = `facility-node node-${node.id}${visited ? ' is-visited' : ''}${trace?.lost === node.id ? ' is-lost' : ''}`;
+                return trace ? (
+                  <button
+                    key={node.id}
+                    ref={(element) => {
+                      if (element) nodeRefs.current[node.id] = element;
+                    }}
+                    type="button"
+                    className={className}
+                    style={style}
+                    data-trace-node={node.id}
+                    aria-label={`${label}端子${visited ? '・追跡済み' : ''}`}
+                    aria-description={node.description}
+                    aria-describedby={helpId}
+                    aria-pressed={Boolean(visited)}
+                    aria-disabled={!trace.active || returned}
+                    tabIndex={focusNode === node.id ? 0 : -1}
+                    onFocus={() => setFocusNode(node.id)}
+                    onClick={() => {
+                      if (trace.active && !returned) trace.onVisit(node.id);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!trace.active || !event.key.startsWith('Arrow'))
+                        return;
+                      const next = neighbours[node.id][event.key];
+                      event.preventDefault();
+                      if (next) nodeRefs.current[next]?.focus();
+                    }}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <span
+                    key={node.id}
+                    className={className}
+                    style={style}
+                    role="img"
+                    aria-label={`${label}端子。${node.description}`}
+                  >
+                    {content}
                   </span>
-                  {trace?.lost === node.id && (
-                    <strong className="facility-node-loss" aria-hidden="true">
-                      ×
-                    </strong>
-                  )}
-                </>
-              );
-              const className = `facility-node node-${node.id}${visited ? ' is-visited' : ''}${trace?.lost === node.id ? ' is-lost' : ''}`;
-              return trace ? (
-                <button
-                  key={node.id}
-                  ref={(element) => {
-                    if (element) nodeRefs.current[node.id] = element;
-                  }}
-                  type="button"
-                  className={className}
-                  style={style}
-                  data-trace-node={node.id}
-                  aria-label={`${label}端子${visited ? '・追跡済み' : ''}`}
-                  aria-description={node.description}
-                  aria-describedby={helpId}
-                  aria-pressed={Boolean(visited)}
-                  aria-disabled={!trace.active || returned}
-                  tabIndex={focusNode === node.id ? 0 : -1}
-                  onFocus={() => setFocusNode(node.id)}
-                  onClick={() => {
-                    if (trace.active && !returned) trace.onVisit(node.id);
-                  }}
-                  onKeyDown={(event) => {
-                    if (!trace.active || !event.key.startsWith('Arrow')) return;
-                    const next = neighbours[node.id][event.key];
-                    event.preventDefault();
-                    if (next) nodeRefs.current[next]?.focus();
-                  }}
-                >
-                  {content}
-                </button>
-              ) : (
-                <span
-                  key={node.id}
-                  className={className}
-                  style={style}
-                  role="img"
-                  aria-label={`${label}端子。${node.description}`}
-                >
-                  {content}
-                </span>
-              );
-            })}
-          </>
-        )}
+                );
+              })}
+            </>
+          )}
+        </div>
       </div>
       {conduitLayer && (
         <div className="facility-map-key">
